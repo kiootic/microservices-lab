@@ -13,8 +13,7 @@ export function makeGlobalObject(globals: object) {
   for (const key of builtInGlobals) {
     Object.defineProperty(globalObject, key, {
       value: Reflect.get(globalThis, key),
-      configurable: false,
-      writable: false,
+      configurable: true,
       enumerable: false,
     });
   }
@@ -22,8 +21,7 @@ export function makeGlobalObject(globals: object) {
   for (const key of Reflect.ownKeys(globals)) {
     Object.defineProperty(globalObject, key, {
       value: Reflect.get(globals, key),
-      configurable: false,
-      writable: false,
+      configurable: true,
       enumerable: false,
     });
   }
@@ -32,14 +30,14 @@ export function makeGlobalObject(globals: object) {
     get() {
       return this;
     },
-    configurable: false,
+    configurable: true,
     enumerable: false,
   });
   Object.defineProperty(globalObject, "globalThis", {
     get() {
       return this;
     },
-    configurable: false,
+    configurable: true,
     enumerable: false,
   });
 
