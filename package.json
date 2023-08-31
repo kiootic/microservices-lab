@@ -11,8 +11,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rollup/browser": "3.28.1",
+    "comlink": "4.4.1",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "sucrase": "3.34.0"
   },
   "devDependencies": {
     "@types/react": "18.2.21",
