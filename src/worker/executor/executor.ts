@@ -13,6 +13,7 @@ export async function execute(
     new Map([["runtime", runtime.module]]),
   ) as () => Promise<unknown>;
 
-  const result = await module();
-  return result;
+  const result$ = module();
+  await runtime.scheduler.run();
+  return await result$;
 }
