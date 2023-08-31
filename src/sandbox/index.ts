@@ -1,7 +1,7 @@
 import * as Comlink from "comlink";
 import { SandboxAPI, WorkerAPI } from "../shared/comm";
 import { makeBundle } from "./bundler";
-import WorkerScriptURL from "../worker?worker&url";
+import WorkerScriptURL from "../worker/worker?worker&url";
 
 const trampolineScript = `import ${JSON.stringify(
   new URL(WorkerScriptURL, import.meta.url),
