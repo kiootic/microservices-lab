@@ -1,14 +1,15 @@
-defineTest("async with delay")
-  .users(10)
-  .run(async (user) => {
-    await Promise.resolve();
-    const start = Date.now();
-    for (let j = 0; j < 10; j++) {
-      await delay(user.id * 1000);
-    }
-    expect(Date.now() - start).toEqual(user.id * 10000);
-  });
+const services = defineServices({
+  db: import("./db"),
+  counter: import("./counter"),
+});
 
-export default async function () {
+declare global {
+  interface SystemServices extends ServicesType<typeof services> {}
+}
+
+import "./test";
+
+export default async function main() {
+  await setupSystem();
   await runTests();
 }

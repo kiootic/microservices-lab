@@ -79,6 +79,7 @@ export async function makeBundle(
 
   const { output } = await bundle.generate({
     format: "cjs",
+    inlineDynamicImports: true,
     sourcemap: "inline",
   });
 

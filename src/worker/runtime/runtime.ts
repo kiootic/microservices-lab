@@ -1,4 +1,8 @@
 import type * as RuntimeGlobals from "../../shared/runtime";
+import { VirtualNetwork } from "../system/network";
+import { System } from "../system/system";
+import { Semaphore } from "../utils/async";
+import { random } from "../utils/random";
 import { Host } from "./host";
 import { LoggerFactory } from "./logger";
 import { Scheduler } from "./scheduler";
@@ -6,7 +10,13 @@ import { Suite, expect } from "./test";
 
 function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const console = runtime.logger.make("console");
+  const system = new System();
   const suite = new Suite(runtime);
+
+  suite.addSetupFn(async () => {
+    runtime.scheduler.reset();
+    await system.reset();
+  });
 
   return {
     console: {
@@ -33,6 +43,13 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
     expect,
     defineTest: suite.defineTest.bind(suite),
     runTests: suite.run.bind(suite),
+
+    defineServices: system.defineServices.bind(system),
+    setupSystem: system.setup.bind(system),
+    services: VirtualNetwork.proxy(() => system.network),
+
+    random: random,
+    Semaphore: Semaphore,
   };
 }
 

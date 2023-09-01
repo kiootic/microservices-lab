@@ -50,6 +50,7 @@ class Test {
 
 export class Suite {
   readonly tests: Test[] = [];
+  readonly setupFns: Array<() => Promise<void>> = [];
   readonly runtime: Runtime;
   readonly log: Logger;
 
@@ -64,12 +65,20 @@ export class Suite {
     return test;
   }
 
+  addSetupFn(fn: () => Promise<void>): void {
+    this.setupFns.push(fn);
+  }
+
   async run(): Promise<void> {
     const start = performance.now();
     for (const test of this.tests) {
       this.log.info(`running test: ${test.name}`);
 
+      for (const fn of this.setupFns) {
+        await fn();
+      }
       await test.setupFn?.();
+
       const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
         const user = new VirtualUser(i + 1, this.runtime.logger);
         await Promise.resolve();

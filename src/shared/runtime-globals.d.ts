@@ -5,14 +5,6 @@ declare const console: {
   error: (...args: unknown[]) => void;
 };
 
-declare const Date: DateConstructor;
-
-declare function setTimeout(
-  handler: Function, // eslint-disable-line @typescript-eslint/ban-types
-  timeout?: number,
-  ...args: unknown[]
-): number;
-declare function clearTimeout(id: number): void;
 declare function delay(ms: number): Promise<void>;
 
 declare const expect: jest.Expect;
@@ -38,3 +30,46 @@ interface Test {
 
 declare function defineTest(name: string): Test;
 declare function runTests(): Promise<void>;
+
+type ServiceTypeMap<T> = {
+  [K in keyof T]: T[K] extends (...args: infer Args) => infer Ret
+    ? Ret extends PromiseLike<infer V>
+      ? (...args: Args) => Promise<V>
+      : (...args: Args) => Promise<Ret>
+    : never;
+};
+
+interface SystemServices {}
+
+type ServicesType<T extends Record<string, PromiseLike<ServiceModule>>> = {
+  [K in keyof T]: ServiceTypeMap<ReturnType<Awaited<T[K]>["instance"]>>;
+};
+
+interface ServiceModule {
+  instance: (hostID: number) => Record<string, unknown>;
+}
+
+declare function defineServices<
+  T extends Record<string, Promise<ServiceModule>>,
+>(services: T): T;
+declare function setupSystem(): Promise<void>;
+declare const services: SystemServices;
+
+interface Random {
+  uniform(): number;
+  normal(): number;
+  choice<T>(list: T[]): T | null;
+}
+declare const random: Random;
+
+declare class Semaphore {
+  readonly max: number;
+  readonly active: number;
+  readonly pending: number;
+
+  constructor(max: number);
+  tryAcquire(n: number): boolean;
+  acquire(n: number): Promise<void>;
+  release(n: number): void;
+  async run<T>(n: number, fn: () => Promise<T>): Promise<T>;
+}

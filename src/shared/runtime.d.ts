@@ -38,3 +38,32 @@ interface Test {
 
 export function defineTest(name: string): Test;
 export function runTests(): Promise<void>;
+
+interface ServiceModule {
+  instance: (hostID: number) => Record<string, unknown>;
+}
+
+export function defineServices<
+  T extends Record<string, Promise<ServiceModule>>,
+>(services: T): T;
+export function setupSystem(): Promise<void>;
+export const services: unknown;
+
+interface Random {
+  uniform(): number;
+  normal(): number;
+  choice<T>(list: T[]): T | null;
+}
+export const random: Random;
+
+export class Semaphore {
+  readonly max: number;
+  readonly active: number;
+  readonly pending: number;
+
+  constructor(max: number);
+  tryAcquire(n: number): boolean;
+  acquire(n: number): Promise<void>;
+  release(n: number): void;
+  async run<T>(n: number, fn: () => Promise<T>): Promise<T>;
+}
