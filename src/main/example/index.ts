@@ -11,5 +11,5 @@ import "./test";
 
 export default async function main() {
   await setupSystem();
-  await runTests();
+  return await runTests();
 }

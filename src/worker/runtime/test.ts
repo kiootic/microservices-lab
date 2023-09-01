@@ -69,7 +69,7 @@ export class Suite {
     this.setupFns.push(fn);
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<number> {
     const start = performance.now();
     for (const test of this.tests) {
       this.log.info(`running test: ${test.name}`);
@@ -93,8 +93,8 @@ export class Suite {
     }
 
     const end = performance.now();
-    this.log.info(
-      `all tests completed; time taken: ${((end - start) / 1000).toFixed(2)}s`,
-    );
+    const elaspsed = (end - start) / 1000;
+    this.log.info(`all tests completed; time taken: ${elaspsed.toFixed(2)}s`);
+    return elaspsed;
   }
 }

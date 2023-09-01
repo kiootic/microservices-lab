@@ -1,26 +1,10 @@
 import { Heap } from "../utils/heap";
+import { flushMicrotasks, observeMicrotasks } from "./microtask";
 
 interface Timer {
   id: number;
   runNotBefore: number;
   fn: () => void;
-}
-
-let nextYieldID = 1;
-const yieldTasks = new Map<number, () => void>();
-const yieldChannel = new MessageChannel();
-yieldChannel.port1.onmessage = (e) => {
-  const id: number = e.data;
-  yieldTasks.get(id)?.();
-  yieldTasks.delete(id);
-};
-
-function yieldNext() {
-  return new Promise<void>((resolve) => {
-    const id = nextYieldID++;
-    yieldTasks.set(id, resolve);
-    yieldChannel.port2.postMessage(id);
-  });
 }
 
 export class Scheduler {
@@ -75,23 +59,42 @@ export class Scheduler {
     this.timers.clear();
   }
 
-  async run(): Promise<void> {
-    await yieldNext();
-    while (this.timers.size > 0) {
-      let nextID = this.heap.pop();
-      let timer: Timer | undefined;
-      while (nextID != null && (timer = this.timers.get(nextID)) == null) {
-        nextID = this.heap.pop();
-      }
-      if (timer == null) {
-        continue;
+  run<T>(fn: () => Promise<T>): T {
+    return observeMicrotasks(() => {
+      let result: { ok: boolean; value: unknown } | undefined;
+      fn().then(
+        (value) => {
+          result = { ok: true, value };
+        },
+        (reason) => {
+          result = { ok: false, value: reason };
+        },
+      );
+
+      flushMicrotasks();
+      while (this.timers.size > 0) {
+        let nextID = this.heap.pop();
+        let timer: Timer | undefined;
+        while (nextID != null && (timer = this.timers.get(nextID)) == null) {
+          nextID = this.heap.pop();
+        }
+        if (timer == null) {
+          continue;
+        }
+
+        this.timers.delete(timer.id);
+        this.time = Math.max(this.time, timer.runNotBefore);
+        timer.fn?.();
+
+        flushMicrotasks();
       }
 
-      this.timers.delete(timer.id);
-      this.time = Math.max(this.time, timer.runNotBefore);
-      timer.fn?.();
-
-      await yieldNext();
-    }
+      if (result == null) {
+        throw new EvalError("Execution not settled");
+      } else if (!result.ok) {
+        throw result.value;
+      }
+      return result.value as T;
+    });
   }
 }

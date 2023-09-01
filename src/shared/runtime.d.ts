@@ -37,7 +37,7 @@ interface Test {
 }
 
 export function defineTest(name: string): Test;
-export function runTests(): Promise<void>;
+export function runTests(): Promise<number>;
 
 interface ServiceModule {
   instance: (hostID: number) => Record<string, unknown>;

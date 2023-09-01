@@ -17,5 +17,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       import.meta.glob("./example/**/*.ts", { eager: true, as: "raw" }),
     ).map(([key, value]) => [key.replace("./example/", "/"), value]),
   );
-  console.log(await sandbox.run(modules));
+  alert(await sandbox.run(modules));
 })();

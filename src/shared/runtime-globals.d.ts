@@ -29,7 +29,7 @@ interface Test {
 }
 
 declare function defineTest(name: string): Test;
-declare function runTests(): Promise<void>;
+declare function runTests(): Promise<number>;
 
 type ServiceTypeMap<T> = {
   [K in keyof T]: T[K] extends (...args: infer Args) => infer Ret

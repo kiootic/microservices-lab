@@ -7,38 +7,38 @@ const builtInGlobals = new Set(
     .filter((x) => x.length > 0),
 );
 
+function defineProperty(
+  obj: unknown,
+  key: string | symbol,
+  getter: (this: unknown) => unknown,
+) {
+  Object.defineProperty(obj, key, {
+    get: getter,
+    configurable: true,
+    enumerable: false,
+  });
+}
+
 export function makeGlobalObject(globals: object) {
   const globalObject = {};
 
   for (const key of builtInGlobals) {
-    Object.defineProperty(globalObject, key, {
-      value: Reflect.get(globalThis, key),
-      configurable: true,
-      enumerable: false,
+    defineProperty(globalObject, key, function () {
+      return Reflect.get(globalThis, key);
     });
   }
 
   for (const key of Reflect.ownKeys(globals)) {
-    Object.defineProperty(globalObject, key, {
-      value: Reflect.get(globals, key),
-      configurable: true,
-      enumerable: false,
+    defineProperty(globalObject, key, function () {
+      return Reflect.get(globals, key);
     });
   }
 
-  Object.defineProperty(globalObject, "self", {
-    get() {
-      return this;
-    },
-    configurable: true,
-    enumerable: false,
+  defineProperty(globalObject, "self", function () {
+    return this;
   });
-  Object.defineProperty(globalObject, "globalThis", {
-    get() {
-      return this;
-    },
-    configurable: true,
-    enumerable: false,
+  defineProperty(globalObject, "globalThis", function () {
+    return this;
   });
 
   return new Proxy(Object.freeze(globalObject), {
