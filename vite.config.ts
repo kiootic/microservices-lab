@@ -26,6 +26,9 @@ const WorkerAsyncPlugin: Plugin = {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), WorkerAsyncPlugin],
+  worker: {
+    plugins: [WorkerAsyncPlugin],
+  },
   build: {
     rollupOptions: {
       input: {

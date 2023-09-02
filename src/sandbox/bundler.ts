@@ -1,8 +1,7 @@
 import { initialize, build, Plugin } from "esbuild-wasm";
+import ESBuildWasm from "esbuild-wasm/esbuild.wasm?url";
 
-const init$ = initialize({
-  wasmURL: "./node_modules/esbuild-wasm/esbuild.wasm",
-});
+const init$ = initialize({ wasmURL: ESBuildWasm });
 
 function basename(path: string) {
   return path.substring(path.lastIndexOf("/") + 1);
