@@ -5,8 +5,11 @@ defineTest("test counters")
     const id = `user-${user.id}`;
     let counter = 0;
 
+    const start = Date.now();
+    let elapsed = 0;
     for (let i = 0; i < 20; i++) {
-      await delay(1000 + random.normal() * 100);
+      const ms = Math.max(0, Math.floor(1000 + random.normal() * 100));
+      await delay(ms);
       if (random.uniform() > 0.5) {
         counter++;
         const updated = await services.counter.increment(id);
@@ -17,6 +20,10 @@ defineTest("test counters")
         expect(updated).toEqual(counter);
       }
       x++;
+      elapsed += ms + 200;
+      expect(Date.now() - start).toEqual(elapsed);
     }
   })
-  .teardown(async () => console.log(x));
+  .teardown(async () => {
+    console.log(x);
+  });

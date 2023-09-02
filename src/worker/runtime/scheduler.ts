@@ -1,3 +1,4 @@
+import { deferred } from "../utils/async";
 import { Heap } from "../utils/heap";
 import { flushMicrotasks, observeMicrotasks, internals } from "./microtask";
 
@@ -9,7 +10,7 @@ interface Timer<T = any> {
   arg: T;
 }
 
-function completeTimerPromise(arg: Promise<void>) {
+function completeTimerMicrotaskPromise(arg: Promise<void>) {
   internals.resolve(arg, undefined);
 }
 
@@ -17,8 +18,41 @@ function completeTimerCallback(fn: () => void) {
   fn();
 }
 
+export type SchedulerMode = "native" | "microtask";
+
+function yieldMacrotask() {
+  const { promise, resolve } = deferred();
+  const channel = new MessageChannel();
+  channel.port1.onmessage = resolve;
+  channel.port2.postMessage(undefined);
+  return promise;
+}
+
+function settle<T>(promise: Promise<T>): () => T {
+  let result: (() => T) | null = null;
+  promise.then(
+    (value) => {
+      result = () => value;
+    },
+    (reason) => {
+      result = () => {
+        throw reason;
+      };
+    },
+  );
+
+  return () => {
+    if (result == null) {
+      throw new EvalError("Execution not settled");
+    }
+    return result();
+  };
+}
+
 export class Scheduler {
   static readonly epoch = new Date("1984-07-01T02:00:00Z");
+
+  readonly mode: SchedulerMode;
 
   private nextID = 1;
   private time = 0;
@@ -45,7 +79,9 @@ export class Scheduler {
     },
   });
 
-  constructor() {}
+  constructor(mode: SchedulerMode = "microtask") {
+    this.mode = mode;
+  }
 
   get currentTime(): number {
     return this.time;
@@ -84,9 +120,18 @@ export class Scheduler {
   delay(ms?: number): Promise<void> {
     ms = Math.max(0, ms ?? 0);
     const runNotBefore = this.time + ms;
-    const promise = internals.make<void>();
-    this.schedule(runNotBefore, completeTimerPromise, promise);
-    return promise;
+    switch (this.mode) {
+      case "native": {
+        const { promise, resolve } = deferred<void>();
+        this.schedule(runNotBefore, completeTimerCallback, resolve);
+        return promise;
+      }
+      case "microtask": {
+        const promise = internals.make<void>();
+        this.schedule(runNotBefore, completeTimerMicrotaskPromise, promise);
+        return promise;
+      }
+    }
   }
 
   reset(): void {
@@ -96,42 +141,52 @@ export class Scheduler {
     this.timers.clear();
   }
 
-  run<T>(fn: () => Promise<T>): T {
+  run<T>(fn: () => Promise<T>): Promise<T> {
+    switch (this.mode) {
+      case "microtask":
+        return Promise.resolve(this.runMicrotasks(fn));
+      case "native":
+        return this.runNative(fn);
+    }
+  }
+
+  private runTimer(): boolean {
+    let nextID = this.heap.pop();
+    let timer: Timer | undefined;
+    while (nextID != null && (timer = this.timers.get(nextID)) == null) {
+      nextID = this.heap.pop();
+    }
+    if (timer == null) {
+      return false;
+    }
+
+    this.timers.delete(timer.id);
+    this.time = Math.max(this.time, timer.runNotBefore);
+    timer.complete(timer.arg);
+    return true;
+  }
+
+  private async runNative<T>(fn: () => Promise<T>): Promise<T> {
+    const result = settle(fn());
+
+    await yieldMacrotask();
+    while (this.runTimer()) {
+      await yieldMacrotask();
+    }
+
+    return result();
+  }
+
+  private runMicrotasks<T>(fn: () => Promise<T>): T {
     return observeMicrotasks(() => {
-      let result: { ok: boolean; value: unknown } | undefined;
-      fn().then(
-        (value) => {
-          result = { ok: true, value };
-        },
-        (reason) => {
-          result = { ok: false, value: reason };
-        },
-      );
+      const result = settle(fn());
 
       flushMicrotasks();
-      while (this.timers.size > 0) {
-        let nextID = this.heap.pop();
-        let timer: Timer | undefined;
-        while (nextID != null && (timer = this.timers.get(nextID)) == null) {
-          nextID = this.heap.pop();
-        }
-        if (timer == null) {
-          continue;
-        }
-
-        this.timers.delete(timer.id);
-        this.time = Math.max(this.time, timer.runNotBefore);
-        timer.complete(timer.arg);
-
+      while (this.runTimer()) {
         flushMicrotasks();
       }
 
-      if (result == null) {
-        throw new EvalError("Execution not settled");
-      } else if (!result.ok) {
-        throw result.value;
-      }
-      return result.value as T;
+      return result();
     });
   }
 }

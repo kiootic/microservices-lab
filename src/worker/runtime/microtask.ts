@@ -11,12 +11,17 @@ export const [Promise, internals] = makePromise(
 
 const NativePromise = globalThis.Promise;
 
+let patched = false;
 let isObserving = false;
-Object.defineProperties(globalThis, {
-  Promise: { get: () => (isObserving ? Promise : NativePromise) },
-});
 
 export function observeMicrotasks<T>(fn: () => T): T {
+  if (!patched) {
+    Object.defineProperties(globalThis, {
+      Promise: { get: () => (isObserving ? Promise : NativePromise) },
+    });
+    patched = true;
+  }
+
   isObserving = true;
   try {
     return fn();
