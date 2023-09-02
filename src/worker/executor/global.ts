@@ -22,15 +22,23 @@ function defineProperty(
 export function makeGlobalObject(globals: object) {
   const globalObject = {};
 
+  for (const key of Reflect.ownKeys(globalThis)) {
+    Object.defineProperty(globalObject, key, {
+      value: undefined,
+      configurable: true,
+      enumerable: false,
+    });
+  }
+
   for (const key of builtInGlobals) {
     defineProperty(globalObject, key, function () {
-      return Reflect.get(globalThis, key);
+      return (globalThis as Record<string, unknown>)[key];
     });
   }
 
   for (const key of Reflect.ownKeys(globals)) {
     defineProperty(globalObject, key, function () {
-      return Reflect.get(globals, key);
+      return (globals as Record<string | symbol, unknown>)[key];
     });
   }
 
@@ -41,12 +49,5 @@ export function makeGlobalObject(globals: object) {
     return this;
   });
 
-  return new Proxy(Object.freeze(globalObject), {
-    get(globals, p) {
-      return Reflect.get(globals, p);
-    },
-    has(globals, p) {
-      return Reflect.has(globalThis, p) || Reflect.has(globals, p);
-    },
-  });
+  return Object.freeze(globalObject);
 }

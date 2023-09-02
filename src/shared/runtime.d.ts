@@ -8,7 +8,7 @@ export const console: {
 export const Date: DateConstructor;
 
 export function setTimeout(
-  handler: Function, // eslint-disable-line @typescript-eslint/ban-types
+  handler: (...args: unknown[]) => void,
   timeout?: number,
   ...args: unknown[]
 ): number;

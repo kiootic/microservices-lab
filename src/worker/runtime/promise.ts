@@ -4,205 +4,233 @@ const REJECTED = 2;
 
 type PromiseState = typeof PENDING | typeof FULFILLED | typeof REJECTED;
 
-const raw = Symbol();
-
-declare interface PromiseConstructor<T extends Promise = Promise> {
-  new (
-    executor:
-      | typeof raw
-      | ((
-          resolve: (value: unknown) => void,
-          reject: (reason: unknown) => void,
-        ) => void),
-  ): T;
-  schedule<T>(fn: (x: T) => void, arg: T): void;
+function scheduleMicrotask<T>(fn: (x: T) => void, arg: T) {
+  queueMicrotask(() => fn(arg));
 }
 
-export class Promise {
-  static schedule<T>(fn: (x: T) => void, arg: T) {
-    queueMicrotask(() => fn(arg));
-  }
+export interface PromiseInternals {
+  make<T>(): Promise<T>;
+  resolve<T>(promise: Promise<T>, value: T | PromiseLike<T>): void;
+  reject<T>(promise: Promise<T>, reason: unknown): void;
+}
 
-  #state: PromiseState = PENDING;
-  #value: unknown = undefined;
-  #children: Promise[] | undefined = [];
-  #parent: Promise | undefined = undefined;
-  #onFulfill: ((value: unknown) => unknown) | undefined = undefined;
-  #onReject: ((reason: unknown) => unknown) | undefined = undefined;
+type Executor = (
+  resolve: (value: unknown) => void,
+  reject: (reason: unknown) => void,
+) => void;
 
-  constructor(
-    executor:
-      | typeof raw
-      | ((
-          resolve: (value: unknown) => void,
-          reject: (reason: unknown) => void,
-        ) => void),
-  ) {
-    if (executor === raw) {
-      return;
-    }
-    try {
-      let settling = false;
-      executor(
-        (value) => {
-          if (settling) {
-            return;
-          }
-          settling = true;
-          this.#fulfill(value);
-        },
-        (reason) => {
-          if (settling) {
-            return;
-          }
-          settling = true;
-          this.#reject(reason);
-        },
-      );
-    } catch (err) {
-      this.#reject(err);
-    }
-  }
+export function makePromise(
+  name: string,
+  schedule = scheduleMicrotask,
+): [PromiseConstructor, PromiseInternals] {
+  const raw = Symbol();
 
-  static #notify(self: Promise) {
-    const children = self.#children;
-    self.#children = undefined;
-    if (children == undefined) {
-      return;
-    }
+  const Promise = {
+    [name]: class {
+      __state: PromiseState = PENDING;
+      __value: unknown = undefined;
+      __child: Promise | undefined = undefined;
+      __sibling: Promise | undefined = undefined;
+      __onFulfill: ((value: unknown) => unknown) | undefined = undefined;
+      __onReject: ((reason: unknown) => unknown) | undefined = undefined;
 
-    for (const child of children) {
-      Promise.#chain(child);
-    }
-  }
-
-  #settle(value: unknown, state: PromiseState) {
-    this.#value = value;
-    this.#state = state;
-
-    (this.constructor as PromiseConstructor).schedule(Promise.#notify, this);
-  }
-
-  #reject(reason: unknown) {
-    this.#settle(reason, REJECTED);
-  }
-
-  #fulfill(value: unknown) {
-    let executed = false;
-    try {
-      if (value === this) throw new TypeError();
-
-      if (typeof value === "object" || typeof value === "function") {
-        const then = (value as Record<string, unknown>)?.then;
-        if (typeof then === "function") {
-          then.call(
-            value,
-            (value: unknown) => {
-              if (executed) return;
-              executed = true;
-              this.#fulfill(value);
-            },
-            (value: unknown) => {
-              if (executed) return;
-              executed = true;
-              this.#reject(value);
-            },
-          );
+      constructor(executor: typeof raw | Executor) {
+        if (executor === raw) {
           return;
         }
+        execute(this, executor);
       }
 
-      this.#settle(value, FULFILLED);
-    } catch (err) {
-      if (executed) return;
-      this.#reject(err);
+      then(
+        onFulfill?: (value: unknown) => unknown,
+        onReject?: (value: unknown) => unknown,
+      ) {
+        const promise = new Promise(raw);
+        promise.__onFulfill =
+          typeof onFulfill === "function" ? onFulfill : undefined;
+        promise.__onReject =
+          typeof onReject === "function" ? onReject : undefined;
+        chain(this, promise);
+        return promise;
+      }
+
+      catch(onReject?: (value: unknown) => unknown) {
+        return this.then(undefined, onReject);
+      }
+
+      static resolve(value: unknown) {
+        if (value instanceof Promise) {
+          return value;
+        }
+        const promise = new Promise(raw);
+        resolve(promise, value);
+        return promise;
+      }
+
+      static allSettled(promises: Promise[]) {
+        const result = new Array(promises.length);
+        let completed = 0;
+        return new this((resolve) => {
+          promises.forEach((p, i) =>
+            p
+              .then(
+                (value) => {
+                  result[i] = { status: "fulfilled", value };
+                },
+                (reason) => {
+                  result[i] = { status: "reject", reason };
+                },
+              )
+              .then(() => {
+                completed++;
+                if (completed == promises.length) resolve(result);
+              }),
+          );
+        });
+      }
+    },
+  }[name];
+  type Promise = InstanceType<typeof Promise>;
+
+  const internal = {
+    make: () => new Promise(raw),
+    resolve,
+    reject,
+  };
+
+  return [
+    Promise as unknown as PromiseConstructor,
+    internal as unknown as PromiseInternals,
+  ];
+
+  function reaction(self: Promise, state: PromiseState, value: unknown) {
+    const onFulfill = self.__onFulfill;
+    const onReject = self.__onReject;
+    self.__onFulfill = undefined;
+    self.__onReject = undefined;
+
+    if (state === FULFILLED) {
+      if (onFulfill) {
+        try {
+          resolve(self, onFulfill(value));
+        } catch (err) {
+          reject(self, err);
+        }
+      } else {
+        resolve(self, value);
+      }
+    }
+    if (state === REJECTED) {
+      if (onReject) {
+        try {
+          resolve(self, onReject(value));
+        } catch (err) {
+          reject(self, err);
+        }
+      } else {
+        reject(self, value);
+      }
     }
   }
 
-  static #chain(self: Promise) {
-    if (self.#parent == null) {
+  function notify(self: Promise) {
+    let child = self.__child;
+    self.__child = undefined;
+    if (child == null) {
       return;
     }
 
-    const value = self.#parent.#value;
-    if (self.#parent.#state === FULFILLED) {
-      const onFulfill = self.#onFulfill;
-      if (onFulfill) {
-        try {
-          self.#fulfill(onFulfill(value));
-        } catch (err) {
-          self.#reject(err);
-        }
-      } else {
-        self.#fulfill(value);
-      }
-    }
-    if (self.#parent.#state === REJECTED) {
-      const onReject = self.#onReject;
-      if (onReject) {
-        try {
-          self.#fulfill(onReject(value));
-        } catch (err) {
-          self.#reject(err);
-        }
-      } else {
-        self.#reject(value);
-      }
+    const state = self.__state;
+    const value = self.__value;
+    while (child != null) {
+      const next: Promise | undefined = child.__sibling;
+      child.__sibling = undefined;
+
+      reaction(child, state, value);
+
+      child = next;
     }
   }
 
-  then(
-    onFulfill?: (value: unknown) => unknown,
-    onReject?: (value: unknown) => unknown,
-  ) {
-    const promise: this = new (this.constructor as PromiseConstructor<this>)(
-      raw,
-    );
-    promise.#parent = this;
-    promise.#onFulfill =
-      typeof onFulfill === "function" ? onFulfill : undefined;
-    promise.#onReject = typeof onReject === "function" ? onReject : undefined;
+  function settle(self: Promise, value: unknown, state: PromiseState) {
+    self.__value = value;
+    self.__state = state;
 
-    if (this.#state === FULFILLED || this.#state === REJECTED) {
-      (this.constructor as PromiseConstructor).schedule(
-        Promise.#chain,
-        promise,
-      );
+    if (self.__child != null) {
+      schedule(notify, self);
+    }
+  }
+
+  function resolve(self: Promise, value: unknown) {
+    if (value === self) {
+      reject(self, new TypeError());
+    }
+
+    if (value instanceof Promise) {
+      chain(value, self);
+      return;
+    }
+
+    if (typeof value === "object" || typeof value === "function") {
+      let then;
+      try {
+        then = (value as Record<string, unknown>)?.then;
+      } catch (err) {
+        reject(self, err);
+        return;
+      }
+
+      if (typeof then === "function") {
+        schedule(execute.bind(undefined, self), then.bind(value));
+        return;
+      }
+    }
+
+    settle(self, value, FULFILLED);
+  }
+
+  function reject(self: Promise, reason: unknown) {
+    settle(self, reason, REJECTED);
+  }
+
+  function execute(self: Promise, fn: Executor) {
+    let executed = false;
+    const _resolve = (value: unknown) => {
+      if (!executed) {
+        executed = true;
+        resolve(self, value);
+      }
+    };
+    const _reject = (reason: unknown) => {
+      if (!executed) {
+        executed = true;
+        reject(self, reason);
+      }
+    };
+
+    try {
+      fn(_resolve, _reject);
+    } catch (err) {
+      _reject(err);
+    }
+  }
+
+  function chain(self: Promise, promise: Promise) {
+    if (
+      (self.__state === FULFILLED || self.__state === REJECTED) &&
+      self.__child == null
+    ) {
+      schedule(notify, self);
+    }
+
+    if (self.__child == null) {
+      self.__child = promise;
     } else {
-      this.#children?.push(promise);
+      let child = self.__child;
+      while (child.__sibling != null) {
+        child = child.__sibling;
+      }
+      child.__sibling = promise;
     }
-    return promise;
-  }
-
-  catch(onReject?: (value: unknown) => unknown) {
-    return this.then(undefined, onReject);
-  }
-
-  static resolve(value: unknown) {
-    const promise = new this(raw);
-    promise.#fulfill(value);
-    return promise;
-  }
-
-  static allSettled(promises: Promise[]) {
-    const result = new Array(promises.length);
-    let completed = 0;
-    return new this((resolve) => {
-      promises.forEach((p, i) =>
-        p
-          .then(
-            (value) => {
-              result[i] = { status: "fulfilled", value };
-            },
-            (reason) => {
-              result[i] = { status: "reject", reason };
-            },
-          )
-          .then(() => {
-            completed++;
-            if (completed == promises.length) resolve(result);
-          }),
-      );
-    });
   }
 }

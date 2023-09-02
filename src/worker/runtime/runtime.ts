@@ -26,19 +26,9 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
       error: console.error,
     },
     Date: runtime.scheduler.Date,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    setTimeout: (handler: Function, timeout?: number, ...args: unknown[]) => {
-      timeout = Math.max(0, timeout ?? 0);
-      const runNotBefore = runtime.scheduler.currentTime + timeout;
-      const fn = handler.bind(null, ...args);
-      return runtime.scheduler.schedule(runNotBefore, fn);
-    },
-    clearTimeout: (id: number) => runtime.scheduler.unschedule(id),
-    delay: (ms: number) =>
-      new Promise<void>((resolve) => {
-        const runNotBefore = runtime.scheduler.currentTime + ms;
-        runtime.scheduler.schedule(runNotBefore, resolve);
-      }),
+    setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
+    clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
+    delay: runtime.scheduler.delay.bind(runtime.scheduler),
 
     expect,
     defineTest: suite.defineTest.bind(suite),

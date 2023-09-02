@@ -1,5 +1,6 @@
+let x = 0;
 defineTest("test counters")
-  .users(1000)
+  .users(2000)
   .run(async (user) => {
     const id = `user-${user.id}`;
     let counter = 0;
@@ -15,5 +16,7 @@ defineTest("test counters")
         const updated = await services.counter.decrement(id);
         expect(updated).toEqual(counter);
       }
+      x++;
     }
-  });
+  })
+  .teardown(async () => console.log(x));

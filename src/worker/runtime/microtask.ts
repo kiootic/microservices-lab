@@ -1,18 +1,19 @@
-import { Promise as _Promise } from "./promise";
+import { makePromise } from "./promise";
 
 const microtaskQueue: Array<unknown> = [];
 
-class ObservedPromise extends _Promise {
-  static schedule<T>(fn: (x: T) => void, arg: T) {
+export const [Promise, internals] = makePromise(
+  "ObservedPromise",
+  (fn, arg) => {
     microtaskQueue.push(fn, arg);
-  }
-}
+  },
+);
 
-const NativePromise = Promise;
+const NativePromise = globalThis.Promise;
 
 let isObserving = false;
 Object.defineProperties(globalThis, {
-  Promise: { get: () => (isObserving ? ObservedPromise : NativePromise) },
+  Promise: { get: () => (isObserving ? Promise : NativePromise) },
 });
 
 export function observeMicrotasks<T>(fn: () => T): T {
@@ -26,7 +27,9 @@ export function observeMicrotasks<T>(fn: () => T): T {
 
 export function flushMicrotasks() {
   for (let i = 0; i < microtaskQueue.length; i += 2) {
-    (microtaskQueue[i] as (x: unknown) => void)(microtaskQueue[i + 1]);
+    const fn = microtaskQueue[i] as (x: unknown) => void;
+    const arg = microtaskQueue[i + 1];
+    fn(arg);
   }
   microtaskQueue.length = 0;
 }

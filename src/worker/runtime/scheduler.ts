@@ -1,10 +1,20 @@
 import { Heap } from "../utils/heap";
-import { flushMicrotasks, observeMicrotasks } from "./microtask";
+import { flushMicrotasks, observeMicrotasks, internals } from "./microtask";
 
-interface Timer {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Timer<T = any> {
   id: number;
   runNotBefore: number;
-  fn: () => void;
+  complete: (arg: T) => void;
+  arg: T;
+}
+
+function completeTimerPromise(arg: Promise<void>) {
+  internals.resolve(arg, undefined);
+}
+
+function completeTimerCallback(fn: () => void) {
+  fn();
 }
 
 export class Scheduler {
@@ -25,13 +35,13 @@ export class Scheduler {
       if (args.length === 0) {
         return new Date(this.now());
       }
-      return Reflect.construct(Date, args);
+      return new (Date as new (...args: unknown[]) => Date)(...args);
     },
     get: (Date, p) => {
       if (p === "now") {
         return this.now;
       }
-      return Reflect.get(Date, p);
+      return Date[p as keyof typeof Date];
     },
   });
 
@@ -41,8 +51,12 @@ export class Scheduler {
     return this.time;
   }
 
-  schedule(runNotBefore: number, fn: () => void): number {
-    const timer: Timer = { id: this.nextID++, runNotBefore, fn };
+  schedule<T>(
+    runNotBefore: number,
+    complete: (arg: T) => void,
+    arg: T,
+  ): number {
+    const timer: Timer<T> = { id: this.nextID++, runNotBefore, complete, arg };
     this.timers.set(timer.id, timer);
     this.heap.push(timer.runNotBefore, timer.id);
     return timer.id;
@@ -50,6 +64,29 @@ export class Scheduler {
 
   unschedule(id: number): void {
     this.timers.delete(id);
+  }
+
+  setTimeout(
+    handler: (...args: unknown[]) => void,
+    timeout?: number,
+    ...args: unknown[]
+  ): number {
+    timeout = Math.max(0, timeout ?? 0);
+    const runNotBefore = this.time + timeout;
+    const fn = handler.bind(null, ...args);
+    return this.schedule(runNotBefore, completeTimerCallback, fn);
+  }
+
+  clearTimeout(handle: number): void {
+    this.unschedule(handle);
+  }
+
+  delay(ms?: number): Promise<void> {
+    ms = Math.max(0, ms ?? 0);
+    const runNotBefore = this.time + ms;
+    const promise = internals.make<void>();
+    this.schedule(runNotBefore, completeTimerPromise, promise);
+    return promise;
   }
 
   reset(): void {
@@ -84,7 +121,7 @@ export class Scheduler {
 
         this.timers.delete(timer.id);
         this.time = Math.max(this.time, timer.runNotBefore);
-        timer.fn?.();
+        timer.complete(timer.arg);
 
         flushMicrotasks();
       }
