@@ -1,8 +1,22 @@
 import { Runtime } from "./runtime";
 import { Logger, LoggerFactory } from "./logger";
-import jestExpect from "@storybook/expect";
+import {
+  JestExtend,
+  JestChaiExpect,
+  JestAsymmetricMatchers,
+  ExpectStatic,
+  GLOBAL_EXPECT,
+  setState,
+} from "@vitest/expect";
+import chai, { expect as chaiExpect } from "chai";
 
-export const expect = jestExpect;
+chai.use(JestExtend);
+chai.use(JestChaiExpect);
+chai.use(JestAsymmetricMatchers);
+
+export const expect: ExpectStatic = chaiExpect as ExpectStatic;
+Object.defineProperty(globalThis, GLOBAL_EXPECT, { value: expect });
+setState({}, expect);
 
 export class VirtualUser {
   readonly id: number;

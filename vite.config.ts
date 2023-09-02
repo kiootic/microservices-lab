@@ -38,12 +38,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        process: "{}",
-        "process.env": "{}",
-        Buffer: "{}",
-      },
-    },
+    exclude: ["util"],
   },
 });

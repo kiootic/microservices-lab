@@ -1,6 +1,6 @@
 let x = 0;
 defineTest("test counters")
-  .users(2000)
+  .users(10000)
   .run(async (user) => {
     const id = `user-${user.id}`;
     let counter = 0;
