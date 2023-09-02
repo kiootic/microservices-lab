@@ -1,0 +1,4 @@
+.editor {
+  --app-editor-min-height: 16rem;
+  --app-editor-line-numbers-min-width: 2rem;
+}
