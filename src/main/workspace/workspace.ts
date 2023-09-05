@@ -1,9 +1,9 @@
 import ts from "typescript";
 import { createLanguageService } from "./host";
-import { memoryVfs } from "./vfs";
+import { MemoryVfs } from "./vfs";
 
 export class Workspace {
-  private readonly vfs = memoryVfs();
+  private readonly vfs = new MemoryVfs();
   private readonly subscribers = new Set<() => void>();
 
   readonly lang: ts.LanguageService;
@@ -16,6 +16,14 @@ export class Workspace {
       isolatedModules: true,
       strict: true,
     });
+
+    this.vfs.write("/index.ts", "");
+    this.vfs.write("/test.ts", "");
+    this.vfs.write("/a/1.ts", "");
+    this.vfs.write("/a/2.ts", "");
+    this.vfs.write("/b/c/3.ts", "");
+    this.vfs.write("/b/d/e/4.ts", "");
+    this.vfs.write("/b/5.ts", "");
   }
 
   getFileVersion(fileName: string): number {

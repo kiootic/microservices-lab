@@ -41,6 +41,23 @@ export function createLanguageService(
     getNewLine: () => "\n",
     useCaseSensitiveFileNames: () => true,
     getCurrentDirectory: () => "/",
+
+    readDirectory: (path, extensions, _, include) => {
+      let result = vfs.glob((include ?? ["**/*"]).map((p) => path + p));
+      if (extensions != null) {
+        result = result.filter((p) =>
+          extensions.some((ext) => p.endsWith(ext)),
+        );
+      }
+      return result;
+    },
+    getDirectories: (dir) => {
+      const result = vfs
+        .readDir(dir)
+        .filter((f) => f.endsWith("/"))
+        .map((f) => f.slice(0, f.length - 1));
+      return result;
+    },
     readFile: (fileName) => vfs.read(fileName),
     fileExists: vfs.exists,
   };
