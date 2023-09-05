@@ -37,6 +37,7 @@ import React, {
 import { typescriptIntegration } from "../../language/typescript";
 import { Workspace } from "../../workspace/workspace";
 import styles from "./Editor.module.css";
+import { prettier } from "./prettier";
 
 const tabKeymap: KeyBinding[] = [
   {
@@ -65,6 +66,7 @@ const setup: Extension = [
   closeBrackets(),
   rectangularSelection(),
   crosshairCursor(),
+  prettier(),
   keymap.of([
     ...closeBracketsKeymap,
     ...defaultKeymap,

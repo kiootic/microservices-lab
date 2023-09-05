@@ -28,7 +28,7 @@ specifiers:
   eslint-plugin-react-refresh: 0.4.3
   minimatch: 9.0.3
   postcss: 8.4.28
-  prettier: 3.0.2
+  prettier: 3.0.3
   react: 18.2.0
   react-dom: 18.2.0
   tailwindcss: 3.3.3
@@ -51,6 +51,7 @@ dependencies:
   comlink: 4.4.1
   esbuild-wasm: 0.19.2
   minimatch: 9.0.3
+  prettier: 3.0.3
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   typescript: 5.2.2
@@ -68,7 +69,6 @@ devDependencies:
   eslint-plugin-react-hooks: 4.6.0_eslint@8.48.0
   eslint-plugin-react-refresh: 0.4.3_eslint@8.48.0
   postcss: 8.4.28
-  prettier: 3.0.2
   tailwindcss: 3.3.3
   vite: 4.4.9
 
@@ -2195,11 +2195,11 @@ packages:
     engines: {node: '>= 0.8.0'}
     dev: true
 
-  /prettier/3.0.2:
-    resolution: {integrity: sha512-o2YR9qtniXvwEZlOKbveKfDQVyqxbEIWn48Z8m3ZJjBjcCmUy3xZGIv+7AkaeuaTr6yPXJjwv07ZWlsWbEy1rQ==}
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
     engines: {node: '>=14'}
     hasBin: true
-    dev: true
+    dev: false
 
   /pretty-format/29.6.3:
     resolution: {integrity: sha512-ZsBgjVhFAj5KeK+nHfF1305/By3lechHQSMWCTl8iHSbfOm2TN5nHEtFc/+W7fAyUeCs2n5iow72gld4gW0xDw==}
