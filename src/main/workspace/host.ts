@@ -1,0 +1,56 @@
+import ts from "typescript";
+import { Vfs, overlayVfs } from "./vfs";
+import { libsVfs } from "./libs";
+
+export function createLanguageService(
+  vfs: Vfs,
+  compilerOptions: unknown,
+): ts.LanguageService {
+  vfs = overlayVfs(vfs, libsVfs);
+
+  const diagHost: ts.FormatDiagnosticsHost = {
+    getCurrentDirectory: () => "/",
+    getCanonicalFileName: (fileName) => fileName,
+    getNewLine: () => "\n",
+  };
+
+  const { options, errors } = ts.convertCompilerOptionsFromJson(
+    compilerOptions,
+    "/",
+  );
+  if (errors.length > 0) {
+    throw new Error(ts.formatDiagnostics(errors, diagHost));
+  }
+
+  const defaultLibFileName = ts.getDefaultLibFileName(options);
+  const host: ts.LanguageServiceHost = {
+    getDefaultLibFileName: () => "/types/" + defaultLibFileName,
+
+    getCompilationSettings: () => options,
+    getScriptFileNames: () => vfs.fileNames(),
+    getScriptSnapshot: (fileName) => {
+      const contents = vfs.read(fileName);
+      return contents != null
+        ? ts.ScriptSnapshot.fromString(contents)
+        : undefined;
+    },
+    getScriptVersion: (fileName) => {
+      return String(vfs.getFileVersion(fileName));
+    },
+
+    getNewLine: () => "\n",
+    useCaseSensitiveFileNames: () => true,
+    getCurrentDirectory: () => "/",
+    readFile: (fileName) => vfs.read(fileName),
+    fileExists: vfs.exists,
+  };
+
+  const languageService = ts.createLanguageService(host);
+  const diagnostics = languageService.getCompilerOptionsDiagnostics();
+
+  if (diagnostics.length > 0) {
+    throw new Error(ts.formatDiagnostics(diagnostics, diagHost));
+  }
+
+  return languageService;
+}

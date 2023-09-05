@@ -1,0 +1,240 @@
+import {
+  Completion,
+  CompletionContext,
+  CompletionResult,
+  acceptCompletion,
+  autocompletion,
+  selectedCompletion,
+} from "@codemirror/autocomplete";
+import { Extension } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
+import ts from "typescript";
+import { Workspace } from "../workspace/workspace";
+
+// ref: https://github.com/typescript-language-server/typescript-language-server/blob/983a6923114c39d638e0c7d419ae16e8bca8985c/src/completion.ts
+
+interface TSCompletion extends Completion {
+  ts?: TSCompletionData;
+}
+
+interface TSCompletionData {
+  preselect: boolean;
+  sortText: string;
+  commitCharacters: string[];
+}
+
+type CMCompletionKind =
+  | "class"
+  | "constant"
+  | "enum"
+  | "function"
+  | "interface"
+  | "keyword"
+  | "method"
+  | "namespace"
+  | "property"
+  | "text"
+  | "type"
+  | "variable";
+
+function mapCompletionKind(kind: ts.ScriptElementKind): CMCompletionKind {
+  switch (kind) {
+    case ts.ScriptElementKind.primitiveType:
+    case ts.ScriptElementKind.keyword:
+      return "keyword";
+    case ts.ScriptElementKind.constElement:
+      return "constant";
+    case ts.ScriptElementKind.letElement:
+    case ts.ScriptElementKind.variableElement:
+    case ts.ScriptElementKind.localVariableElement:
+    case ts.ScriptElementKind.alias:
+      return "variable";
+    case ts.ScriptElementKind.memberVariableElement:
+    case ts.ScriptElementKind.memberGetAccessorElement:
+    case ts.ScriptElementKind.memberSetAccessorElement:
+      return "property";
+    case ts.ScriptElementKind.functionElement:
+      return "function";
+    case ts.ScriptElementKind.memberFunctionElement:
+    case ts.ScriptElementKind.constructSignatureElement:
+    case ts.ScriptElementKind.callSignatureElement:
+    case ts.ScriptElementKind.indexSignatureElement:
+      return "method";
+    case ts.ScriptElementKind.enumElement:
+      return "enum";
+    case ts.ScriptElementKind.classElement:
+    case ts.ScriptElementKind.typeElement:
+      return "class";
+    case ts.ScriptElementKind.interfaceElement:
+      return "interface";
+    case ts.ScriptElementKind.moduleElement:
+    case ts.ScriptElementKind.externalModuleName:
+    case ts.ScriptElementKind.scriptElement:
+    case ts.ScriptElementKind.directory:
+      return "namespace";
+    case ts.ScriptElementKind.string:
+      return "text";
+  }
+  return "property";
+}
+
+type CMCommitCharacter = "." | "," | "(";
+const completionCommitCharacters: CMCommitCharacter[] = [".", ",", "("];
+function mapCommitCharacters(kind: ts.ScriptElementKind): CMCommitCharacter[] {
+  switch (kind) {
+    case ts.ScriptElementKind.memberGetAccessorElement:
+    case ts.ScriptElementKind.memberSetAccessorElement:
+    case ts.ScriptElementKind.constructSignatureElement:
+    case ts.ScriptElementKind.callSignatureElement:
+    case ts.ScriptElementKind.indexSignatureElement:
+    case ts.ScriptElementKind.enumElement:
+    case ts.ScriptElementKind.interfaceElement:
+      return ["."];
+
+    case ts.ScriptElementKind.moduleElement:
+    case ts.ScriptElementKind.alias:
+    case ts.ScriptElementKind.constElement:
+    case ts.ScriptElementKind.letElement:
+    case ts.ScriptElementKind.variableElement:
+    case ts.ScriptElementKind.localVariableElement:
+    case ts.ScriptElementKind.memberVariableElement:
+    case ts.ScriptElementKind.classElement:
+    case ts.ScriptElementKind.functionElement:
+    case ts.ScriptElementKind.memberFunctionElement:
+      return [".", ",", "("];
+  }
+  return [];
+}
+
+function mapCompletion(entry: ts.CompletionEntry): TSCompletion {
+  return {
+    type: mapCompletionKind(entry.kind),
+    label: entry.name,
+    ts: {
+      preselect: entry.isRecommended ?? false,
+      sortText: entry.sortText,
+      commitCharacters: mapCommitCharacters(entry.kind),
+    },
+  };
+}
+
+const completionTriggerChars = new Set<ts.CompletionsTriggerCharacter>([
+  "@",
+  "#",
+  " ",
+  ".",
+  '"',
+  "'",
+  "`",
+  "/",
+  "<",
+]);
+const completionTriggerCharRegex = new RegExp(
+  `(${[...completionTriggerChars, "\n"].map((c) => "\\" + c).join("|")})$`,
+);
+
+function getTSCompletionOptions(
+  ctx: CompletionContext,
+): ts.GetCompletionsAtPositionOptions | null {
+  const options: ts.GetCompletionsAtPositionOptions = {
+    triggerKind: ts.CompletionTriggerKind.Invoked,
+  };
+
+  if (ctx.explicit) {
+    return options;
+  }
+
+  const triggerText = ctx.matchBefore(completionTriggerCharRegex);
+  if (triggerText != null) {
+    options.triggerKind = ts.CompletionTriggerKind.TriggerCharacter;
+    options.triggerCharacter =
+      triggerText.text as ts.CompletionsTriggerCharacter;
+    return options;
+  }
+
+  ctx.aborted;
+  const identifierToken = ctx.matchBefore(/[a-zA-Z_$][a-zA-Z0-9_$]*$/);
+  if (identifierToken != null) {
+    return options;
+  }
+
+  return null;
+}
+
+export function getCompletions(
+  ctx: CompletionContext,
+  workspace: Workspace,
+  fileName: string,
+): CompletionResult | null {
+  const { pos } = ctx;
+  try {
+    const options = getTSCompletionOptions(ctx);
+    if (options == null) {
+      return null;
+    }
+
+    const result = workspace.lang.getCompletionsAtPosition(
+      fileName,
+      pos,
+      options,
+    );
+
+    if (result == null) {
+      return null;
+    }
+
+    let from = pos;
+    let to: number | undefined;
+    if (result.optionalReplacementSpan != null) {
+      from = result.optionalReplacementSpan.start;
+      to = from + result.optionalReplacementSpan.length;
+    }
+
+    const completions: TSCompletion[] = [];
+    for (const entry of result.entries) {
+      if (entry.kind === ts.ScriptElementKind.warning) {
+        continue;
+      }
+      completions.push(mapCompletion(entry));
+    }
+
+    return {
+      from,
+      to,
+      options: completions,
+      validFor: /^\w*$/,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+function tryCommitCompletion(char: string, view: EditorView) {
+  const completion: TSCompletion | null = selectedCompletion(view.state);
+  if (completion != null && completion.ts?.commitCharacters.includes(char)) {
+    acceptCompletion(view);
+  }
+}
+
+export function tsAutocompletion(
+  workspace: Workspace,
+  fileName: string,
+): Extension {
+  return [
+    autocompletion({
+      maxRenderedOptions: 100,
+      override: [(ctx) => getCompletions(ctx, workspace, fileName)],
+    }),
+    keymap.of([
+      ...completionCommitCharacters.map((key) => ({
+        key,
+        run: (view: EditorView) => {
+          if (!view.composing) {
+            tryCommitCompletion(key, view);
+          }
+          return false;
+        },
+      })),
+    ]),
+  ];
+}
