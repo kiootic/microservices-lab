@@ -25,7 +25,7 @@ export class ReactTooltip implements TooltipView {
   }
 
   mount(view: EditorView): void {
-    this.renderDOM(view.state);
+    ReactDOM.flushSync(() => this.renderDOM(view.state));
   }
 
   update(update: ViewUpdate): void {
@@ -33,14 +33,12 @@ export class ReactTooltip implements TooltipView {
   }
 
   private renderDOM(state: EditorState) {
-    ReactDOM.flushSync(() =>
-      this.root.render(
-        <Context.Provider value={state}>{this.render()}</Context.Provider>,
-      ),
+    this.root.render(
+      <Context.Provider value={state}>{this.render()}</Context.Provider>,
     );
   }
 
   destroy(): void {
-    this.root.unmount();
+    queueMicrotask(() => this.root.unmount());
   }
 }
