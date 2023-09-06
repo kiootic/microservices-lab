@@ -1,5 +1,10 @@
 import { Annotation, Extension } from "@codemirror/state";
-import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import {
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  showTooltip,
+} from "@codemirror/view";
 import { format } from "prettier";
 import * as prettierESTree from "prettier/plugins/estree";
 import * as prettierTS from "prettier/plugins/typescript";
@@ -9,7 +14,7 @@ const formatCode = Annotation.define<boolean>();
 const plugin = ViewPlugin.fromClass(
   class {
     private readonly view: EditorView;
-    private dirty = false;
+    private needFormat = false;
     constructor(view: EditorView) {
       this.view = view;
     }
@@ -20,10 +25,11 @@ const plugin = ViewPlugin.fromClass(
           (tx) => tx.docChanged && !tx.annotation(formatCode),
         )
       ) {
-        this.dirty = true;
+        this.needFormat = true;
       }
 
-      if (update.focusChanged && !update.view.hasFocus) {
+      const hasTooltip = update.state.facet(showTooltip).some((t) => t != null);
+      if (!update.view.hasFocus && !hasTooltip && this.needFormat) {
         this.applyPrettier(update.state.doc.toString());
       }
     }
@@ -40,10 +46,10 @@ const plugin = ViewPlugin.fromClass(
     }
 
     private async applyPrettier(code: string) {
-      this.dirty = false;
+      this.needFormat = false;
       const newCode = await this.format(code);
 
-      if (newCode == null || newCode === code || this.dirty) {
+      if (newCode == null || newCode === code || this.needFormat) {
         return;
       }
 

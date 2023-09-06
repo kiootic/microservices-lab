@@ -1,4 +1,4 @@
-import { Extension, MapMode, StateEffect, StateField } from "@codemirror/state";
+import { Extension, StateEffect, StateField } from "@codemirror/state";
 import {
   EditorView,
   PluginValue,
@@ -10,6 +10,7 @@ import {
 import React, { useMemo } from "react";
 import ts from "typescript";
 import { WorkspaceFile } from "../model/workspace";
+import { clickOutsideHandler } from "./click-outside";
 import { SymbolDisplay, TagsDisplay } from "./symbol";
 import { ReactTooltip } from "./tooltip";
 
@@ -24,34 +25,34 @@ interface State {
   signatureHelp: ts.SignatureHelpItems;
 }
 
-const state = StateField.define<State | null>({
+const field = StateField.define<State | null>({
   create() {
     return null;
   },
   update(value, tx) {
-    if (value != null) {
-      const selection = tx.state.selection.main;
-      const pos = tx.changes.mapPos(value.tooltip.pos, 1, MapMode.TrackDel);
-      const keepTooltip = selection.empty && selection.from === pos;
-      value = keepTooltip
-        ? { ...value, tooltip: { ...value.tooltip, pos } }
-        : null;
-    }
-
-    const update = tx.effects.find((e) => e.is(updateSignatureHelp));
+    const update: StateEffect<ts.SignatureHelpItems | undefined> | undefined =
+      tx.effects.find((e) => e.is(updateSignatureHelp));
     if (update != null) {
       if (update.value == null) {
         value = null;
       } else {
+        const signatureHelp = update.value;
         value = {
           tooltip: value?.tooltip ?? {
             pos: tx.state.selection.main.from,
             create: () => new ReactTooltip(() => <SignatureHelpTooltip />),
             above: true,
           },
-          signatureHelp: update.value,
+          signatureHelp,
         };
       }
+    }
+
+    if (value != null && tx.selection != null) {
+      value = {
+        ...value,
+        tooltip: { ...value.tooltip, pos: tx.state.selection.main.from },
+      };
     }
     return value;
   },
@@ -60,7 +61,7 @@ const state = StateField.define<State | null>({
 
 // eslint-disable-next-line react-refresh/only-export-components
 const SignatureHelpTooltip: React.FC = () => {
-  const help = ReactTooltip.useEditorState().field(state)?.signatureHelp;
+  const help = ReactTooltip.useEditorState().field(field)?.signatureHelp;
 
   const item = help == null ? undefined : help.items[help.selectedItemIndex];
   const argIndex = help?.argumentIndex ?? 0;
@@ -133,7 +134,6 @@ class Plugin implements PluginValue {
   private readonly view: EditorView;
   private readonly file: WorkspaceFile;
 
-  private isTriggered = false;
   private timer: number | null = null;
 
   constructor(view: EditorView, file: WorkspaceFile) {
@@ -141,16 +141,24 @@ class Plugin implements PluginValue {
     this.file = file;
   }
 
-  update(update: ViewUpdate): void {
-    const isUserInput = update.transactions.some(
-      (tx) => tx.docChanged && tx.isUserEvent("input.type"),
-    );
+  get isTriggered(): boolean {
+    return this.view.state.field(field) != null;
+  }
 
-    if (!isUserInput) {
+  update(update: ViewUpdate): void {
+    const isTriggered = this.isTriggered;
+
+    const needUpdate = update.transactions.some(
+      (tx) =>
+        tx.isUserEvent("input") ||
+        tx.isUserEvent("delete") ||
+        (isTriggered && tx.isUserEvent("select")),
+    );
+    if (!needUpdate) {
       return;
     }
 
-    if (this.isTriggered) {
+    if (isTriggered) {
       this.run({ kind: "retrigger" });
     } else {
       const from = update.state.selection.main.from;
@@ -181,6 +189,15 @@ class Plugin implements PluginValue {
     }
   }
 
+  hide() {
+    if (this.isTriggered) {
+      this.view.dispatch({ effects: [updateSignatureHelp.of(undefined)] });
+    }
+    if (this.timer != null) {
+      clearTimeout(this.timer);
+    }
+  }
+
   private run(reason: ts.SignatureHelpTriggerReason) {
     if (!this.view.state.selection.main.empty) {
       return;
@@ -203,15 +220,13 @@ class Plugin implements PluginValue {
   private updateSignatureHelp(reason: ts.SignatureHelpTriggerReason) {
     const selection = this.view.state.selection.main;
     if (!selection.empty) {
-      this.isTriggered = false;
-      this.view.dispatch({ effects: [updateSignatureHelp.of(undefined)] });
+      this.hide();
       return;
     }
 
     const signatureHelp = this.file.getSignatureHelpItems(selection.from, {
       triggerReason: reason,
     });
-    this.isTriggered = signatureHelp != null;
     this.view.dispatch({ effects: [updateSignatureHelp.of(signatureHelp)] });
   }
 }
@@ -219,7 +234,12 @@ class Plugin implements PluginValue {
 export function tsSignatureHelp(file: WorkspaceFile): Extension {
   return [
     ViewPlugin.define((view) => new Plugin(view, file), {
-      provide: () => state,
+      provide: (plugin) => [
+        field,
+        clickOutsideHandler.of((view) => {
+          view.plugin(plugin)?.hide();
+        }),
+      ],
     }),
   ];
 }

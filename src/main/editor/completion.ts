@@ -214,7 +214,6 @@ export function getCompletions(
       }
       completions.push(mapCompletion(entry));
     }
-    console.log(result.entries);
 
     return {
       from,
