@@ -24,14 +24,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <div className="text-lg">Hello World!</div>
     <Test />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
+
+workspace.getState().vfs.write("/index.ts", "import {X} from 'test';");
 
 setTimeout(
   () => workspace.getState().vfs.write("/index.ts", "import {X} from 'test';"),
-  1000
-);
-setTimeout(
-  () => workspace.getState().vfs.write("/test.ts", "export class X{}"),
-  2000
+  3000,
 );

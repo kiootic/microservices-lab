@@ -1,31 +1,5 @@
-import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentLess,
-  insertTab,
-} from "@codemirror/commands";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  foldKeymap,
-  indentOnInput,
-  syntaxHighlighting,
-} from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
-import {
-  EditorView,
-  KeyBinding,
-  crosshairCursor,
-  drawSelection,
-  dropCursor,
-  highlightActiveLineGutter,
-  highlightSpecialChars,
-  keymap,
-  lineNumbers,
-  rectangularSelection,
-} from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import cn from "clsx";
 import React, {
   useCallback,
@@ -34,89 +8,55 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
-import { prettier } from "../../editor/prettier";
 import { typescriptIntegration } from "../../editor/typescript";
 import { WorkspaceFile } from "../../model/workspace";
 import styles from "./Editor.module.css";
+import { setup } from "./extensions";
 
-const tabKeymap: KeyBinding[] = [
-  {
-    key: "Tab",
-    preventDefault: true,
-    run: insertTab,
-  },
-  {
-    key: "Shift-Tab",
-    preventDefault: true,
-    run: indentLess,
-  },
-];
-
-const setup: Extension = [
-  lineNumbers(),
-  highlightSpecialChars(),
-  highlightActiveLineGutter(),
-  history(),
-  drawSelection(),
-  dropCursor(),
-  EditorState.allowMultipleSelections.of(true),
-  indentOnInput(),
-  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  bracketMatching(),
-  closeBrackets(),
-  rectangularSelection(),
-  crosshairCursor(),
-  prettier(),
-  keymap.of([
-    ...closeBracketsKeymap,
-    ...defaultKeymap,
-    ...historyKeymap,
-    ...foldKeymap,
-    ...tabKeymap,
-  ]),
-  EditorView.theme({
-    ".cm-content, .cm-gutter": { minHeight: "var(--app-editor-min-height)" },
-    ".cm-lineNumbers": { minWidth: "var(--app-editor-line-numbers-min-width)" },
-  }),
-];
-
-function createEditorState(file: WorkspaceFile, text: string, ext: Extension) {
+function createEditorState(file: WorkspaceFile, ext: Extension) {
   return EditorState.create({
-    doc: text,
+    doc: file.read() ?? "",
     extensions: [setup, ext, typescriptIntegration(file)],
   });
 }
 
-function useEditorState(file: WorkspaceFile) {
-  const stateRef = useRef<EditorState | null>(null);
-  const versionRef = useRef<number | null>(null);
+interface FileToken {
+  file: WorkspaceFile;
+  version: number;
+}
 
-  return useSyncExternalStore(
+function useEditorState(view: EditorView | null, file: WorkspaceFile) {
+  const tokenRef = useRef<FileToken | null>(null);
+  const token = useSyncExternalStore(
     useCallback((onChange) => file.vfs.subscribe(onChange), [file]),
     useCallback(() => {
       const version = file.getFileVersion();
-      if (stateRef.current != null && versionRef.current === version) {
-        return stateRef.current;
+      if (
+        tokenRef.current == null ||
+        tokenRef.current.file !== file ||
+        tokenRef.current.version !== version
+      ) {
+        tokenRef.current = { file, version };
       }
-
-      const syncWorkspaceFile = EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          file.write(update.state.doc.toString());
-          versionRef.current = file.getFileVersion();
-        }
-      });
-
-      const content = file.read();
-      stateRef.current = createEditorState(
-        file,
-        content ?? "",
-        syncWorkspaceFile
-      );
-      versionRef.current = version;
-
-      return stateRef.current;
-    }, [file])
+      return tokenRef.current;
+    }, [file]),
   );
+
+  useLayoutEffect(() => {
+    if (view == null) {
+      return;
+    }
+
+    const syncWorkspaceFile = EditorView.updateListener.of((update) => {
+      if (update.docChanged) {
+        token.file.write(update.state.doc.toString());
+        token.version = token.file.getFileVersion();
+      }
+    });
+
+    const state = createEditorState(token.file, syncWorkspaceFile);
+    view.setState(state);
+  }, [view, token]);
 }
 
 interface EditorProps {
@@ -130,16 +70,15 @@ export const Editor: React.FC<EditorProps> = (props) => {
   const element = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<EditorView | null>(null);
   useLayoutEffect(() => {
-    const view = new EditorView();
+    if (element.current == null) {
+      return;
+    }
+    const view = new EditorView({ parent: element.current });
     setView(view);
-    element.current?.append(view.dom);
     return () => view.destroy();
   }, []);
 
-  const state = useEditorState(file);
-  useLayoutEffect(() => {
-    view?.setState(state);
-  }, [view, state]);
+  useEditorState(view, file);
 
   return <div ref={element} className={cn(styles.editor, className)}></div>;
 };

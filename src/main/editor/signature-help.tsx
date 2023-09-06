@@ -143,7 +143,7 @@ class Plugin implements PluginValue {
 
   update(update: ViewUpdate): void {
     const isUserInput = update.transactions.some(
-      (tx) => tx.docChanged && tx.isUserEvent("input.type")
+      (tx) => tx.docChanged && tx.isUserEvent("input.type"),
     );
 
     if (!isUserInput) {

@@ -15,12 +15,12 @@ export interface WorkspaceFile {
   getSemanticDiagnostics: () => ts.Diagnostic[];
   getCompletionsAtPosition: (
     position: number,
-    options: ts.GetCompletionsAtPositionOptions
+    options: ts.GetCompletionsAtPositionOptions,
   ) => ts.WithMetadata<ts.CompletionInfo> | undefined;
   getQuickInfoAtPosition: (position: number) => ts.QuickInfo | undefined;
   getSignatureHelpItems: (
     position: number,
-    options: ts.SignatureHelpItemsOptions
+    options: ts.SignatureHelpItemsOptions,
   ) => ts.SignatureHelpItems | undefined;
 }
 
@@ -102,23 +102,23 @@ export function makeWorkspace() {
 
           getSyntacticDiagnostics: lang.getSyntacticDiagnostics.bind(
             lang,
-            fileName
+            fileName,
           ),
           getSemanticDiagnostics: lang.getSemanticDiagnostics.bind(
             lang,
-            fileName
+            fileName,
           ),
           getCompletionsAtPosition: lang.getCompletionsAtPosition.bind(
             lang,
-            fileName
+            fileName,
           ),
           getQuickInfoAtPosition: lang.getQuickInfoAtPosition.bind(
             lang,
-            fileName
+            fileName,
           ),
           getSignatureHelpItems: lang.getSignatureHelpItems.bind(
             lang,
-            fileName
+            fileName,
           ),
         };
       },

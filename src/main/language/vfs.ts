@@ -88,7 +88,7 @@ export function storeVfs(store: Store): Vfs {
         optimizationLevel: 2,
       });
       return Array.from(store.fileNames()).filter((fileName) =>
-        matches(fileName)
+        matches(fileName),
       );
     },
     exists: (fileName) => store.has(fileName),

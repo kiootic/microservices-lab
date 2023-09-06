@@ -130,11 +130,11 @@ const completionTriggerChars = new Set<ts.CompletionsTriggerCharacter>([
   "<",
 ]);
 const completionTriggerCharRegex = new RegExp(
-  `(${[...completionTriggerChars, "\n"].map((c) => "\\" + c).join("|")})$`
+  `(${[...completionTriggerChars, "\n"].map((c) => "\\" + c).join("|")})$`,
 );
 
 function getTSCompletionOptions(
-  ctx: CompletionContext
+  ctx: CompletionContext,
 ): ts.GetCompletionsAtPositionOptions | null {
   const options: ts.GetCompletionsAtPositionOptions = {
     triggerKind: ts.CompletionTriggerKind.Invoked,
@@ -163,7 +163,7 @@ function getTSCompletionOptions(
 
 export function getCompletions(
   ctx: CompletionContext,
-  file: WorkspaceFile
+  file: WorkspaceFile,
 ): CompletionResult | null {
   const { pos } = ctx;
   try {
