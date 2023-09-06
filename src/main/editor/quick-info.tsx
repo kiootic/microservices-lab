@@ -2,7 +2,7 @@ import { Extension } from "@codemirror/state";
 import { Tooltip, hoverTooltip } from "@codemirror/view";
 import React from "react";
 import ts from "typescript";
-import { Workspace } from "../workspace/workspace";
+import { WorkspaceFile } from "../model/workspace";
 import { SymbolDisplay, TagsDisplay } from "./symbol";
 import { ReactTooltip } from "./tooltip";
 
@@ -21,13 +21,9 @@ const HoverTooltip: React.FC<{ info: ts.QuickInfo }> = ({ info }) => {
   );
 };
 
-export function getHoverText(
-  workspace: Workspace,
-  fileName: string,
-  pos: number,
-): Tooltip | null {
+export function getHoverText(file: WorkspaceFile, pos: number): Tooltip | null {
   try {
-    const result = workspace.lang.getQuickInfoAtPosition(fileName, pos);
+    const result = file.getQuickInfoAtPosition(pos);
     if (result == null) {
       return null;
     }
@@ -43,9 +39,9 @@ export function getHoverText(
   }
 }
 
-export function tsQuickInfo(workspace: Workspace, fileName: string): Extension {
+export function tsQuickInfo(file: WorkspaceFile): Extension {
   return [
-    hoverTooltip((_, pos) => getHoverText(workspace, fileName, pos), {
+    hoverTooltip((_, pos) => getHoverText(file, pos), {
       hideOnChange: true,
     }),
   ];

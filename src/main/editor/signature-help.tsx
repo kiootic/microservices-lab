@@ -9,7 +9,7 @@ import {
 } from "@codemirror/view";
 import React, { useMemo } from "react";
 import ts from "typescript";
-import { Workspace } from "../workspace/workspace";
+import { WorkspaceFile } from "../model/workspace";
 import { SymbolDisplay, TagsDisplay } from "./symbol";
 import { ReactTooltip } from "./tooltip";
 
@@ -131,21 +131,19 @@ const SignatureHelpTooltip: React.FC = () => {
 
 class Plugin implements PluginValue {
   private readonly view: EditorView;
-  private readonly workspace: Workspace;
-  private readonly fileName: string;
+  private readonly file: WorkspaceFile;
 
   private isTriggered = false;
   private timer: number | null = null;
 
-  constructor(view: EditorView, workspace: Workspace, fileName: string) {
+  constructor(view: EditorView, file: WorkspaceFile) {
     this.view = view;
-    this.workspace = workspace;
-    this.fileName = fileName;
+    this.file = file;
   }
 
   update(update: ViewUpdate): void {
     const isUserInput = update.transactions.some(
-      (tx) => tx.docChanged && tx.isUserEvent("input.type"),
+      (tx) => tx.docChanged && tx.isUserEvent("input.type")
     );
 
     if (!isUserInput) {
@@ -210,27 +208,17 @@ class Plugin implements PluginValue {
       return;
     }
 
-    const signatureHelp = this.getSignatureHelp(selection.from, reason);
+    const signatureHelp = this.file.getSignatureHelpItems(selection.from, {
+      triggerReason: reason,
+    });
     this.isTriggered = signatureHelp != null;
     this.view.dispatch({ effects: [updateSignatureHelp.of(signatureHelp)] });
   }
-
-  private getSignatureHelp(
-    pos: number,
-    reason: ts.SignatureHelpTriggerReason,
-  ): ts.SignatureHelpItems | undefined {
-    return this.workspace.lang.getSignatureHelpItems(this.fileName, pos, {
-      triggerReason: reason,
-    });
-  }
 }
 
-export function tsSignatureHelp(
-  workspace: Workspace,
-  fileName: string,
-): Extension {
+export function tsSignatureHelp(file: WorkspaceFile): Extension {
   return [
-    ViewPlugin.define((view) => new Plugin(view, workspace, fileName), {
+    ViewPlugin.define((view) => new Plugin(view, file), {
       provide: () => state,
     }),
   ];

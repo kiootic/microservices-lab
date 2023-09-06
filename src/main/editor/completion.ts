@@ -9,7 +9,7 @@ import {
 import { Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import ts from "typescript";
-import { Workspace } from "../workspace/workspace";
+import { WorkspaceFile } from "../model/workspace";
 
 // ref: https://github.com/typescript-language-server/typescript-language-server/blob/983a6923114c39d638e0c7d419ae16e8bca8985c/src/completion.ts
 
@@ -130,11 +130,11 @@ const completionTriggerChars = new Set<ts.CompletionsTriggerCharacter>([
   "<",
 ]);
 const completionTriggerCharRegex = new RegExp(
-  `(${[...completionTriggerChars, "\n"].map((c) => "\\" + c).join("|")})$`,
+  `(${[...completionTriggerChars, "\n"].map((c) => "\\" + c).join("|")})$`
 );
 
 function getTSCompletionOptions(
-  ctx: CompletionContext,
+  ctx: CompletionContext
 ): ts.GetCompletionsAtPositionOptions | null {
   const options: ts.GetCompletionsAtPositionOptions = {
     triggerKind: ts.CompletionTriggerKind.Invoked,
@@ -163,8 +163,7 @@ function getTSCompletionOptions(
 
 export function getCompletions(
   ctx: CompletionContext,
-  workspace: Workspace,
-  fileName: string,
+  file: WorkspaceFile
 ): CompletionResult | null {
   const { pos } = ctx;
   try {
@@ -173,11 +172,7 @@ export function getCompletions(
       return null;
     }
 
-    const result = workspace.lang.getCompletionsAtPosition(
-      fileName,
-      pos,
-      options,
-    );
+    const result = file.getCompletionsAtPosition(pos, options);
 
     if (result == null) {
       return null;
@@ -216,14 +211,11 @@ function tryCommitCompletion(char: string, view: EditorView) {
   }
 }
 
-export function tsAutocompletion(
-  workspace: Workspace,
-  fileName: string,
-): Extension {
+export function tsAutocompletion(file: WorkspaceFile): Extension {
   return [
     autocompletion({
       maxRenderedOptions: 100,
-      override: [(ctx) => getCompletions(ctx, workspace, fileName)],
+      override: [(ctx) => getCompletions(ctx, file)],
     }),
     keymap.of([
       ...completionCommitCharacters.map((key) => ({

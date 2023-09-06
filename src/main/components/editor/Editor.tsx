@@ -34,10 +34,10 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
-import { typescriptIntegration } from "../../language/typescript";
-import { Workspace } from "../../workspace/workspace";
+import { prettier } from "../../editor/prettier";
+import { typescriptIntegration } from "../../editor/typescript";
+import { WorkspaceFile } from "../../model/workspace";
 import styles from "./Editor.module.css";
-import { prettier } from "./prettier";
 
 const tabKeymap: KeyBinding[] = [
   {
@@ -80,59 +80,52 @@ const setup: Extension = [
   }),
 ];
 
-function createEditorState(
-  workspace: Workspace,
-  fileName: string,
-  text: string,
-  ext: Extension,
-) {
+function createEditorState(file: WorkspaceFile, text: string, ext: Extension) {
   return EditorState.create({
     doc: text,
-    extensions: [setup, ext, typescriptIntegration(workspace, fileName)],
+    extensions: [setup, ext, typescriptIntegration(file)],
   });
 }
 
-function useEditorState(workspace: Workspace, fileName: string) {
+function useEditorState(file: WorkspaceFile) {
   const stateRef = useRef<EditorState | null>(null);
   const versionRef = useRef<number | null>(null);
 
   return useSyncExternalStore(
-    useCallback((onChange) => workspace.subscribe(onChange), [workspace]),
+    useCallback((onChange) => file.vfs.subscribe(onChange), [file]),
     useCallback(() => {
-      const version = workspace.getFileVersion(fileName);
+      const version = file.getFileVersion();
       if (stateRef.current != null && versionRef.current === version) {
         return stateRef.current;
       }
 
       const syncWorkspaceFile = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
-          workspace.write(fileName, update.state.doc.toString());
-          versionRef.current = workspace.getFileVersion(fileName);
+          file.write(update.state.doc.toString());
+          versionRef.current = file.getFileVersion();
         }
       });
 
-      const content = workspace.read(fileName);
+      const content = file.read();
       stateRef.current = createEditorState(
-        workspace,
-        fileName,
+        file,
         content ?? "",
-        syncWorkspaceFile,
+        syncWorkspaceFile
       );
       versionRef.current = version;
 
       return stateRef.current;
-    }, [workspace, fileName]),
+    }, [file])
   );
 }
 
 interface EditorProps {
   className?: string;
-  workspace: Workspace;
-  fileName: string;
+  file: WorkspaceFile;
 }
 
 export const Editor: React.FC<EditorProps> = (props) => {
-  const { className, workspace, fileName } = props;
+  const { className, file } = props;
 
   const element = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<EditorView | null>(null);
@@ -143,7 +136,7 @@ export const Editor: React.FC<EditorProps> = (props) => {
     return () => view.destroy();
   }, []);
 
-  const state = useEditorState(workspace, fileName);
+  const state = useEditorState(file);
   useLayoutEffect(() => {
     view?.setState(state);
   }, [view, state]);

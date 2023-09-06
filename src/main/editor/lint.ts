@@ -2,7 +2,7 @@ import { Diagnostic, setDiagnostics } from "@codemirror/lint";
 import { Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import ts from "typescript";
-import { Workspace } from "../workspace/workspace";
+import { WorkspaceFile } from "../model/workspace";
 
 function mapDiagnostics(diagnostics: ts.Diagnostic[]): Diagnostic[] {
   return diagnostics.flatMap((d) => {
@@ -37,38 +37,22 @@ function mapDiagnostics(diagnostics: ts.Diagnostic[]): Diagnostic[] {
   });
 }
 
-function getLintDiagnostics(
-  workspace: Workspace,
-  fileName: string,
-): Diagnostic[] {
-  try {
-    return mapDiagnostics([
-      ...workspace.lang.getSyntacticDiagnostics(fileName),
-      ...workspace.lang.getSemanticDiagnostics(fileName),
-    ]);
-  } catch {
-    return [];
-  }
-}
-
 const lintIntervalMS = 300;
 
 class Plugin implements PluginValue {
   private readonly view: EditorView;
-  private readonly workspace: Workspace;
-  private readonly fileName: string;
+  private readonly file: WorkspaceFile;
 
   private readonly dispose: () => void;
   private timer: number | null = null;
   private needLint = false;
   private throttled = false;
 
-  constructor(view: EditorView, workspace: Workspace, fileName: string) {
+  constructor(view: EditorView, file: WorkspaceFile) {
     this.view = view;
-    this.workspace = workspace;
-    this.fileName = fileName;
+    this.file = file;
 
-    this.dispose = workspace.subscribe(() => {
+    this.dispose = file.vfs.subscribe(() => {
       this.scheduleLint();
     });
     queueMicrotask(() => this.scheduleLint());
@@ -93,7 +77,15 @@ class Plugin implements PluginValue {
   }
 
   private doLint() {
-    const diagnostics = getLintDiagnostics(this.workspace, this.fileName);
+    let diagnostics: Diagnostic[];
+    try {
+      diagnostics = mapDiagnostics([
+        ...this.file.getSyntacticDiagnostics(),
+        ...this.file.getSemanticDiagnostics(),
+      ]);
+    } catch {
+      diagnostics = [];
+    }
     this.view.dispatch(setDiagnostics(this.view.state, diagnostics));
   }
 
@@ -105,6 +97,6 @@ class Plugin implements PluginValue {
   }
 }
 
-export function tsLint(workspace: Workspace, fileName: string): Extension {
-  return ViewPlugin.define((view) => new Plugin(view, workspace, fileName));
+export function tsLint(file: WorkspaceFile): Extension {
+  return ViewPlugin.define((view) => new Plugin(view, file));
 }
