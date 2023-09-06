@@ -113,13 +113,13 @@ const SignatureHelpTooltip: React.FC = () => {
   const argDoc = item.parameters[argIndex]?.documentation ?? [];
 
   return (
-    <div className="whitespace-pre-wrap">
-      <p className="p-1 font-mono">{symbolDisplay}</p>
+    <div className="whitespace-pre-wrap px-2 py-1 space-y-1">
+      <p className="font-mono">{symbolDisplay}</p>
 
       {item.documentation.length > 0 ||
       argDoc.length > 0 ||
       item.tags.length > 0 ? (
-        <hr />
+        <hr className="-mx-2" />
       ) : null}
 
       <SymbolDisplay parts={argDoc} />

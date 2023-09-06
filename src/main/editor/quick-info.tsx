@@ -10,10 +10,12 @@ import { ReactTooltip } from "./tooltip";
 const HoverTooltip: React.FC<{ info: ts.QuickInfo }> = ({ info }) => {
   const { displayParts = [], documentation = [], tags = [] } = info;
   return (
-    <div className="whitespace-pre-wrap">
+    <div className="whitespace-pre-wrap px-2 py-1 space-y-1">
       <SymbolDisplay className="font-mono" parts={displayParts} />
 
-      {documentation.length > 0 || tags.length > 0 ? <hr /> : null}
+      {documentation.length > 0 || tags.length > 0 ? (
+        <hr className="-mx-2" />
+      ) : null}
 
       <SymbolDisplay parts={documentation} />
       <TagsDisplay tags={tags} />
@@ -29,7 +31,8 @@ export function getHoverText(file: WorkspaceFile, pos: number): Tooltip | null {
     }
 
     return {
-      pos,
+      pos: result.textSpan.start,
+      end: result.textSpan.start + result.textSpan.length,
       create() {
         return new ReactTooltip(() => <HoverTooltip info={result} />);
       },

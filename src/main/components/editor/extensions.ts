@@ -15,7 +15,6 @@ import {
 } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import {
-  EditorView,
   KeyBinding,
   crosshairCursor,
   drawSelection,
@@ -27,6 +26,7 @@ import {
   rectangularSelection,
 } from "@codemirror/view";
 import { prettier } from "../../editor/prettier";
+import { themeExtension } from "./theme";
 
 const tabKeymap: KeyBinding[] = [
   {
@@ -63,8 +63,5 @@ export const setup: Extension = [
     ...foldKeymap,
     ...tabKeymap,
   ]),
-  EditorView.theme({
-    ".cm-content, .cm-gutter": { minHeight: "var(--app-editor-min-height)" },
-    ".cm-lineNumbers": { minWidth: "var(--app-editor-line-numbers-min-width)" },
-  }),
+  themeExtension,
 ];

@@ -1,4 +1,12 @@
 .editor {
-  --app-editor-min-height: 16rem;
-  --app-editor-line-numbers-min-width: 2rem;
+  @apply text-sm;
+}
+
+.editor :global(.cm-content),
+.editor :global(.cm-gutter) {
+  min-height: 16rem;
+}
+
+.editor :global(.cm-lineNumbers) {
+  min-width: 3rem;
 }

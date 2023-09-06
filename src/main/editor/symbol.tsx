@@ -3,7 +3,6 @@ import { Tag, tags } from "@lezer/highlight";
 import { highlightingFor } from "@codemirror/language";
 import React from "react";
 import { ReactTooltip } from "./tooltip";
-import cn from "clsx";
 
 type Kind = keyof typeof ts.SymbolDisplayPartKind;
 const symbolTagMap: Record<keyof typeof ts.SymbolDisplayPartKind, Tag[]> = {
@@ -39,8 +38,8 @@ export const SymbolDisplay: React.FC<{
   parts: ts.SymbolDisplayPart[];
 }> = ({ className, parts }) => {
   const state = ReactTooltip.useEditorState();
-  return (
-    <p className={cn("p-1 empty:p-0", className)}>
+  return parts.length > 0 ? (
+    <p className={className}>
       {parts.map((part, i) => {
         const cssClass =
           highlightingFor(state, symbolTagMap[part.kind as Kind] ?? []) ??
@@ -52,15 +51,15 @@ export const SymbolDisplay: React.FC<{
         );
       })}
     </p>
-  );
+  ) : null;
 };
 
 export const TagsDisplay: React.FC<{
   className?: string;
   tags: ts.JSDocTagInfo[];
 }> = ({ className, tags }) => {
-  return (
-    <ul className={cn("p-1 empty:p-0", className)}>
+  return tags.length > 0 ? (
+    <ul className={className}>
       {tags.map((tag, i) => (
         <li key={i}>
           <i>@{tag.name}</i>
@@ -73,5 +72,5 @@ export const TagsDisplay: React.FC<{
         </li>
       ))}
     </ul>
-  );
+  ) : null;
 };

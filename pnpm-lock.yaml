@@ -17,6 +17,7 @@ specifiers:
   '@typescript-eslint/parser': 6.5.0
   '@vitejs/plugin-react': 4.0.4
   '@vitest/expect': 0.34.3
+  '@vscode/codicons': 0.0.33
   autoprefixer: 10.4.15
   chai: 4.3.8
   clsx: 2.0.0
@@ -47,6 +48,7 @@ dependencies:
   '@lezer/highlight': 1.1.6
   '@rollup/browser': 3.28.1
   '@vitest/expect': 0.34.3
+  '@vscode/codicons': 0.0.33
   chai: 4.3.8
   clsx: 2.0.0
   comlink: 4.4.1
@@ -1114,6 +1116,10 @@ packages:
       diff-sequences: 29.6.3
       loupe: 2.3.6
       pretty-format: 29.6.3
+    dev: false
+
+  /@vscode/codicons/0.0.33:
+    resolution: {integrity: sha512-VdgpnD75swH9hpXjd34VBgQ2w2quK63WljodlUcOoJDPKiV+rPjHrcUc2sjLCNKxhl6oKqmsZgwOWcDAY2GKKQ==}
     dev: false
 
   /acorn-jsx/5.3.2_acorn@8.10.0:

@@ -23,59 +23,81 @@ interface TSCompletionData {
   commitCharacters: string[];
 }
 
-type CMCompletionKind =
-  | "class"
-  | "constant"
-  | "enum"
-  | "function"
-  | "interface"
+export type CompletionKind =
   | "keyword"
+  | "variable"
+  | "field"
+  | "function"
   | "method"
-  | "namespace"
-  | "property"
-  | "text"
-  | "type"
-  | "variable";
+  | "enum"
+  | "enum-member"
+  | "module"
+  | "class"
+  | "interface"
+  | "file"
+  | "folder"
+  | "constant"
+  | "property";
 
-function mapCompletionKind(kind: ts.ScriptElementKind): CMCompletionKind {
+function mapCompletionKind(kind: ts.ScriptElementKind): CompletionKind {
   switch (kind) {
     case ts.ScriptElementKind.primitiveType:
     case ts.ScriptElementKind.keyword:
       return "keyword";
+
     case ts.ScriptElementKind.constElement:
-      return "constant";
     case ts.ScriptElementKind.letElement:
     case ts.ScriptElementKind.variableElement:
     case ts.ScriptElementKind.localVariableElement:
     case ts.ScriptElementKind.alias:
+    case ts.ScriptElementKind.parameterElement:
       return "variable";
+
     case ts.ScriptElementKind.memberVariableElement:
     case ts.ScriptElementKind.memberGetAccessorElement:
     case ts.ScriptElementKind.memberSetAccessorElement:
-      return "property";
+      return "field";
+
     case ts.ScriptElementKind.functionElement:
+    case ts.ScriptElementKind.localFunctionElement:
       return "function";
+
     case ts.ScriptElementKind.memberFunctionElement:
     case ts.ScriptElementKind.constructSignatureElement:
     case ts.ScriptElementKind.callSignatureElement:
     case ts.ScriptElementKind.indexSignatureElement:
       return "method";
+
     case ts.ScriptElementKind.enumElement:
       return "enum";
+
+    case ts.ScriptElementKind.enumMemberElement:
+      return "enum-member";
+
+    case ts.ScriptElementKind.moduleElement:
+    case ts.ScriptElementKind.externalModuleName:
+      return "module";
+
     case ts.ScriptElementKind.classElement:
     case ts.ScriptElementKind.typeElement:
       return "class";
+
     case ts.ScriptElementKind.interfaceElement:
       return "interface";
-    case ts.ScriptElementKind.moduleElement:
-    case ts.ScriptElementKind.externalModuleName:
+
+    case ts.ScriptElementKind.warning:
     case ts.ScriptElementKind.scriptElement:
+      return "file";
+
     case ts.ScriptElementKind.directory:
-      return "namespace";
+      return "folder";
+
     case ts.ScriptElementKind.string:
-      return "text";
+      return "constant";
+
+    default:
+      return "property";
   }
-  return "property";
 }
 
 type CMCommitCharacter = "." | "," | "(";
@@ -192,6 +214,7 @@ export function getCompletions(
       }
       completions.push(mapCompletion(entry));
     }
+    console.log(result.entries);
 
     return {
       from,
