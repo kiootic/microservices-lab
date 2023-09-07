@@ -9,8 +9,7 @@ import x from "react/package.json?raw";
 const workspace = makeWorkspace();
 workspace.getState().vfs.write("/index.ts", "import {X} from 'test';");
 workspace.getState().vfs.write("/test.ts", "export class X {}");
-workspace.getState().vfs.write("/react.json", x);
-workspace.getState().vfs.write("/test.ts", "export class X {}");
+workspace.getState().vfs.write("/test/react.json", x);
 
 const Test: React.FC = () => {
   const controller = useNotebook(workspace);

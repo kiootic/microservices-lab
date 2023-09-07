@@ -23,7 +23,7 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
   return (
     <div
       className={cn(
-        "flex h-10 items-center text-sm text-gray-600 hover:font-bold",
+        "flex h-10 items-center text-sm hover:font-bold",
         className,
       )}
     >
