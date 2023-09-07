@@ -106,6 +106,8 @@ const theme = EditorView.theme({
     backgroundColor: colors["editorHoverWidget.background"],
     color: colors["editorHoverWidget.foreground"],
     borderRadius: "3px",
+  },
+  ".cm-tooltip-hover": {
     overflow: "hidden",
   },
   ".cm-tooltip hr": {
@@ -138,6 +140,10 @@ const theme = EditorView.theme({
     "& > ul > li[aria-selected] .codicon": {
       color: colors["editorSuggestWidget.selectedIconForeground"],
     },
+  },
+  ".cm-tooltip.cm-completionInfo": {
+    padding: "0.25rem 0.5rem",
+    fontFamily: "monospace",
   },
   ".cm-completionMatchedText": {
     fontWeight: "600",

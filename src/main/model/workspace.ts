@@ -16,7 +16,11 @@ export interface WorkspaceFile {
   getCompletionsAtPosition: (
     position: number,
     options: ts.GetCompletionsAtPositionOptions,
-  ) => ts.WithMetadata<ts.CompletionInfo> | undefined;
+  ) => ts.CompletionInfo | undefined;
+  getCompletionEntryDetails: (
+    position: number,
+    entryName: string,
+  ) => ts.CompletionEntryDetails | undefined;
   getQuickInfoAtPosition: (position: number) => ts.QuickInfo | undefined;
   getSignatureHelpItems: (
     position: number,
@@ -112,6 +116,16 @@ export function makeWorkspace() {
             lang,
             fileName,
           ),
+          getCompletionEntryDetails: (position, entryName) =>
+            lang.getCompletionEntryDetails(
+              fileName,
+              position,
+              entryName,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+            ),
           getQuickInfoAtPosition: lang.getQuickInfoAtPosition.bind(
             lang,
             fileName,

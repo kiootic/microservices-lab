@@ -1,6 +1,7 @@
 import {
   Completion,
   CompletionContext,
+  CompletionInfo,
   CompletionResult,
   acceptCompletion,
   autocompletion,
@@ -18,7 +19,9 @@ interface TSCompletion extends Completion {
 }
 
 interface TSCompletionData {
-  preselect: boolean;
+  file: WorkspaceFile;
+  pos: number;
+  name: string;
   sortText: string;
   commitCharacters: string[];
 }
@@ -128,12 +131,35 @@ function mapCommitCharacters(kind: ts.ScriptElementKind): CMCommitCharacter[] {
   return [];
 }
 
-function mapCompletion(entry: ts.CompletionEntry): TSCompletion {
+function renderCompletionDetails(completion: TSCompletion): CompletionInfo {
+  if (completion.ts == null) {
+    return null;
+  }
+
+  const details = completion.ts.file.getCompletionEntryDetails(
+    completion.ts.pos,
+    completion.ts.name,
+  );
+  const detailsText = ts.displayPartsToString(details?.displayParts);
+
+  const elem = document.createElement("p");
+  elem.textContent = detailsText;
+  return elem;
+}
+
+function mapCompletion(
+  entry: ts.CompletionEntry,
+  file: WorkspaceFile,
+  pos: number,
+): TSCompletion {
   return {
     type: mapCompletionKind(entry.kind),
     label: entry.name,
+    info: renderCompletionDetails,
     ts: {
-      preselect: entry.isRecommended ?? false,
+      file,
+      pos,
+      name: entry.name,
       sortText: entry.sortText,
       commitCharacters: mapCommitCharacters(entry.kind),
     },
@@ -212,7 +238,7 @@ export function getCompletions(
       if (entry.kind === ts.ScriptElementKind.warning) {
         continue;
       }
-      completions.push(mapCompletion(entry));
+      completions.push(mapCompletion(entry, file, pos));
     }
 
     return {
