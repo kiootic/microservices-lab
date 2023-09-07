@@ -15,6 +15,7 @@ import {
 } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import {
+  EditorView,
   KeyBinding,
   crosshairCursor,
   drawSelection,
@@ -64,4 +65,14 @@ export const setup: Extension = [
     ...tabKeymap,
   ]),
   themeExtension,
+  EditorView.theme({
+    // FIXME: refactor it
+    ".cm-content": {
+      paddingTop: "0.5rem",
+      paddingBottom: "2rem",
+    },
+    ".cm-line": {
+      padding: "0 1rem",
+    },
+  }),
 ];

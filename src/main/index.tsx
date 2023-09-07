@@ -1,35 +1,24 @@
-import React, { useMemo } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
+import { Notebook } from "./components/notebook/Notebook";
 import "./index.css";
-import { Editor } from "./components/editor/Editor";
 import { makeWorkspace } from "./model/workspace";
-import { useStore } from "zustand";
+import { useNotebook } from "./components/notebook/useNotebook";
+import x from "react/package.json?raw";
 
 const workspace = makeWorkspace();
-
-const FileEditor: React.FC<{ fileName: string }> = ({ fileName }) => {
-  const getFile = useStore(workspace, (w) => w.getFile);
-  const file = useMemo(() => getFile(fileName), [getFile, fileName]);
-  return <Editor file={file} />;
-};
+workspace.getState().vfs.write("/index.ts", "import {X} from 'test';");
+workspace.getState().vfs.write("/test.ts", "export class X {}");
+workspace.getState().vfs.write("/react.json", x);
+workspace.getState().vfs.write("/test.ts", "export class X {}");
 
 const Test: React.FC = () => {
-  const fileNames = useStore(workspace, (w) => w.fileNames);
-  return fileNames.map((fileName) => (
-    <FileEditor key={fileName} fileName={fileName} />
-  ));
+  const controller = useNotebook(workspace);
+  return <Notebook className="w-screen h-screen" controller={controller} />;
 };
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <div className="text-lg">Hello World!</div>
     <Test />
   </React.StrictMode>,
-);
-
-workspace.getState().vfs.write("/index.ts", "import {X} from 'test';");
-
-setTimeout(
-  () => workspace.getState().vfs.write("/index.ts", "import {X} from 'test';"),
-  3000,
 );

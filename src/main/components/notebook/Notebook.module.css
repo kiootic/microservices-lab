@@ -1,0 +1,5 @@
+.notebook::after {
+  content: "";
+  display: block;
+  height: calc(100% - 8rem);
+}

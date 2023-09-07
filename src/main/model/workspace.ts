@@ -28,7 +28,7 @@ export interface WorkspaceFile {
   ) => ts.SignatureHelpItems | undefined;
 }
 
-export interface Workspace {
+export interface WorkspaceValue {
   isDirty: boolean;
   fileNames: string[];
   vfs: Vfs;
@@ -36,8 +36,9 @@ export interface Workspace {
 
   getFile: (fileName: string) => WorkspaceFile;
 }
+export type Workspace = StoreApi<WorkspaceValue>;
 
-function wrapStore(inner: Store, workspace: StoreApi<Workspace>): Store {
+function wrapStore(inner: Store, workspace: Workspace): Store {
   return {
     fileNames: inner.fileNames,
     content: inner.content,
@@ -82,10 +83,11 @@ const compilerOptions = {
 };
 
 export function makeWorkspace() {
-  return createStore<Workspace>()((_set, _get, workspace) => {
+  return createStore<WorkspaceValue>()((_set, _get, workspace) => {
     const store = mapStore();
     const vfs = storeVfs(wrapStore(store, workspace));
     const lang = createLanguageService(vfs, compilerOptions);
+    const fileCache = new Map<string, WorkspaceFile>();
     return {
       isDirty: false,
       fileNames: [],
@@ -96,45 +98,49 @@ export function makeWorkspace() {
           vfs.write(fileName, "");
         }
 
-        return {
-          name: fileName,
-          vfs,
+        let file = fileCache.get(fileName);
+        if (file == null) {
+          file = {
+            name: fileName,
+            vfs,
 
-          getFileVersion: vfs.getFileVersion.bind(vfs, fileName),
-          read: vfs.read.bind(vfs, fileName),
-          write: vfs.write.bind(vfs, fileName),
+            getFileVersion: vfs.getFileVersion.bind(vfs, fileName),
+            read: vfs.read.bind(vfs, fileName),
+            write: vfs.write.bind(vfs, fileName),
 
-          getSyntacticDiagnostics: lang.getSyntacticDiagnostics.bind(
-            lang,
-            fileName,
-          ),
-          getSemanticDiagnostics: lang.getSemanticDiagnostics.bind(
-            lang,
-            fileName,
-          ),
-          getCompletionsAtPosition: lang.getCompletionsAtPosition.bind(
-            lang,
-            fileName,
-          ),
-          getCompletionEntryDetails: (position, entryName) =>
-            lang.getCompletionEntryDetails(
+            getSyntacticDiagnostics: lang.getSyntacticDiagnostics.bind(
+              lang,
               fileName,
-              position,
-              entryName,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
             ),
-          getQuickInfoAtPosition: lang.getQuickInfoAtPosition.bind(
-            lang,
-            fileName,
-          ),
-          getSignatureHelpItems: lang.getSignatureHelpItems.bind(
-            lang,
-            fileName,
-          ),
-        };
+            getSemanticDiagnostics: lang.getSemanticDiagnostics.bind(
+              lang,
+              fileName,
+            ),
+            getCompletionsAtPosition: lang.getCompletionsAtPosition.bind(
+              lang,
+              fileName,
+            ),
+            getCompletionEntryDetails: (position, entryName) =>
+              lang.getCompletionEntryDetails(
+                fileName,
+                position,
+                entryName,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+              ),
+            getQuickInfoAtPosition: lang.getQuickInfoAtPosition.bind(
+              lang,
+              fileName,
+            ),
+            getSignatureHelpItems: lang.getSignatureHelpItems.bind(
+              lang,
+              fileName,
+            ),
+          };
+        }
+        return file;
       },
     };
   });
