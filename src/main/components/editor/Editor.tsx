@@ -5,7 +5,6 @@ import React, {
   useCallback,
   useLayoutEffect,
   useRef,
-  useState,
   useSyncExternalStore,
 } from "react";
 import { typescriptIntegration } from "../../editor/typescript";
@@ -25,7 +24,7 @@ interface FileToken {
   version: number;
 }
 
-function useEditorState(view: EditorView | null, file: WorkspaceFile) {
+function useEditor(element: React.RefObject<HTMLElement>, file: WorkspaceFile) {
   const tokenRef = useRef<FileToken | null>(null);
   const token = useSyncExternalStore(
     useCallback((onChange) => file.vfs.subscribe(onChange), [file]),
@@ -43,7 +42,7 @@ function useEditorState(view: EditorView | null, file: WorkspaceFile) {
   );
 
   useLayoutEffect(() => {
-    if (view == null) {
+    if (element.current == null) {
       return;
     }
 
@@ -55,8 +54,9 @@ function useEditorState(view: EditorView | null, file: WorkspaceFile) {
     });
 
     const state = createEditorState(token.file, syncWorkspaceFile);
-    view.setState(state);
-  }, [view, token]);
+    const view = new EditorView({ parent: element.current, state });
+    return () => view.destroy();
+  }, [element, token]);
 }
 
 interface EditorProps {
@@ -68,17 +68,7 @@ export const Editor: React.FC<EditorProps> = (props) => {
   const { className, file } = props;
 
   const element = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<EditorView | null>(null);
-  useLayoutEffect(() => {
-    if (element.current == null) {
-      return;
-    }
-    const view = new EditorView({ parent: element.current });
-    setView(view);
-    return () => view.destroy();
-  }, []);
-
-  useEditorState(view, file);
+  useEditor(element, file);
 
   return <div ref={element} className={cn(styles.editor, className)}></div>;
 };
