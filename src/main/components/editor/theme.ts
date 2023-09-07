@@ -4,7 +4,6 @@ import { EditorView } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
 import { CompletionKind } from "../../editor/completion";
 import { Completion, autocompletion } from "@codemirror/autocomplete";
-import "@vscode/codicons/dist/codicon.css";
 
 const colors = {
   "editor.background": "#ffffff",
