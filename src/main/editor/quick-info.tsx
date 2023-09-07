@@ -26,7 +26,7 @@ const HoverTooltip: React.FC<{ info: ts.QuickInfo }> = ({ info }) => {
 export function getHoverText(file: WorkspaceFile, pos: number): Tooltip | null {
   try {
     const result = file.getQuickInfoAtPosition(pos);
-    if (result == null) {
+    if (result == null || result.displayParts?.length === 0) {
       return null;
     }
 
