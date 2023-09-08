@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useStore } from "zustand";
+import { useEvent } from "../../hooks/event-bus";
+import { useIntersection } from "../../hooks/intersection";
 import { WorkspaceFile } from "../../model/workspace";
 import { Editor } from "../editor/Editor";
 import { FileHeader } from "./FileHeader";
 import { NotebookUIState } from "./useNotebook";
-import { useIntersection } from "../../hooks/intersection";
-import { useEvent } from "../../hooks/event-bus";
 
 interface FileViewProps {
   className?: string;
@@ -17,6 +18,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   const { className, file, uiState } = props;
 
   const isOpened = useStore(uiState, (s) => s.isOpened(file.name));
+  const toggleOpen = useStore(uiState, (s) => s.toggleOpen);
   const setIsVisible = useStore(uiState, (s) => s.setIsVisible);
 
   const handleSummaryOnClick = useCallback<React.MouseEventHandler>(
@@ -33,6 +35,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   const events = useStore(uiState, (s) => s.events);
   useEvent(events, "navigate", (e) => {
     if (e.fileName === file.name) {
+      ReactDOM.flushSync(() => toggleOpen(file.name, true));
       contentElementRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   });

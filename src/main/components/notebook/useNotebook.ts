@@ -9,7 +9,7 @@ export interface NotebookUIStateValue {
   events: EventBus<NotebookUIEvent>;
   isOpened: (fileName: string) => boolean;
   visibleFileNames: Set<string>;
-  toggleOpen: (fileName: string) => void;
+  toggleOpen: (fileName: string, force?: boolean) => void;
   setIsVisible: (fileName: string, isVisible: boolean) => void;
 }
 export type NotebookUIState = StoreApi<NotebookUIStateValue>;
@@ -23,9 +23,12 @@ function createUIState(): NotebookUIState {
     isCollapsed: {},
     visibleFileNames: new Set(),
     isOpened: (fileName) => !get().isCollapsed[fileName],
-    toggleOpen: (fileName) =>
+    toggleOpen: (fileName, force) =>
       set((s) => ({
-        isCollapsed: { ...s.isCollapsed, [fileName]: !s.isCollapsed[fileName] },
+        isCollapsed: {
+          ...s.isCollapsed,
+          [fileName]: force != null ? !force : !s.isCollapsed[fileName],
+        },
       })),
     setIsVisible: (fileName, isVisible) =>
       set((s) => {
