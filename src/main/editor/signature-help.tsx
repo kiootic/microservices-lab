@@ -218,6 +218,16 @@ class Plugin implements PluginValue {
     }
   }
 
+  private getSignatureHelp(pos: number, reason: ts.SignatureHelpTriggerReason) {
+    try {
+      return this.file.getSignatureHelpItems(pos, {
+        triggerReason: reason,
+      });
+    } catch {
+      return undefined;
+    }
+  }
+
   private updateSignatureHelp(reason: ts.SignatureHelpTriggerReason) {
     const selection = this.view.state.selection.main;
     if (!selection.empty) {
@@ -225,9 +235,7 @@ class Plugin implements PluginValue {
       return;
     }
 
-    const signatureHelp = this.file.getSignatureHelpItems(selection.from, {
-      triggerReason: reason,
-    });
+    const signatureHelp = this.getSignatureHelp(selection.from, reason);
     this.view.dispatch({ effects: [updateSignatureHelp.of(signatureHelp)] });
   }
 }
