@@ -5,7 +5,8 @@ import { EventBus, createEventBus } from "../../hooks/event-bus";
 
 export type NotebookUIEvent =
   | { kind: "navigate"; fileName: string }
-  | { kind: "focus"; target: "nav"; fileName?: string };
+  | { kind: "focus"; target: "nav"; fileName?: string }
+  | { kind: "focus"; target: "nav-toolbar" };
 
 export interface NotebookUIStateValue {
   rootElementRef: React.RefObject<HTMLDivElement>;

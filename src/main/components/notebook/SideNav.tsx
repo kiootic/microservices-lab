@@ -46,21 +46,31 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
           workspace.getState().createFile(fileName, "//\n");
         });
         events.dispatch({ kind: "navigate", fileName });
+      } else {
+        events.dispatch({ kind: "focus", target: "nav" });
       }
     },
   );
 
   const events = useStore(uiState, (s) => s.events);
 
-  const onNavigate = useEventCallback((fileName: React.Key) => {
+  const handleListOnAction = useEventCallback((fileName: React.Key) => {
     events.dispatch({ kind: "navigate", fileName: String(fileName) });
+  });
+  const handleListOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      events.dispatch({ kind: "focus", target: "nav-toolbar" });
+    }
   });
 
   return (
     <div className={cn("flex flex-col", className)}>
       <SideNavToolbar className="flex-none" uiState={uiState} />
-      <div className="flex-1 overflow-auto font-mono text-sm py-2">
-        <ListBox aria-label="Navigation" onAction={onNavigate}>
+      <div
+        className="flex-1 overflow-auto font-mono text-sm py-2"
+        onKeyDown={handleListOnKeyDown}
+      >
+        <ListBox aria-label="Navigation" onAction={handleListOnAction}>
           {fileNames.map((fileName) => (
             <NavItem
               key={fileName}
@@ -102,10 +112,10 @@ export const NavItem: React.FC<NavItemProps> = (props) => {
   }, [fileName]);
 
   const elementRef = useRef<HTMLDivElement>(null);
-  useEvent(events, "focus", ({ target, fileName: targetFileName }) => {
+  useEvent(events, "focus", (e) => {
     if (
-      target === "nav" &&
-      (targetFileName == null ? isActive : targetFileName === fileName)
+      e.target === "nav" &&
+      (e.fileName == null ? isActive : e.fileName === fileName)
     ) {
       elementRef.current?.focus();
     }
@@ -170,6 +180,7 @@ export const FileNameEditor: React.FC<FileNameEditorProps> = (props) => {
     }
   });
   const handleOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation();
     if (e.key === "Escape") {
       e.preventDefault();
       onFinishEdit(null);

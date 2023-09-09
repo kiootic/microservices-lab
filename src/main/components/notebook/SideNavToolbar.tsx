@@ -4,6 +4,8 @@ import { useStore } from "zustand";
 import { useEventCallback } from "../../hooks/event-callback";
 import { IconButton } from "../IconButton";
 import { NotebookUIState } from "./useNotebook";
+import { FocusScope, useFocusManager } from "react-aria";
+import { useEvent } from "../../hooks/event-bus";
 
 interface SideNavToolbarProps {
   className?: string;
@@ -18,11 +20,37 @@ export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
     setIsAdding(true);
   });
 
+  const events = useStore(uiState, (s) => s.events);
+  const handleOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      events.dispatch({ kind: "focus", target: "nav" });
+    }
+  });
+
   return (
-    <div className={cn("flex items-center justify-end p-1", className)}>
-      <IconButton className="flex-none" onPress={handleAddOnCLick}>
-        <span className="codicon codicon-add" />
-      </IconButton>
+    <div
+      className={cn("flex items-center justify-end p-1", className)}
+      onKeyDown={handleOnKeyDown}
+    >
+      <FocusScope>
+        <ToolbarSentinel uiState={uiState} />
+        <IconButton className="flex-none" onPress={handleAddOnCLick}>
+          <span className="codicon codicon-add" />
+        </IconButton>
+      </FocusScope>
     </div>
   );
+};
+
+const ToolbarSentinel: React.FC<{ uiState: NotebookUIState }> = ({
+  uiState,
+}) => {
+  const events = useStore(uiState, (s) => s.events);
+  const manager = useFocusManager();
+  useEvent(events, "focus", (e) => {
+    if (e.kind === "focus" && e.target === "nav-toolbar") {
+      manager.focusFirst();
+    }
+  });
+  return null;
 };
