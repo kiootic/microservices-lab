@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { StoreApi, createStore, useStore } from "zustand";
 import { Workspace, WorkspaceFile } from "../../model/workspace";
 import { EventBus, createEventBus } from "../../hooks/event-bus";
 
-type NotebookUIEvent = { kind: "navigate"; fileName: string };
+export type NotebookUIEvent =
+  | { kind: "navigate"; fileName: string }
+  | { kind: "focus"; target: "nav"; fileName?: string };
 
 export interface NotebookUIStateValue {
+  rootElementRef: React.RefObject<HTMLDivElement>;
   events: EventBus<NotebookUIEvent>;
   isOpened: (fileName: string) => boolean;
   visibleFileNames: Set<string>;
-  toggleOpen: (fileName: string, force?: boolean) => void;
+  toggleOpen: (fileName: string, force?: boolean) => boolean;
   setIsVisible: (fileName: string, isVisible: boolean) => void;
 }
 export type NotebookUIState = StoreApi<NotebookUIStateValue>;
@@ -19,17 +22,20 @@ function createUIState(): NotebookUIState {
     isCollapsed: Partial<Record<string, boolean>>;
   }
   return createStore<NotebookUIStateInternalValue>((set, get) => ({
+    rootElementRef: React.createRef(),
     events: createEventBus(),
     isCollapsed: {},
     visibleFileNames: new Set(),
     isOpened: (fileName) => !get().isCollapsed[fileName],
-    toggleOpen: (fileName, force) =>
+    toggleOpen: (fileName, force) => {
       set((s) => ({
         isCollapsed: {
           ...s.isCollapsed,
           [fileName]: force != null ? !force : !s.isCollapsed[fileName],
         },
-      })),
+      }));
+      return !get().isCollapsed[fileName];
+    },
     setIsVisible: (fileName, isVisible) =>
       set((s) => {
         const visibleFileNames = new Set(s.visibleFileNames);

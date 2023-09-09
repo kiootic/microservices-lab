@@ -5,6 +5,7 @@ import {
   Tooltip,
   ViewPlugin,
   ViewUpdate,
+  keymap,
   showTooltip,
 } from "@codemirror/view";
 import React, { useMemo } from "react";
@@ -236,6 +237,19 @@ export function tsSignatureHelp(file: WorkspaceFile): Extension {
     ViewPlugin.define((view) => new Plugin(view, file), {
       provide: (plugin) => [
         field,
+        keymap.of([
+          {
+            key: "Escape",
+            run: (view) => {
+              const p = view.plugin(plugin);
+              if (p?.isTriggered) {
+                p.hide();
+                return true;
+              }
+              return false;
+            },
+          },
+        ]),
         clickOutsideHandler.of((view) => {
           view.plugin(plugin)?.hide();
         }),

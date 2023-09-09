@@ -1,8 +1,11 @@
-import React, { useCallback, useMemo } from "react";
 import cn from "clsx";
-import { Workspace } from "../../model/workspace";
+import React, { useMemo, useRef } from "react";
+import { Item, ListBox } from "react-aria-components";
 import { useStore } from "zustand";
-import { NotebookUIState } from "./useNotebook";
+import { EventBus, useEvent } from "../../hooks/event-bus";
+import { useEventCallback } from "../../hooks/event-callback";
+import { Workspace } from "../../model/workspace";
+import { NotebookUIEvent, NotebookUIState } from "./useNotebook";
 
 interface SideNavProps {
   className?: string;
@@ -18,26 +21,27 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
   const activeFileName = fileNames.find((n) => visibleFileNames.has(n));
 
   const events = useStore(uiState, (s) => s.events);
-  const handleOnNavigate = useCallback(
-    (fileName: string) => {
-      events.dispatch({ kind: "navigate", fileName });
-    },
-    [events],
-  );
+
+  const onNavigate = useEventCallback((fileName: React.Key) => {
+    events.dispatch({ kind: "navigate", fileName: String(fileName) });
+  });
 
   return (
-    <ul className={cn("overflow-auto font-mono text-sm py-2", className)}>
+    <ListBox
+      className={cn("overflow-auto font-mono text-sm py-2", className)}
+      aria-label="Navigation"
+      selectionMode="none"
+      onAction={onNavigate}
+    >
       {fileNames.map((fileName) => (
-        <li key={fileName}>
-          <NavItem
-            className="w-full"
-            fileName={fileName}
-            isActive={fileName === activeFileName}
-            onNavigate={handleOnNavigate}
-          />
-        </li>
+        <NavItem
+          key={fileName}
+          fileName={fileName}
+          isActive={fileName === activeFileName}
+          events={events}
+        />
       ))}
-    </ul>
+    </ListBox>
   );
 };
 
@@ -45,16 +49,11 @@ interface NavItemProps {
   className?: string;
   fileName: string;
   isActive: boolean;
-  onNavigate: (fileName: string) => void;
+  events: EventBus<NotebookUIEvent>;
 }
 
 export const NavItem: React.FC<NavItemProps> = (props) => {
-  const { className, fileName, isActive, onNavigate } = props;
-
-  const handleOnClick = useCallback(
-    () => onNavigate(fileName),
-    [onNavigate, fileName],
-  );
+  const { className, fileName, isActive, events } = props;
 
   const [dirname, basename] = useMemo(() => {
     const pathname = fileName.replace(/^\//, "");
@@ -65,18 +64,34 @@ export const NavItem: React.FC<NavItemProps> = (props) => {
     return [pathname.slice(0, lastSlash + 1), pathname.slice(lastSlash + 1)];
   }, [fileName]);
 
+  const elementRef = useRef<HTMLDivElement>(null);
+  useEvent(events, "focus", ({ target, fileName: targetFileName }) => {
+    if (
+      target === "nav" &&
+      (targetFileName == null ? isActive : targetFileName === fileName)
+    ) {
+      elementRef.current?.focus();
+    }
+  });
+
   return (
-    <button
+    <Item
+      ref={elementRef}
       className={cn(
-        "px-2 py-1 truncate text-left hover:bg-gray-200",
+        "px-2 py-1 truncate text-left cursor-pointer",
+        "focus:outline-none focus-visible:ring-2",
+        isActive
+          ? "bg-gray-200"
+          : "hover:bg-gray-100 focus-visible:bg-gray-100",
         className,
       )}
-      onClick={handleOnClick}
+      id={fileName}
+      textValue={fileName}
     >
       <span className="text-gray-500">{dirname}</span>
       <span className={isActive ? "font-bold text-gray-950" : "text-gray-500"}>
         {basename}
       </span>
-    </button>
+    </Item>
   );
 };

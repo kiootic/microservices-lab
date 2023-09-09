@@ -1,5 +1,5 @@
-import { EditorView } from "@codemirror/view";
-import React, { useEffect, useRef } from "react";
+import { EditorView, keymap } from "@codemirror/view";
+import React, { useEffect, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
@@ -9,6 +9,8 @@ import { WorkspaceFile } from "../../model/workspace";
 import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
 import { NotebookUIState } from "./useNotebook";
+import { Extension } from "@codemirror/state";
+import { isIntersecting } from "../../utils/intersection";
 
 interface FileViewProps {
   className?: string;
@@ -23,11 +25,6 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   const toggleOpen = useStore(uiState, (s) => s.toggleOpen);
   const setIsVisible = useStore(uiState, (s) => s.setIsVisible);
 
-  const handleSummaryOnClick = useEventCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    toggleOpen(file.name);
-  });
-
   const contentElementRef = useRef<HTMLDetailsElement | null>(null);
   const isVisible = useIntersection(contentElementRef);
   useEffect(() => {
@@ -40,21 +37,67 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   useEvent(events, "navigate", (e) => {
     if (e.fileName === file.name) {
       ReactDOM.flushSync(() => toggleOpen(file.name, true));
-      contentElementRef.current?.scrollIntoView({ behavior: "smooth" });
-      editorRef.current?.focus();
+
+      contentElementRef.current?.scrollIntoView();
+
+      if (editorRef.current != null) {
+        const view = editorRef.current;
+        const pos = view.state.selection.main.from;
+        const element = view.domAtPos(pos).node.parentElement;
+        const rootElement = uiState.getState().rootElementRef.current;
+        if (
+          element != null &&
+          rootElement != null &&
+          !isIntersecting(element, rootElement)
+        ) {
+          element.scrollIntoView({ block: "center" });
+        }
+        view.focus();
+      }
     }
   });
+
+  const handleSummaryOnClick = useEventCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    if (ReactDOM.flushSync(() => toggleOpen(file.name))) {
+      editorRef.current?.focus();
+    } else {
+      events.dispatch({ kind: "focus", target: "nav", fileName: file.name });
+    }
+  });
+
+  const handleOnEscape = useEventCallback(() => {
+    events.dispatch({ kind: "focus", target: "nav", fileName: file.name });
+  });
+  const extension: Extension = useMemo(
+    () => [
+      keymap.of([
+        {
+          key: "Escape",
+          run: () => {
+            handleOnEscape();
+            return true;
+          },
+        },
+      ]),
+    ],
+    [handleOnEscape],
+  );
 
   return (
     <div className={className}>
       <details ref={contentElementRef} open={isOpened}>
         <summary
-          className="marker:content-none cursor-pointer"
+          className="marker:content-none cursor-pointer focus:outline-none"
           onClick={handleSummaryOnClick}
         >
           <FileHeader file={file} uiState={uiState} />
         </summary>
-        <WorkspaceFileEditor ref={editorRef} file={file} />
+        <WorkspaceFileEditor
+          ref={editorRef}
+          file={file}
+          extension={extension}
+        />
       </details>
     </div>
   );

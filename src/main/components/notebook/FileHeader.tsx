@@ -22,7 +22,7 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
         className,
       )}
     >
-      <span className="w-12 h-full flex items-center justify-center">
+      <span className="flex-none w-12 h-full flex items-center justify-center">
         <span
           className={cn(
             "codicon",
@@ -30,10 +30,10 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
           )}
         />
       </span>
-      <div className="pl-2 pr-4">
+      <div className="truncate pl-2 pr-4">
         <span className="font-mono">{file.name}</span>
       </div>
-      <hr className="flex-1 border-t-2" />
+      <hr className="w-8 flex-shrink-0 flex-grow border-t-2" />
     </div>
   );
 };

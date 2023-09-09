@@ -10,17 +10,19 @@ import { typescriptIntegration } from "../../editor/typescript";
 import { WorkspaceFile } from "../../model/workspace";
 import { Editor } from "./Editor";
 import { setup } from "./extensions";
+import { Extension } from "@codemirror/state";
 
 interface WorkspaceFileEditorProps {
   className?: string;
   file: WorkspaceFile;
+  extension?: Extension;
 }
 
 export const WorkspaceFileEditor = React.forwardRef<
   EditorView | null,
   WorkspaceFileEditorProps
 >((props, ref) => {
-  const { className, file } = props;
+  const { className, file, extension: extraExt } = props;
 
   interface FileToken {
     file: WorkspaceFile;
@@ -58,10 +60,11 @@ export const WorkspaceFileEditor = React.forwardRef<
             token.version = token.file.getFileVersion();
           }
         }),
+        EditorView.lineWrapping,
         EditorView.theme({
           ".cm-content": {
             paddingTop: "0.5rem",
-            paddingBottom: "2rem",
+            paddingBottom: "4rem",
           },
           ".cm-line": {
             padding: "0 1rem",
@@ -70,9 +73,10 @@ export const WorkspaceFileEditor = React.forwardRef<
             minWidth: "3rem",
           },
         }),
+        extraExt ?? [],
       ],
     };
-  }, [token]);
+  }, [token, extraExt]);
 
   return (
     <Editor
