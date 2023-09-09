@@ -8,6 +8,7 @@ import {
 } from "@codemirror/commands";
 import {
   bracketMatching,
+  codeFolding,
   defaultHighlightStyle,
   foldKeymap,
   indentOnInput,
@@ -15,7 +16,6 @@ import {
 } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import {
-  EditorView,
   KeyBinding,
   crosshairCursor,
   drawSelection,
@@ -27,7 +27,7 @@ import {
   rectangularSelection,
 } from "@codemirror/view";
 import { prettier } from "../../editor/prettier";
-import { themeExtension } from "./theme";
+import { foldGutter } from "./theme";
 
 const tabKeymap: KeyBinding[] = [
   {
@@ -47,6 +47,8 @@ export const setup: Extension = [
   highlightSpecialChars(),
   highlightActiveLineGutter(),
   history(),
+  codeFolding(),
+  foldGutter(),
   drawSelection(),
   dropCursor(),
   EditorState.allowMultipleSelections.of(true),
@@ -64,15 +66,4 @@ export const setup: Extension = [
     ...foldKeymap,
     ...tabKeymap,
   ]),
-  themeExtension,
-  EditorView.theme({
-    // FIXME: refactor it
-    ".cm-content": {
-      paddingTop: "0.5rem",
-      paddingBottom: "2rem",
-    },
-    ".cm-line": {
-      padding: "0 1rem",
-    },
-  }),
 ];

@@ -4,7 +4,7 @@ import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useIntersection } from "../../hooks/intersection";
 import { WorkspaceFile } from "../../model/workspace";
-import { Editor } from "../editor/Editor";
+import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
 import { NotebookUIState } from "./useNotebook";
 
@@ -50,7 +50,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
         >
           <FileHeader file={file} uiState={uiState} />
         </summary>
-        <Editor file={file} />
+        <WorkspaceFileEditor file={file} />
       </details>
     </div>
   );

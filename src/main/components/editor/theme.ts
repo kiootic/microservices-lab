@@ -1,9 +1,13 @@
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { Completion, autocompletion } from "@codemirror/autocomplete";
+import {
+  HighlightStyle,
+  foldGutter as cmFoldGutter,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
 import { CompletionKind } from "../../editor/completion";
-import { Completion, autocompletion } from "@codemirror/autocomplete";
 
 const colors = {
   "editor.background": "#ffffff",
@@ -87,12 +91,20 @@ const theme = EditorView.theme({
     border: "none",
     userSelect: "none",
   },
+  ".cm-activeLineGutter": {
+    backgroundColor: "unset",
+  },
+  ".cm-foldGutter": {
+    opacity: 0,
+    "&:hover": {
+      opacity: 1,
+    },
+  },
   ".cm-lineNumbers .cm-gutterElement": {
     padding: "0 8px",
     color: colors["editorLineNumber.foreground"],
   },
   ".cm-lineNumbers .cm-activeLineGutter": {
-    backgroundColor: "unset",
     color: colors["editorLineNumber.activeForeground"],
   },
   ".cm-selectionMatch": {
@@ -266,6 +278,19 @@ const autocompleteIcon: Extension = autocompletion({
     },
   ],
 });
+
+export function foldGutter(): Extension {
+  return cmFoldGutter({
+    markerDOM: (open) => {
+      const marker = document.createElement("span");
+      marker.classList.add(
+        "codicon",
+        open ? "codicon-chevron-down" : "codicon-chevron-right",
+      );
+      return marker;
+    },
+  });
+}
 
 export const themeExtension: Extension = [
   theme,

@@ -1,7 +1,0 @@
-.editor {
-  @apply text-sm;
-}
-
-.editor :global(.cm-lineNumbers) {
-  min-width: 3rem;
-}
