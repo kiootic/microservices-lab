@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply text-base bg-gray-50 text-gray-950;
+@layer base {
+  body {
+    @apply text-base bg-gray-50 text-gray-950;
+    -webkit-tap-highlight-color: transparent;
+  }
 }

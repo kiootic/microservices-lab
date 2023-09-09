@@ -6,6 +6,7 @@ import { EventBus, useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Workspace } from "../../model/workspace";
 import { NotebookUIEvent, NotebookUIState } from "./useNotebook";
+import { SideNavToolbar } from "./SideNavToolbar";
 
 interface SideNavProps {
   className?: string;
@@ -27,21 +28,21 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
   });
 
   return (
-    <ListBox
-      className={cn("overflow-auto font-mono text-sm py-2", className)}
-      aria-label="Navigation"
-      selectionMode="none"
-      onAction={onNavigate}
-    >
-      {fileNames.map((fileName) => (
-        <NavItem
-          key={fileName}
-          fileName={fileName}
-          isActive={fileName === activeFileName}
-          events={events}
-        />
-      ))}
-    </ListBox>
+    <div className={cn("flex flex-col", className)}>
+      <SideNavToolbar className="flex-none" uiState={uiState} />
+      <div className="flex-1 overflow-auto font-mono text-sm py-2">
+        <ListBox aria-label="Navigation" onAction={onNavigate}>
+          {fileNames.map((fileName) => (
+            <NavItem
+              key={fileName}
+              fileName={fileName}
+              isActive={fileName === activeFileName}
+              events={events}
+            />
+          ))}
+        </ListBox>
+      </div>
+    </div>
   );
 };
 
@@ -79,17 +80,17 @@ export const NavItem: React.FC<NavItemProps> = (props) => {
       ref={elementRef}
       className={cn(
         "px-2 py-1 truncate text-left cursor-pointer",
-        "focus:outline-none focus-visible:ring-2",
+        "ra-focus:outline-none ra-focus-visible:ring-2",
         isActive
-          ? "bg-gray-200"
-          : "hover:bg-gray-100 focus-visible:bg-gray-100",
+          ? "bg-primary-100"
+          : "ra-hover:bg-gray-200 ra-focus-visible:bg-gray-100 text-gray-500",
         className,
       )}
       id={fileName}
       textValue={fileName}
     >
-      <span className="text-gray-500">{dirname}</span>
-      <span className={isActive ? "font-bold text-gray-950" : "text-gray-500"}>
+      <span>{dirname}</span>
+      <span className={cn("text-gray-950", isActive && "font-bold")}>
         {basename}
       </span>
     </Item>

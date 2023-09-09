@@ -10,10 +10,15 @@ export type NotebookUIEvent =
 export interface NotebookUIStateValue {
   rootElementRef: React.RefObject<HTMLDivElement>;
   events: EventBus<NotebookUIEvent>;
+
   isOpened: (fileName: string) => boolean;
-  visibleFileNames: Set<string>;
   toggleOpen: (fileName: string, force?: boolean) => boolean;
+
+  visibleFileNames: Set<string>;
   setIsVisible: (fileName: string, isVisible: boolean) => void;
+
+  isAdding: boolean;
+  setIsAdding: (isAdding: boolean) => void;
 }
 export type NotebookUIState = StoreApi<NotebookUIStateValue>;
 
@@ -24,8 +29,8 @@ function createUIState(): NotebookUIState {
   return createStore<NotebookUIStateInternalValue>((set, get) => ({
     rootElementRef: React.createRef(),
     events: createEventBus(),
+
     isCollapsed: {},
-    visibleFileNames: new Set(),
     isOpened: (fileName) => !get().isCollapsed[fileName],
     toggleOpen: (fileName, force) => {
       set((s) => ({
@@ -36,6 +41,8 @@ function createUIState(): NotebookUIState {
       }));
       return !get().isCollapsed[fileName];
     },
+
+    visibleFileNames: new Set(),
     setIsVisible: (fileName, isVisible) =>
       set((s) => {
         const visibleFileNames = new Set(s.visibleFileNames);
@@ -46,6 +53,9 @@ function createUIState(): NotebookUIState {
         }
         return { visibleFileNames };
       }),
+
+    isAdding: false,
+    setIsAdding: (isAdding) => set({ isAdding }),
   }));
 }
 
