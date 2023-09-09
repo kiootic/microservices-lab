@@ -7,6 +7,7 @@ import { WorkspaceFile } from "../../model/workspace";
 import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
 import { NotebookUIState } from "./useNotebook";
+import { EditorView } from "@codemirror/view";
 
 interface FileViewProps {
   className?: string;
@@ -32,11 +33,14 @@ export const FileView: React.FC<FileViewProps> = (props) => {
     setIsVisible(file.name, isVisible);
   }, [setIsVisible, file.name, isVisible]);
 
+  const editorRef = useRef<EditorView | null>(null);
+
   const events = useStore(uiState, (s) => s.events);
   useEvent(events, "navigate", (e) => {
     if (e.fileName === file.name) {
       ReactDOM.flushSync(() => toggleOpen(file.name, true));
       contentElementRef.current?.scrollIntoView({ behavior: "smooth" });
+      editorRef.current?.focus();
     }
   });
 
@@ -50,7 +54,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
         >
           <FileHeader file={file} uiState={uiState} />
         </summary>
-        <WorkspaceFileEditor file={file} />
+        <WorkspaceFileEditor ref={editorRef} file={file} />
       </details>
     </div>
   );
