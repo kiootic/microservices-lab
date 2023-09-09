@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import cn from "clsx";
 import { useStore } from "zustand";
 import { WorkspaceFile } from "../../model/workspace";
@@ -14,11 +14,6 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
   const { className, uiState, file } = props;
 
   const isOpened = useStore(uiState, (s) => s.isOpened(file.name));
-  const toggleOpen = useStore(uiState, (s) => s.toggleOpen);
-
-  const handleToggleOnClick = useCallback(() => {
-    toggleOpen(file.name);
-  }, [toggleOpen, file]);
 
   return (
     <div
@@ -27,18 +22,14 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
         className,
       )}
     >
-      <button
-        type="button"
-        className="w-12 h-full flex items-center justify-center"
-        onClick={handleToggleOnClick}
-      >
+      <span className="w-12 h-full flex items-center justify-center">
         <span
           className={cn(
             "codicon",
             isOpened ? "codicon-chevron-down" : "codicon-chevron-right",
           )}
         />
-      </button>
+      </span>
       <div className="pl-2 pr-4">
         <span className="font-mono">{file.name}</span>
       </div>
