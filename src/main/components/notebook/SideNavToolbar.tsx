@@ -15,9 +15,8 @@ interface SideNavToolbarProps {
 export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
   const { className, uiState } = props;
 
-  const setIsAdding = useStore(uiState, (s) => s.setIsAdding);
   const handleAddOnCLick = useEventCallback(() => {
-    setIsAdding(true);
+    uiState.getState().startAction({ kind: "add" });
   });
 
   const events = useStore(uiState, (s) => s.events);

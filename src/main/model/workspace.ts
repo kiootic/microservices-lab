@@ -61,6 +61,7 @@ export interface WorkspaceValue {
   lang: ts.LanguageService;
 
   createFile: (fileName: string, text: string) => boolean;
+  renameFile: (fileName: string, newFileName: string) => boolean;
   getFile: (fileName: string) => WorkspaceFile;
 }
 export type Workspace = StoreApi<WorkspaceValue>;
@@ -130,6 +131,24 @@ export function makeWorkspace() {
 
         const fileNames = get().fileNames.slice();
         fileNames.push(fileName);
+        fileNames.sort(compareFileName);
+        set({ fileNames });
+        return true;
+      },
+
+      renameFile: (fileName: string, newFileName: string) => {
+        if (
+          !vfs.exists(fileName) ||
+          vfs.exists(newFileName) ||
+          !isValidFileName(newFileName)
+        ) {
+          return false;
+        }
+        store.set(newFileName, store.get(fileName) ?? "");
+        store.delete(fileName);
+
+        let fileNames = get().fileNames.slice();
+        fileNames = fileNames.map((n) => (n === fileName ? newFileName : n));
         fileNames.sort(compareFileName);
         set({ fileNames });
         return true;
