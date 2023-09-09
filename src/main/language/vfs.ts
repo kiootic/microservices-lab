@@ -29,8 +29,17 @@ export function mapStore(): Store {
   const files = new Map<string, string>();
   const subscribers = new Set<() => void>();
 
+  let isNotifying = false;
   function notify() {
-    queueMicrotask(() => subscribers.forEach((cb) => cb()));
+    if (isNotifying) {
+      return;
+    }
+
+    isNotifying = true;
+    queueMicrotask(() => {
+      isNotifying = false;
+      subscribers.forEach((cb) => cb());
+    });
   }
 
   return {

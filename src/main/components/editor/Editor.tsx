@@ -5,7 +5,7 @@ import {
 } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView, highlightSpecialChars, keymap } from "@codemirror/view";
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useImperativeHandle, useLayoutEffect, useRef } from "react";
 import { themeExtension } from "./theme";
 
 const minimalSetup: Extension = [
@@ -22,24 +22,37 @@ interface EditorProps {
   extension?: Extension;
 }
 
-export const Editor: React.FC<EditorProps> = (props) => {
-  const { className, initialText, extension } = props;
+export const Editor = React.forwardRef<EditorView | null, EditorProps>(
+  (props, ref) => {
+    const { className, initialText, extension } = props;
 
-  const element = useRef<HTMLDivElement>(null);
-  const text = useRef(initialText);
+    const element = useRef<HTMLDivElement>(null);
+    const initialTextRef = useRef(initialText);
+    const viewRef = useRef<EditorView | null>(null);
 
-  useLayoutEffect(() => {
-    if (element.current == null) {
-      return;
-    }
+    useImperativeHandle<EditorView | null, EditorView | null>(
+      ref,
+      () => viewRef.current,
+    );
 
-    const state = EditorState.create({
-      doc: text.current,
-      extensions: [extension ?? [], minimalSetup],
-    });
-    const view = new EditorView({ parent: element.current, state });
-    return () => view.destroy();
-  }, [extension]);
+    useLayoutEffect(() => {
+      if (element.current == null) {
+        viewRef.current = null;
+        return;
+      }
 
-  return <div ref={element} className={className}></div>;
-};
+      const state = EditorState.create({
+        doc: viewRef.current?.state.doc ?? initialTextRef.current,
+        extensions: [extension ?? [], minimalSetup],
+      });
+      const view = new EditorView({ parent: element.current, state });
+      viewRef.current = view;
+
+      return () => {
+        view.destroy();
+      };
+    }, [extension]);
+
+    return <div ref={element} className={className}></div>;
+  },
+);
