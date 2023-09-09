@@ -5,7 +5,12 @@ import {
 } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView, highlightSpecialChars, keymap } from "@codemirror/view";
-import React, { useImperativeHandle, useLayoutEffect, useRef } from "react";
+import React, {
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { themeExtension } from "./theme";
 
 const minimalSetup: Extension = [
@@ -29,6 +34,7 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
     const element = useRef<HTMLDivElement>(null);
     const initialTextRef = useRef(initialText);
     const viewRef = useRef<EditorView | null>(null);
+    const [, render] = useState({});
 
     useImperativeHandle<EditorView | null, EditorView | null>(
       ref,
@@ -47,6 +53,7 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
       });
       const view = new EditorView({ parent: element.current, state });
       viewRef.current = view;
+      render({});
 
       return () => {
         view.destroy();
