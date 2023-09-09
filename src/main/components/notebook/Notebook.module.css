@@ -1,5 +1,5 @@
 .content::after {
   content: "";
   display: block;
-  height: calc(100% - 8rem);
+  height: calc(100% - 4rem);
 }

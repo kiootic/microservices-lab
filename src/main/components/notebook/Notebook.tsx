@@ -28,6 +28,7 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
         {files.map((file) => (
           <FileView key={file.name} file={file} uiState={uiState} />
         ))}
+        <hr className="ml-12 flex-1 border-t-2 mt-5" />
       </div>
     </div>
   );
