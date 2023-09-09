@@ -3,7 +3,33 @@ import { createLanguageService } from "../language/host";
 import { mapStore, Store, storeVfs, Vfs } from "../language/vfs";
 import ts from "typescript";
 
+export function isValidFileName(fileName: string) {
+  if (!fileName.startsWith("/")) {
+    return false;
+  }
+  const segments = fileName.slice(1).split("/");
+  return segments.every((s) => s !== "" && s !== "." && s !== "..");
+}
+
+function compareFileName(a: string, b: string) {
+  const aSegments = a.split("/");
+  const bSegments = b.split("/");
+  if (aSegments.length !== bSegments.length) {
+    return aSegments.length - bSegments.length;
+  }
+  for (let i = 0; i < aSegments.length; i++) {
+    const cmp = aSegments[i].localeCompare(bSegments[i], undefined, {
+      sensitivity: "base",
+    });
+    if (cmp !== 0) {
+      return cmp;
+    }
+  }
+  return 0;
+}
+
 export interface WorkspaceFile {
+  workspace: Workspace;
   vfs: Vfs;
   name: string;
 
@@ -34,6 +60,7 @@ export interface WorkspaceValue {
   vfs: Vfs;
   lang: ts.LanguageService;
 
+  createFile: (fileName: string, text: string) => boolean;
   getFile: (fileName: string) => WorkspaceFile;
 }
 export type Workspace = StoreApi<WorkspaceValue>;
@@ -53,7 +80,7 @@ function wrapStore(inner: Store, workspace: Workspace): Store {
         workspace.setState((state) => ({
           isDirty: true,
           fileNames: isNew
-            ? [...state.fileNames, fileName].sort()
+            ? [...state.fileNames, fileName].sort(compareFileName)
             : state.fileNames,
         }));
       }
@@ -77,13 +104,14 @@ function wrapStore(inner: Store, workspace: Workspace): Store {
 const compilerOptions = {
   target: "ES2020",
   baseUrl: "/",
+  module: "ES2020",
   moduleResolution: "bundler",
   isolatedModules: true,
   strict: true,
 };
 
 export function makeWorkspace() {
-  return createStore<WorkspaceValue>()((_set, _get, workspace) => {
+  return createStore<WorkspaceValue>()((set, get, workspace) => {
     const store = mapStore();
     const vfs = storeVfs(wrapStore(store, workspace));
     const lang = createLanguageService(vfs, compilerOptions);
@@ -93,6 +121,20 @@ export function makeWorkspace() {
       fileNames: [],
       vfs,
       lang,
+
+      createFile: (fileName: string, text: string) => {
+        if (vfs.exists(fileName) || !isValidFileName(fileName)) {
+          return false;
+        }
+        store.set(fileName, text);
+
+        const fileNames = get().fileNames.slice();
+        fileNames.push(fileName);
+        fileNames.sort(compareFileName);
+        set({ fileNames });
+        return true;
+      },
+
       getFile: (fileName) => {
         if (!vfs.exists(fileName)) {
           vfs.write(fileName, "");
@@ -101,6 +143,7 @@ export function makeWorkspace() {
         let file = fileCache.get(fileName);
         if (file == null) {
           file = {
+            workspace,
             name: fileName,
             vfs,
 
