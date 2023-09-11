@@ -1,10 +1,12 @@
 import cn from "clsx";
-import React, { useMemo, useRef } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ListState, Selection } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Workspace } from "../../model/workspace";
+import { AppButton } from "../AppButton";
+import { AppDialog } from "../Dialog";
 import { ListBox } from "../ListBox";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
@@ -76,6 +78,9 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
     const focusedFileName = state.selectionManager.focusedKey
       ? String(state.selectionManager.focusedKey)
       : null;
+    if (focusedFileName == null) {
+      return;
+    }
 
     switch (e.key) {
       case "ArrowUp": {
@@ -87,22 +92,27 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
         break;
       }
       case "Escape": {
-        if (focusedFileName != null) {
-          events.dispatch({
-            kind: "focus",
-            target: "editor",
-            fileName: focusedFileName,
-          });
-          e.stopPropagation();
-          e.preventDefault();
-        }
+        events.dispatch({
+          kind: "focus",
+          target: "editor",
+          fileName: focusedFileName,
+        });
+        e.stopPropagation();
+        e.preventDefault();
         break;
       }
       case " ": {
-        const fileName = String(
-          state.selectionManager.focusedKey ?? activeFileName,
-        );
-        uiState.getState().startAction({ kind: "rename", fileName });
+        uiState
+          .getState()
+          .startAction({ kind: "rename", fileName: focusedFileName });
+        e.stopPropagation();
+        e.preventDefault();
+        break;
+      }
+      case "Delete": {
+        uiState
+          .getState()
+          .startAction({ kind: "delete", fileName: focusedFileName });
         e.stopPropagation();
         e.preventDefault();
         break;
@@ -151,11 +161,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
                     className,
                   )}
                 >
-                  <NavItem
-                    fileName={fileName}
-                    isActive={isActive}
-                    uiState={uiState}
-                  />
+                  <NavItem fileName={fileName} isActive={isActive} />
                 </ListBox.Item>
               );
             })}
@@ -181,6 +187,12 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
           ) : null}
         </div>
       </div>
+      <DeleteDialog
+        isDeleting={action?.kind === "delete"}
+        fileName={action?.kind === "delete" ? action.fileName : null}
+        workspace={workspace}
+        uiState={uiState}
+      />
     </div>
   );
 };
@@ -189,10 +201,9 @@ interface NavItemProps {
   className?: string;
   fileName: string;
   isActive: boolean;
-  uiState: NotebookUIState;
 }
 
-export const NavItem: React.FC<NavItemProps> = (props) => {
+const NavItem: React.FC<NavItemProps> = (props) => {
   const { className, fileName, isActive } = props;
 
   const [dirname, basename] = useMemo(() => {
@@ -217,5 +228,71 @@ export const NavItem: React.FC<NavItemProps> = (props) => {
         {basename}
       </span>
     </div>
+  );
+};
+
+interface DeleteDialogProps {
+  isDeleting: boolean;
+  fileName: string | null;
+  workspace: Workspace;
+  uiState: NotebookUIState;
+}
+
+const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
+  const { isDeleting, fileName, workspace, uiState } = props;
+
+  const [displayFileName, setDisplayFileName] = useState(fileName);
+  useLayoutEffect(() => {
+    if (fileName != null) {
+      setDisplayFileName(fileName);
+    }
+  }, [fileName]);
+
+  const handleOnOpenChange = useEventCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      uiState.getState().endAction("delete");
+    }
+  });
+  const handleKeepOnClick = useEventCallback(() => {
+    uiState.getState().endAction("delete");
+  });
+
+  const handleDeleteOnClick = useEventCallback(() => {
+    const action = uiState.getState().endAction("delete");
+    if (action != null) {
+      workspace.getState().vfs.delete(action.fileName);
+      uiState.getState().events.dispatch({ kind: "focus", target: "nav" });
+    }
+  });
+
+  return (
+    <AppDialog.ModalOverlay
+      isOpen={isDeleting}
+      isDismissable={true}
+      onOpenChange={handleOnOpenChange}
+    >
+      <AppDialog.Modal>
+        <AppDialog className="select-none">
+          <AppDialog.Heading>Delete {displayFileName}</AppDialog.Heading>
+          <AppDialog.Actions>
+            <AppButton
+              variant="destructive"
+              className="flex-none"
+              onPress={handleDeleteOnClick}
+            >
+              Delete
+            </AppButton>
+            <AppButton
+              variant="secondary"
+              className="flex-none"
+              autoFocus
+              onPress={handleKeepOnClick}
+            >
+              Keep
+            </AppButton>
+          </AppDialog.Actions>
+        </AppDialog>
+      </AppDialog.Modal>
+    </AppDialog.ModalOverlay>
   );
 };

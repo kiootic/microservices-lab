@@ -93,7 +93,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
     <div className={className}>
       <details ref={contentElementRef} open={isOpened}>
         <summary
-          className="marker:content-none cursor-pointer focus:outline-none"
+          className="marker:content-none cursor-pointer outline-none"
           tabIndex={-1}
           onClick={handleSummaryOnClick}
         >

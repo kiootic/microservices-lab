@@ -47,10 +47,17 @@ export const FileNameEntry: React.FC<FileNameEntryProps> = (props) => {
         if (currentFileName != null) {
           workspace.getState().renameFile(currentFileName, newFileName);
         } else {
-          workspace.getState().createFile(newFileName, "//\n");
+          workspace.getState().vfs.write(newFileName, "//\n");
         }
       });
       events.dispatch({ kind: "show", fileName: newFileName });
+      if (currentFileName == null) {
+        events.dispatch({
+          kind: "focus",
+          target: "editor",
+          fileName: newFileName,
+        });
+      }
     } else {
       events.dispatch({ kind: "focus", target: "nav" });
     }

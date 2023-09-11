@@ -5,7 +5,8 @@ import { EventBus, createEventBus } from "../../hooks/event-bus";
 
 export type NotebookAction =
   | { kind: "add" }
-  | { kind: "rename"; fileName: string };
+  | { kind: "rename"; fileName: string }
+  | { kind: "delete"; fileName: string };
 
 export type NotebookUIEvent =
   | { kind: "show"; fileName: string }
@@ -25,7 +26,9 @@ export interface NotebookUIStateValue {
 
   activeAction: NotebookAction | null;
   startAction: (action: NotebookAction) => void;
-  endAction: (kind: NotebookAction["kind"]) => boolean;
+  endAction: <K extends NotebookAction["kind"]>(
+    kind: K,
+  ) => (NotebookAction & { kind: K }) | null;
 }
 export type NotebookUIState = StoreApi<NotebookUIStateValue>;
 
@@ -66,12 +69,13 @@ function createUIState(): NotebookUIState {
 
       activeAction: null,
       startAction: (action) => set({ activeAction: action }),
-      endAction: (kind) => {
-        if (get().activeAction?.kind !== kind) {
-          return false;
+      endAction: <K extends NotebookAction["kind"]>(kind: K) => {
+        const action = get().activeAction;
+        if (action?.kind !== kind) {
+          return null;
         }
         set({ activeAction: null });
-        return true;
+        return action as NotebookAction & { kind: K };
       },
     };
   });

@@ -13,6 +13,16 @@ export default {
     },
     extend: {
       ringColor: ({ theme }) => ({ DEFAULT: theme("colors.primary.400") }),
+      animation: {
+        "fade-in": "fade 150ms ease-out",
+        "fade-out": "fade 150ms reverse ease-in",
+      },
+      keyframes: {
+        fade: {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+      },
     },
   },
   future: { hoverOnlyWhenSupported: true },

@@ -14,7 +14,7 @@ export const IconButton: React.FC<IconButtonProps> = (props) => {
       className={cn(
         "w-8 h-8 inline-flex items-center justify-center",
         "rounded ra-hover:bg-gray-200 ra-pressed:bg-gray-300",
-        "ra-focus:outline-none ra-focus-visible:bg-gray-100 ra-focus-visible:ring-1",
+        "outline-none ra-focus-visible:bg-gray-100 ra-focus-visible:ring-1",
         className,
       )}
       {...rest}
