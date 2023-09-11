@@ -1,12 +1,13 @@
 import cn from "clsx";
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Item, ListBox } from "react-aria-components";
 import ReactDOM from "react-dom";
+import { ListState, Selection } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Vfs } from "../../language/vfs";
 import { Workspace, isValidFileName } from "../../model/workspace";
+import { ListBox } from "../ListBox";
 import { SideNavToolbar } from "./SideNavToolbar";
 import { NotebookUIState } from "./useNotebook";
 
@@ -45,13 +46,83 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
     [fileNames, action],
   );
 
+  const stateRef = useRef<ListState<unknown>>(null);
+
+  const selectedKeys = useMemo(
+    () => (activeFileName == null ? [] : [activeFileName]),
+    [activeFileName],
+  );
+
+  const handleListOnSelectionChange = useEventCallback(
+    (selection: Selection) => {
+      if (selection instanceof Set) {
+        const fileName = String([...selection][0]);
+        events.dispatch({ kind: "show", fileName });
+      }
+    },
+  );
+
   const handleListOnAction = useEventCallback((fileName: React.Key) => {
-    events.dispatch({ kind: "navigate", fileName: String(fileName) });
+    events.dispatch({
+      kind: "focus",
+      target: "editor",
+      fileName: String(fileName),
+    });
   });
 
   const handleListOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      events.dispatch({ kind: "focus", target: "nav-toolbar" });
+    if (action != null) {
+      return;
+    }
+
+    const state = stateRef.current;
+    if (state == null) {
+      return;
+    }
+    const focusedFileName = state.selectionManager.focusedKey
+      ? String(state.selectionManager.focusedKey)
+      : null;
+
+    switch (e.key) {
+      case "ArrowUp": {
+        if (focusedFileName === state.collection.getFirstKey()) {
+          events.dispatch({ kind: "focus", target: "nav-toolbar" });
+          e.stopPropagation();
+          e.preventDefault();
+        }
+        break;
+      }
+      case "Escape": {
+        if (focusedFileName != null) {
+          events.dispatch({
+            kind: "focus",
+            target: "editor",
+            fileName: focusedFileName,
+          });
+          e.stopPropagation();
+          e.preventDefault();
+        }
+        break;
+      }
+      case " ": {
+        const fileName = String(
+          state.selectionManager.focusedKey ?? activeFileName,
+        );
+        uiState.getState().startAction({ kind: "rename", fileName });
+        e.stopPropagation();
+        e.preventDefault();
+        break;
+      }
+    }
+  });
+
+  useEvent(events, "focus", (e) => {
+    if (e.target === "nav") {
+      const fileName = e.fileName ?? activeFileName;
+      if (fileName != null) {
+        stateRef.current?.selectionManager.setFocusedKey(fileName);
+        stateRef.current?.selectionManager.setFocused(true);
+      }
     }
   });
 
@@ -60,18 +131,40 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
       <SideNavToolbar className="flex-none" uiState={uiState} />
       <div
         className="flex-1 overflow-auto font-mono text-sm py-2"
-        onKeyDown={handleListOnKeyDown}
+        onKeyDownCapture={handleListOnKeyDown}
       >
         <div className="relative">
-          <ListBox aria-label="Navigation" onAction={handleListOnAction}>
-            {fileNames.map((fileName) => (
-              <NavItem
-                key={fileName}
-                fileName={fileName}
-                isActive={fileName === activeFileName}
-                uiState={uiState}
-              />
-            ))}
+          <ListBox
+            aria-label="Navigation"
+            onAction={handleListOnAction}
+            selectedKeys={selectedKeys}
+            onSelectionChange={handleListOnSelectionChange}
+            selectionMode="single"
+            selectionBehavior="replace"
+            stateRef={stateRef}
+          >
+            {fileNames.map((fileName) => {
+              const isActive = fileName === activeFileName;
+              return (
+                <ListBox.Item
+                  key={fileName}
+                  textValue={fileName}
+                  className={cn(
+                    isActive && "bg-primary-100",
+                    "outline-none ring-inset ra-focus-visible:ring-1",
+                    !isActive &&
+                      "ra-hover:bg-gray-200 ra-focus-visible:bg-gray-100",
+                    className,
+                  )}
+                >
+                  <NavItem
+                    fileName={fileName}
+                    isActive={isActive}
+                    uiState={uiState}
+                  />
+                </ListBox.Item>
+              );
+            })}
           </ListBox>
 
           {action?.kind === "add" ? (
@@ -102,7 +195,7 @@ interface NavItemProps {
 }
 
 export const NavItem: React.FC<NavItemProps> = (props) => {
-  const { className, fileName, isActive, uiState } = props;
+  const { className, fileName, isActive } = props;
 
   const [dirname, basename] = useMemo(() => {
     const pathname = fileName.replace(/^\//, "");
@@ -113,49 +206,19 @@ export const NavItem: React.FC<NavItemProps> = (props) => {
     return [pathname.slice(0, lastSlash + 1), pathname.slice(lastSlash + 1)];
   }, [fileName]);
 
-  const elementRef = useRef<HTMLDivElement>(null);
-
-  const events = useStore(uiState, (s) => s.events);
-  useEvent(events, "focus", (e) => {
-    if (
-      e.target === "nav" &&
-      (e.fileName == null ? isActive : e.fileName === fileName)
-    ) {
-      elementRef.current?.focus();
-    }
-  });
-
-  const handleOnDoubleClick = useEventCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    uiState.getState().startAction({ kind: "rename", fileName });
-  });
-
   return (
-    <Item
-      ref={elementRef}
+    <div
       className={cn(
-        isActive && "bg-primary-100",
-        "outline-none ring-inset ra-focus-visible:ring-1",
-        !isActive && "ra-hover:bg-gray-200 ra-focus-visible:bg-gray-100",
         className,
+        "px-2 py-1 truncate text-left cursor-pointer",
+        !isActive && "text-gray-500",
       )}
-      id={fileName}
-      textValue={fileName}
     >
-      <div
-        className={cn(
-          "px-2 py-1 truncate text-left cursor-pointer",
-          !isActive && "text-gray-500",
-        )}
-        onDoubleClick={handleOnDoubleClick}
-      >
-        <span>{dirname}</span>
-        <span className={cn("text-gray-950", isActive && "font-bold")}>
-          {basename}
-        </span>
-      </div>
-    </Item>
+      <span>{dirname}</span>
+      <span className={cn("text-gray-950", isActive && "font-bold")}>
+        {basename}
+      </span>
+    </div>
   );
 };
 
@@ -173,16 +236,18 @@ const AddFileEntry: React.FC<AddFileEntryProps> = (props) => {
     return validateNewFileName(vfs, newFileName);
   });
 
-  const handleOnFinishEdit = useEventCallback((fileName: string | null) => {
+  const handleOnFinishEdit = useEventCallback((newFileName: string | null) => {
     if (!uiState.getState().endAction("add")) {
       return;
     }
 
-    if (fileName != null) {
+    if (newFileName != null) {
       ReactDOM.flushSync(() => {
-        workspace.getState().createFile(fileName, "//\n");
+        workspace.getState().createFile(newFileName, "//\n");
       });
-      uiState.getState().events.dispatch({ kind: "navigate", fileName });
+      uiState
+        .getState()
+        .events.dispatch({ kind: "show", fileName: newFileName });
     } else {
       uiState.getState().events.dispatch({ kind: "focus", target: "nav" });
     }
@@ -226,9 +291,11 @@ const RenameFileEntry: React.FC<RenameFileEntryProps> = (props) => {
       });
       uiState
         .getState()
-        .events.dispatch({ kind: "navigate", fileName: newFileName });
+        .events.dispatch({ kind: "show", fileName: newFileName });
     } else {
-      uiState.getState().events.dispatch({ kind: "focus", target: "nav" });
+      uiState
+        .getState()
+        .events.dispatch({ kind: "focus", target: "nav", fileName });
     }
   });
 

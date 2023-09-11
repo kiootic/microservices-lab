@@ -34,11 +34,10 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   const editorRef = useRef<EditorView | null>(null);
 
   const events = useStore(uiState, (s) => s.events);
-  useEvent(events, "navigate", (e) => {
-    if (e.fileName === file.name) {
+  useEvent(events, "focus", (e) => {
+    if (e.target === "editor" && e.fileName === file.name) {
       ReactDOM.flushSync(() => toggleOpen(file.name, true));
-
-      contentElementRef.current?.scrollIntoView();
+      editorRef.current?.focus();
 
       if (editorRef.current != null) {
         const view = editorRef.current;
@@ -52,8 +51,14 @@ export const FileView: React.FC<FileViewProps> = (props) => {
         ) {
           element.scrollIntoView({ block: "center" });
         }
-        view.focus();
       }
+    }
+  });
+  useEvent(events, "show", (e) => {
+    if (e.fileName === file.name) {
+      ReactDOM.flushSync(() => toggleOpen(file.name, true));
+
+      contentElementRef.current?.scrollIntoView();
     }
   });
 
@@ -89,6 +94,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
       <details ref={contentElementRef} open={isOpened}>
         <summary
           className="marker:content-none cursor-pointer focus:outline-none"
+          tabIndex={-1}
           onClick={handleSummaryOnClick}
         >
           <FileHeader file={file} uiState={uiState} />

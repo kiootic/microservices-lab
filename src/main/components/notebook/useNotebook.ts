@@ -8,8 +8,9 @@ export type NotebookAction =
   | { kind: "rename"; fileName: string };
 
 export type NotebookUIEvent =
-  | { kind: "navigate"; fileName: string }
+  | { kind: "show"; fileName: string }
   | { kind: "focus"; target: "nav"; fileName?: string }
+  | { kind: "focus"; target: "editor"; fileName: string }
   | { kind: "focus"; target: "nav-toolbar" };
 
 export interface NotebookUIStateValue {

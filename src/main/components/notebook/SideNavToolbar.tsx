@@ -21,7 +21,7 @@ export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
 
   const events = useStore(uiState, (s) => s.events);
   const handleOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === "ArrowDown") {
       events.dispatch({ kind: "focus", target: "nav" });
     }
   });
