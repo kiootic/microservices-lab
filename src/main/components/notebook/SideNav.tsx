@@ -1,6 +1,6 @@
 import cn from "clsx";
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ListState, Selection } from "react-stately";
+import { ListState } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
@@ -44,26 +44,9 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
 
   const stateRef = useRef<ListState<unknown>>(null);
 
-  const selectedKeys = useMemo(
-    () => (activeFileName == null ? [] : [activeFileName]),
-    [activeFileName],
-  );
-
-  const handleListOnSelectionChange = useEventCallback(
-    (selection: Selection) => {
-      if (selection instanceof Set) {
-        const fileName = String([...selection][0]);
-        events.dispatch({ kind: "show", fileName });
-      }
-    },
-  );
-
-  const handleListOnAction = useEventCallback((fileName: React.Key) => {
-    events.dispatch({
-      kind: "focus",
-      target: "editor",
-      fileName: String(fileName),
-    });
+  const handleListOnAction = useEventCallback((key: React.Key) => {
+    const fileName = String(key);
+    events.dispatch({ kind: "show", fileName });
   });
 
   const handleListOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
@@ -89,6 +72,16 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
           e.stopPropagation();
           e.preventDefault();
         }
+        break;
+      }
+      case "Enter": {
+        events.dispatch({
+          kind: "focus",
+          target: "editor",
+          fileName: focusedFileName,
+        });
+        e.stopPropagation();
+        e.preventDefault();
         break;
       }
       case "Escape": {
@@ -137,10 +130,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
           <ListBox
             aria-label="Navigation"
             onAction={handleListOnAction}
-            selectedKeys={selectedKeys}
-            onSelectionChange={handleListOnSelectionChange}
-            selectionMode="single"
-            selectionBehavior="replace"
+            selectionMode="none"
             stateRef={stateRef}
           >
             {fileNames.map((fileName) => {
@@ -201,6 +191,13 @@ const NavItem: React.FC<NavItemProps> = (props) => {
     return [pathname.slice(0, lastSlash + 1), pathname.slice(lastSlash + 1)];
   }, [fileName]);
 
+  const { events } = useNotebookContext();
+  const handleOnDoubleClick = useEventCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    events.dispatch({ kind: "focus", target: "editor", fileName });
+  });
+
   return (
     <div
       className={cn(
@@ -208,6 +205,7 @@ const NavItem: React.FC<NavItemProps> = (props) => {
         "px-2 py-1 truncate text-left cursor-pointer",
         !isActive && "text-gray-500"
       )}
+      onDoubleClick={handleOnDoubleClick}
     >
       <span>{dirname}</span>
       <span className={cn("text-gray-950", isActive && "font-bold")}>
