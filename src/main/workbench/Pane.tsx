@@ -29,13 +29,14 @@ export const Pane: React.FC<PaneProps> = (props) => {
 
   return (
     <Tabs
-      className={cn("flex flex-col border-x-2 border-b-2", className)}
+      className={cn("flex flex-col border", className)}
+      keyboardActivation="manual"
       selectedKey={currentView}
       onSelectionChange={handleOnSelectionChange}
     >
       <TabList
         className={cn(
-          "flex-none h-10 flex after:flex-1 after:bg-gray-100 after:border-y-2",
+          "flex-none h-10 flex after:flex-1 after:bg-gray-100 after:border-t after:border-b-2",
         )}
         aria-label={paneName(pane)}
       >
@@ -43,11 +44,14 @@ export const Pane: React.FC<PaneProps> = (props) => {
           <Tab
             className={cn(
               "px-5 flex items-center",
-              "border-y-2 border-r-2 bg-gray-100",
+              "border-b-2 border-t border-r-2 bg-gray-100",
               "cursor-pointer",
-              "outline-none ring-inset ring-offset-0 ra-focus-visible:ring-1",
+              "outline-none underline-offset-8 decoration-2 ra-focus-visible:underline ra-focus-visible:decoration-primary-400",
               "ra-hover:bg-gray-50",
-              "ra-selected:border-b-transparent ra-selected:border-t-primary-500 ra-selected:bg-transparent",
+              "ra-selected:border-y-transparent ra-selected:bg-transparent",
+              "relative before:absolute before:inset-x-0 before:top-0 before:-mx-px before:-my-px",
+              "before:border-t-2 before:border-t-primary-500",
+              "before:hidden ra-selected:before:block",
             )}
             key={view.id}
             id={view.id}

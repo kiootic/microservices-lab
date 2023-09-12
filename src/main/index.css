@@ -1,4 +1,5 @@
 @import "../../codicon/codicon.css";
+@import "allotment/dist/style.css";
 
 @tailwind base;
 @tailwind components;
@@ -9,5 +10,9 @@
     @apply text-base bg-gray-50 text-primary-950;
     @apply select-none;
     -webkit-tap-highlight-color: transparent;
+  }
+  :root {
+    --separator-border: theme(borderColor.DEFAULT);
+    --focus-border: theme(colors.primary.600);
   }
 }

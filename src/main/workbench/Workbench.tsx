@@ -8,6 +8,7 @@ import {
 } from "./useWorkbench";
 import cn from "clsx";
 import { Pane } from "./Pane";
+import { Allotment } from "allotment";
 
 interface WorkbenchProps {
   className?: string;
@@ -58,10 +59,10 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   return (
     <WorkbenchContext.Provider value={context}>
-      <div className={cn(className, "p-4 flex gap-x-4")}>
-        <Pane className="flex-1" pane="primary" />
-        <Pane className="flex-1" pane="secondary" />
-      </div>
+      <Allotment className={cn(className)} minSize={375}>
+        <Pane className="h-full" pane="primary" />
+        <Pane className="h-full" pane="secondary" />
+      </Allotment>
     </WorkbenchContext.Provider>
   );
 };
