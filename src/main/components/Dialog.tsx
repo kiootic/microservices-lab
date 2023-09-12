@@ -31,7 +31,7 @@ const AppModalOverlay: React.FC<ModalOverlayProps> = (props) => {
         "fixed inset-0 w-screen h-[--visual-viewport-height]",
         "flex items-center justify-center p-4",
         "ra-entering:animate-fade-in ra-exiting:animate-fade-out",
-        "bg-gray-800/50",
+        "bg-gray-200/70",
         className,
       )}
       {...rest}
@@ -45,8 +45,8 @@ const AppModal: React.FC<ModalOverlayProps> = (props) => {
   return (
     <Modal
       className={cn(
-        "rounded-xl bg-gray-50 shadow-sm",
-        "px-6 py-4 w-96 min-w-min max-w-full",
+        "rounded-lg bg-gray-50 shadow-lg",
+        "px-6 py-5 w-96 min-w-min max-w-full",
         className,
       )}
       {...rest}

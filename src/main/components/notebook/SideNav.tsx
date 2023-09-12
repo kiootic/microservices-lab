@@ -24,7 +24,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
   const visibleFileNames = useStore(state, (s) => s.visibleFileNames);
   const activeFileName = useMemo(
     () => fileNames.find((n) => visibleFileNames.has(n)) ?? null,
-    [fileNames, visibleFileNames],
+    [fileNames, visibleFileNames]
   );
 
   const action = useStore(state, (s) => s.activeAction);
@@ -153,8 +153,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
                     isActive && "bg-primary-100",
                     "outline-none ring-inset ra-focus-visible:ring-1",
                     !isActive &&
-                      "ra-hover:bg-gray-200 ra-focus-visible:bg-gray-100",
-                    className,
+                      "ra-hover:bg-gray-200 ra-focus-visible:bg-gray-100"
                   )}
                 >
                   <NavItem fileName={fileName} isActive={isActive} />
@@ -207,7 +206,7 @@ const NavItem: React.FC<NavItemProps> = (props) => {
       className={cn(
         className,
         "px-2 py-1 truncate text-left cursor-pointer",
-        !isActive && "text-gray-500",
+        !isActive && "text-gray-500"
       )}
     >
       <span>{dirname}</span>

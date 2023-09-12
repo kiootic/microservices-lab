@@ -2,6 +2,8 @@ import cn from "clsx";
 import React from "react";
 import { useStore } from "zustand";
 import { useNotebookContext } from "./context";
+import { mergeProps, useHover, usePress } from "react-aria";
+import { useEventCallback } from "../../hooks/event-callback";
 
 interface FileHeaderProps {
   className?: string;
@@ -11,17 +13,34 @@ interface FileHeaderProps {
 export const FileHeader: React.FC<FileHeaderProps> = (props) => {
   const { className, fileName } = props;
 
-  const { state } = useNotebookContext();
+  const { state, toggleOpen } = useNotebookContext();
   const isOpened = useStore(state, (s) => !s.isCollapsed[fileName]);
+
+  const handleOnPress = useEventCallback(() => {
+    toggleOpen(fileName);
+  });
+  const { pressProps, isPressed } = usePress({
+    preventFocusOnPress: true,
+    onPress: handleOnPress,
+  });
+  const { hoverProps, isHovered } = useHover({});
 
   return (
     <div
+      {...mergeProps(pressProps, hoverProps)}
       className={cn(
-        "flex h-10 items-center text-sm hover:font-bold",
+        "flex h-10 items-center text-sm",
+        isHovered && "font-bold",
+        isPressed && "text-gray-600",
         className,
       )}
     >
-      <span className="flex-none w-12 h-full flex items-center justify-center">
+      <span
+        className={cn(
+          "flex-none w-12 h-full flex items-center justify-center",
+          !isHovered || isPressed ? "text-gray-400" : "",
+        )}
+      >
         <span
           className={cn(
             "codicon",

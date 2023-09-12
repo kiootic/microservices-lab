@@ -64,11 +64,6 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   const handleSummaryOnClick = useEventCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    if (ReactDOM.flushSync(() => toggleOpen(fileName))) {
-      editorRef.current?.focus();
-    } else {
-      events.dispatch({ kind: "focus", target: "nav", fileName });
-    }
   });
 
   const handleOnEscape = useEventCallback(() => {
@@ -95,7 +90,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
         <summary
           className="marker:content-none cursor-pointer outline-none"
           tabIndex={-1}
-          onClick={handleSummaryOnClick}
+          onClickCapture={handleSummaryOnClick}
         >
           <FileHeader fileName={fileName} />
         </summary>
