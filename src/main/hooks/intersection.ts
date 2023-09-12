@@ -2,15 +2,12 @@ import React, { useLayoutEffect, useState } from "react";
 
 const callbacks = new Map<Element, (isIntersecting: boolean) => void>();
 
-const observer = new IntersectionObserver(
-  (entries) => {
-    for (const entry of entries) {
-      const cb = callbacks.get(entry.target);
-      cb?.(entry.isIntersecting);
-    }
-  },
-  { rootMargin: "-4px" },
-);
+const observer = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
+    const cb = callbacks.get(entry.target);
+    cb?.(entry.isIntersecting);
+  }
+});
 
 export function useIntersection(
   element: React.RefObject<Element | null>,

@@ -9,6 +9,7 @@ import { useIntersection } from "../../hooks/intersection";
 import { isIntersecting } from "../../utils/intersection";
 import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
+import cn from "clsx";
 import { useNotebookContext } from "./context";
 
 interface FileViewProps {
@@ -26,8 +27,9 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   const isOpened = useStore(state, (s) => !s.isCollapsed[fileName]);
 
-  const contentElementRef = useRef<HTMLDetailsElement | null>(null);
-  const isVisible = useIntersection(contentElementRef);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentsRef = useRef<HTMLDetailsElement | null>(null);
+  const isVisible = useIntersection(containerRef);
   useEffect(() => {
     setIsVisible(fileName, isVisible);
   }, [setIsVisible, fileName, isVisible]);
@@ -58,7 +60,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
     if (e.fileName === fileName) {
       ReactDOM.flushSync(() => toggleOpen(fileName, true));
 
-      contentElementRef.current?.scrollIntoView();
+      contentsRef.current?.scrollIntoView();
     }
   });
 
@@ -94,23 +96,25 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   });
 
   return (
-    <div className={className}>
-      <details ref={contentElementRef} open={isOpened}>
-        <summary
-          className="marker:content-none cursor-pointer outline-none"
-          tabIndex={-1}
-          onClickCapture={handleSummaryOnClick}
-        >
-          <FileHeader fileName={fileName} />
-        </summary>
-        <WorkspaceFileEditor
-          ref={editorRef}
-          file={file}
-          extension={extension}
-          loadState={loadState}
-          saveState={saveState}
-        />
-      </details>
+    <div className={cn("flow-root", className)}>
+      <div ref={containerRef} className="flow-root mb-4">
+        <details className="-mb-4" ref={contentsRef} open={isOpened}>
+          <summary
+            className="marker:content-none cursor-pointer outline-none"
+            tabIndex={-1}
+            onClickCapture={handleSummaryOnClick}
+          >
+            <FileHeader fileName={fileName} />
+          </summary>
+          <WorkspaceFileEditor
+            ref={editorRef}
+            file={file}
+            extension={extension}
+            loadState={loadState}
+            saveState={saveState}
+          />
+        </details>
+      </div>
     </div>
   );
 };
