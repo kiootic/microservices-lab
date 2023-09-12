@@ -16,8 +16,6 @@ export type NotebookUIEvent =
 
 export interface NotebookUIState {
   isCollapsed: Partial<Record<string, boolean>>;
-  visibleFileNames: Set<string>;
-  activeAction: NotebookAction | null;
 }
 
 export interface NotebookController {
@@ -31,8 +29,6 @@ export function useNotebook(workspace: Workspace): NotebookController {
   const [state] = useState(() =>
     createStore<NotebookUIState>(() => ({
       isCollapsed: {},
-      visibleFileNames: new Set(),
-      activeAction: null,
     })),
   );
 

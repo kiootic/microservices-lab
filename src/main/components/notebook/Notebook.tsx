@@ -1,10 +1,14 @@
 import cn from "clsx";
-import React, { useMemo, useRef } from "react";
-import { useStore } from "zustand";
+import React, { useMemo, useRef, useState } from "react";
+import { createStore, useStore } from "zustand";
 import { FileView } from "./FileView";
 import styles from "./Notebook.module.css";
 import { SideNav } from "./SideNav";
-import { NotebookContext, NotebookContextValue } from "./context";
+import {
+  NotebookContext,
+  NotebookContextValue,
+  NotebookInternalState,
+} from "./context";
 import { NotebookAction, NotebookController } from "./useNotebook";
 
 interface NotebookProps {
@@ -19,9 +23,17 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
   const { workspace } = controller;
   const fileNames = useStore(workspace, (w) => w.fileNames);
 
+  const [internalState] = useState(() =>
+    createStore<NotebookInternalState>(() => ({
+      visibleFileNames: new Set(),
+      activeAction: null,
+    })),
+  );
+
   const context = useMemo<NotebookContextValue>(
     () => ({
       ...controller,
+      internalState,
       rootElementRef: ref,
       toggleOpen: (fileName, force) => {
         controller.state.setState((s) => ({
@@ -35,7 +47,7 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
 
       visibleFileNames: new Set(),
       setIsVisible: (fileName, isVisible) =>
-        controller.state.setState((s) => {
+        internalState.setState((s) => {
           const visibleFileNames = new Set(s.visibleFileNames);
           if (isVisible) {
             visibleFileNames.add(fileName);
@@ -46,18 +58,17 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
         }),
 
       activeAction: null,
-      startAction: (action) =>
-        controller.state.setState({ activeAction: action }),
+      startAction: (action) => internalState.setState({ activeAction: action }),
       endAction: <K extends NotebookAction["kind"]>(kind: K) => {
-        const action = controller.state.getState().activeAction;
+        const action = internalState.getState().activeAction;
         if (action?.kind !== kind) {
           return null;
         }
-        controller.state.setState({ activeAction: null });
+        internalState.setState({ activeAction: null });
         return action as NotebookAction & { kind: K };
       },
     }),
-    [controller],
+    [controller, internalState],
   );
 
   return (

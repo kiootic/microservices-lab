@@ -8,16 +8,22 @@ import {
   NotebookUIState,
 } from "./useNotebook";
 
+export interface NotebookInternalState {
+  visibleFileNames: Set<string>;
+  activeAction: NotebookAction | null;
+}
+
 export interface NotebookContextValue {
   workspace: Workspace;
   events: EventBus<NotebookUIEvent>;
   state: StoreApi<NotebookUIState>;
+  internalState: StoreApi<NotebookInternalState>;
 
   rootElementRef: React.RefObject<HTMLDivElement>;
 
-  toggleOpen: (fileName: string, force?: boolean) => boolean;
-
   setIsVisible: (fileName: string, isVisible: boolean) => void;
+
+  toggleOpen: (fileName: string, force?: boolean) => boolean;
 
   startAction: (action: NotebookAction) => void;
   endAction: <K extends NotebookAction["kind"]>(

@@ -18,16 +18,17 @@ interface SideNavProps {
 export const SideNav: React.FC<SideNavProps> = (props) => {
   const { className } = props;
 
-  const { workspace, events, state, startAction } = useNotebookContext();
+  const { workspace, events, internalState, startAction } =
+    useNotebookContext();
 
   const fileNames = useStore(workspace, (w) => w.fileNames);
-  const visibleFileNames = useStore(state, (s) => s.visibleFileNames);
+  const visibleFileNames = useStore(internalState, (s) => s.visibleFileNames);
   const activeFileName = useMemo(
     () => fileNames.find((n) => visibleFileNames.has(n)) ?? null,
     [fileNames, visibleFileNames],
   );
 
-  const action = useStore(state, (s) => s.activeAction);
+  const action = useStore(internalState, (s) => s.activeAction);
   const fileEntryStyle = useMemo<React.CSSProperties>(() => {
     if (action?.kind === "add") {
       return {};
