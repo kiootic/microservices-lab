@@ -25,22 +25,24 @@ export const WorkspaceFileEditor = React.forwardRef<
   const { className, file, extension: extraExt } = props;
 
   interface FileToken {
-    file: WorkspaceFile;
     version: number;
+    file: WorkspaceFile;
+    fileVersion: number;
   }
   const tokenRef = useRef<FileToken | null>(null);
   const token = useSyncExternalStore(
     useCallback((onChange) => file.vfs.subscribe(onChange), [file]),
     useCallback(() => {
-      const version = file.getFileVersion();
+      const fileVersion = file.getFileVersion();
       if (
         tokenRef.current == null ||
         tokenRef.current.file !== file ||
-        tokenRef.current.version !== version
+        tokenRef.current.fileVersion !== fileVersion
       ) {
         const token: FileToken = {
+          version: (tokenRef.current?.version ?? 0) + 1,
           file,
-          version,
+          fileVersion,
         };
         tokenRef.current = token;
       }
@@ -57,7 +59,7 @@ export const WorkspaceFileEditor = React.forwardRef<
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             token.file.write(update.state.doc.toString());
-            token.version = token.file.getFileVersion();
+            token.fileVersion = token.file.getFileVersion();
           }
         }),
         EditorView.lineWrapping,
@@ -80,6 +82,7 @@ export const WorkspaceFileEditor = React.forwardRef<
 
   return (
     <Editor
+      key={token.version}
       ref={ref}
       className={cn("text-sm", className)}
       initialText={initialText}
