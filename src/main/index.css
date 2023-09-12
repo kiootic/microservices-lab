@@ -6,7 +6,8 @@
 
 @layer base {
   body {
-    @apply text-base bg-gray-50 text-gray-950;
+    @apply text-base bg-gray-50 text-primary-950;
+    @apply select-none;
     -webkit-tap-highlight-color: transparent;
   }
 }

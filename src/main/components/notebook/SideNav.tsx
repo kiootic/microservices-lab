@@ -208,7 +208,7 @@ const NavItem: React.FC<NavItemProps> = (props) => {
       onDoubleClick={handleOnDoubleClick}
     >
       <span>{dirname}</span>
-      <span className={cn("text-gray-950", isActive && "font-bold")}>
+      <span className={cn("text-primary-950", isActive && "font-bold")}>
         {basename}
       </span>
     </div>
@@ -256,7 +256,7 @@ const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
       onOpenChange={handleOnOpenChange}
     >
       <AppDialog.Modal>
-        <AppDialog className="select-none">
+        <AppDialog>
           <AppDialog.Heading>Delete {displayFileName}</AppDialog.Heading>
           <AppDialog.Actions>
             <AppButton

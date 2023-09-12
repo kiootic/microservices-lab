@@ -62,7 +62,7 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
 
   return (
     <NotebookContext.Provider value={context}>
-      <div ref={ref} className={cn("flex select-none", className)}>
+      <div ref={ref} className={cn("flex", className)}>
         <SideNav className="flex-none w-64 border-r-2" />
         <div className={cn(styles["content"], "flex-1 overflow-auto")}>
           {fileNames.map((fileName) => (

@@ -13,7 +13,7 @@ export const AppButton: React.FC<AppButtonProps> = (props) => {
   return (
     <Button
       className={cn(
-        "h-9 px-6 inline-flex text-center items-center justify-center select-none",
+        "h-9 px-6 inline-flex text-center items-center justify-center",
         "rounded outline-none ra-focus-visible:ring-2 ring-offset-2",
         variant === "secondary" &&
           "border border-gray-500 ra-hover:bg-gray-200 ra-pressed:bg-gray-300 ra-focus-visible:bg-gray-100 ring-gray-300",
