@@ -1,28 +1,40 @@
+import { historyField } from "@codemirror/commands";
+import { foldState } from "@codemirror/language";
+import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import cn from "clsx";
 import React, {
   useCallback,
-  useMemo,
+  useLayoutEffect,
   useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import { typescriptIntegration } from "../../editor/typescript";
+import { useForwardedRef } from "../../hooks/ref";
 import { WorkspaceFile } from "../../model/workspace";
-import { Editor } from "./Editor";
+import { Editor, EditorProps, InitialEditorState } from "./Editor";
 import { setup } from "./extensions";
-import { Extension } from "@codemirror/state";
 
 interface WorkspaceFileEditorProps {
   className?: string;
   file: WorkspaceFile;
   extension?: Extension;
+  loadState?: () => unknown;
+  saveState?: (state: unknown) => void;
+}
+
+interface SavedState {
+  fileVersion: number;
+  json: unknown;
 }
 
 export const WorkspaceFileEditor = React.forwardRef<
   EditorView | null,
   WorkspaceFileEditorProps
->((props, ref) => {
-  const { className, file, extension: extraExt } = props;
+>((props, forwardedRef) => {
+  const { className, file, extension: extraExt, loadState, saveState } = props;
+  const ref = useForwardedRef(forwardedRef);
 
   interface FileToken {
     version: number;
@@ -50,17 +62,44 @@ export const WorkspaceFileEditor = React.forwardRef<
     }, [file]),
   );
 
-  const { initialText, extension } = useMemo(() => {
-    return {
-      initialText: token.file.read() ?? "",
+  const [editorProps, setEditorProps] = useState<EditorProps | null>(null);
+
+  useLayoutEffect(() => {
+    const doc = token.file.read() ?? "";
+    const initialState: InitialEditorState = {
+      fields: {},
+      json: EditorState.create({ doc }).toJSON(),
+    };
+
+    const loadedState = loadState?.() as SavedState | null | undefined;
+    if (
+      loadedState != null &&
+      loadedState.fileVersion === token.file.getFileVersion()
+    ) {
+      initialState.fields = persistedFields;
+      initialState.json = { ...(loadedState.json as object), doc };
+    }
+
+    setEditorProps({
+      initialState,
       extension: [
         setup,
         typescriptIntegration(token.file),
         EditorView.updateListener.of((update) => {
+          const state = update.state;
           if (update.docChanged) {
-            token.file.write(update.state.doc.toString());
+            token.file.write(state.doc.toString());
             token.fileVersion = token.file.getFileVersion();
           }
+
+          const json = state.toJSON(persistedFields);
+          delete json.doc;
+
+          const savedState: SavedState = {
+            fileVersion: token.fileVersion,
+            json,
+          };
+          saveState?.(savedState);
         }),
         EditorView.lineWrapping,
         EditorView.theme({
@@ -77,16 +116,20 @@ export const WorkspaceFileEditor = React.forwardRef<
         }),
         extraExt ?? [],
       ],
-    };
-  }, [token, extraExt]);
+    });
+  }, [saveState, loadState, extraExt, token]);
 
-  return (
+  return editorProps != null ? (
     <Editor
       key={token.version}
       ref={ref}
       className={cn("text-sm", className)}
-      initialText={initialText}
-      extension={extension}
+      {...editorProps}
     />
-  );
+  ) : null;
 });
+
+const persistedFields = {
+  history: historyField,
+  fold: foldState,
+};

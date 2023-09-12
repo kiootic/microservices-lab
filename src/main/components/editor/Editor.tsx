@@ -3,7 +3,12 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from "@codemirror/language";
-import { EditorState, Extension } from "@codemirror/state";
+import {
+  EditorState,
+  EditorStateConfig,
+  Extension,
+  StateField,
+} from "@codemirror/state";
 import { EditorView, highlightSpecialChars, keymap } from "@codemirror/view";
 import React, {
   useImperativeHandle,
@@ -21,18 +26,23 @@ const minimalSetup: Extension = [
   themeExtension,
 ];
 
-interface EditorProps {
+export interface InitialEditorState {
+  fields: Record<string, StateField<unknown>>;
+  json: unknown;
+}
+
+export interface EditorProps {
   className?: string;
-  initialText?: string;
   extension?: Extension;
+  initialState?: InitialEditorState;
 }
 
 export const Editor = React.forwardRef<EditorView | null, EditorProps>(
   (props, ref) => {
-    const { className, initialText, extension } = props;
+    const { className, extension, initialState } = props;
 
     const element = useRef<HTMLDivElement>(null);
-    const initialTextRef = useRef(initialText);
+    const initialStateRef = useRef(initialState);
     const viewRef = useRef<EditorView | null>(null);
     const [, render] = useState({});
 
@@ -47,10 +57,20 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
         return;
       }
 
-      const state = EditorState.create({
-        doc: viewRef.current?.state.doc ?? initialTextRef.current,
-        extensions: [extension ?? [], minimalSetup],
-      });
+      const initialState = initialStateRef.current;
+      const config: EditorStateConfig = {
+        doc: viewRef.current?.state.doc ?? "",
+        extensions: [minimalSetup, extension ?? []],
+      };
+      const state =
+        initialState == null
+          ? EditorState.create(config)
+          : EditorState.fromJSON(
+              initialState.json,
+              config,
+              initialState.fields,
+            );
+
       const view = new EditorView({ parent: element.current, state });
       viewRef.current = view;
       render({});

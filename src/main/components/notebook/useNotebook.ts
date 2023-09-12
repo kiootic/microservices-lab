@@ -16,6 +16,8 @@ export type NotebookUIEvent =
 
 export interface NotebookUIState {
   isCollapsed: Partial<Record<string, boolean>>;
+  editorState: Partial<Record<string, unknown>>;
+  scrollY: number;
 }
 
 export interface NotebookController {
@@ -24,12 +26,20 @@ export interface NotebookController {
   state: StoreApi<NotebookUIState>;
 }
 
-export function useNotebook(workspace: Workspace): NotebookController {
+export function useNotebook(
+  workspace: Workspace,
+  persistedState?: NotebookUIState,
+): NotebookController {
   const [events] = useState(() => createEventBus<NotebookUIEvent>());
   const [state] = useState(() =>
-    createStore<NotebookUIState>(() => ({
-      isCollapsed: {},
-    })),
+    createStore<NotebookUIState>(
+      () =>
+        persistedState ?? {
+          isCollapsed: {},
+          editorState: {},
+          scrollY: 0,
+        },
+    ),
   );
 
   return useMemo<NotebookController>(

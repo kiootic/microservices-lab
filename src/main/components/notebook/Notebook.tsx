@@ -1,8 +1,7 @@
 import cn from "clsx";
 import React, { useMemo, useRef, useState } from "react";
-import { createStore, useStore } from "zustand";
-import { FileView } from "./FileView";
-import styles from "./Notebook.module.css";
+import { createStore } from "zustand";
+import { Content } from "./Content";
 import { SideNav } from "./SideNav";
 import {
   NotebookContext,
@@ -20,8 +19,6 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
   const { className, controller } = props;
 
   const ref = useRef<HTMLDivElement>(null);
-  const { workspace } = controller;
-  const fileNames = useStore(workspace, (w) => w.fileNames);
 
   const [internalState] = useState(() =>
     createStore<NotebookInternalState>(() => ({
@@ -75,12 +72,7 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
     <NotebookContext.Provider value={context}>
       <div ref={ref} className={cn("flex", className)}>
         <SideNav className="flex-none w-64 border-r-2" />
-        <div className={cn(styles["content"], "flex-1 overflow-auto")}>
-          {fileNames.map((fileName) => (
-            <FileView key={fileName} fileName={fileName} />
-          ))}
-          <hr className="ml-12 flex-1 border-t-2 mt-5" />
-        </div>
+        <Content className="flex-1" />
       </div>
     </NotebookContext.Provider>
   );

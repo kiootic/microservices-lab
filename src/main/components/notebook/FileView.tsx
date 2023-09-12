@@ -84,6 +84,15 @@ export const FileView: React.FC<FileViewProps> = (props) => {
     [handleOnEscape],
   );
 
+  const loadState = useEventCallback(() => {
+    return state.getState().editorState[fileName];
+  });
+  const saveState = useEventCallback((editorState: unknown) => {
+    state.setState((s) => ({
+      editorState: { ...s.editorState, [fileName]: editorState },
+    }));
+  });
+
   return (
     <div className={className}>
       <details ref={contentElementRef} open={isOpened}>
@@ -98,6 +107,8 @@ export const FileView: React.FC<FileViewProps> = (props) => {
           ref={editorRef}
           file={file}
           extension={extension}
+          loadState={loadState}
+          saveState={saveState}
         />
       </details>
     </div>
