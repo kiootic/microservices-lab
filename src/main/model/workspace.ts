@@ -185,6 +185,7 @@ export function makeWorkspace() {
               fileName,
             ),
           };
+          fileCache.set(fileName, file);
         }
         return file;
       },
