@@ -29,7 +29,6 @@ function compareFileName(a: string, b: string) {
 }
 
 export interface WorkspaceFile {
-  workspace: Workspace;
   vfs: Vfs;
   name: string;
 
@@ -148,7 +147,6 @@ export function makeWorkspace() {
         let file = fileCache.get(fileName);
         if (file == null) {
           file = {
-            workspace,
             name: fileName,
             vfs,
 

@@ -1,10 +1,10 @@
-import React, { useRef, useState, useLayoutEffect } from "react";
+import cn from "clsx";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { useEventCallback } from "../../hooks/event-callback";
-import { Workspace, isValidFileName } from "../../model/workspace";
-import { NotebookUIState } from "./useNotebook";
-import cn from "clsx";
 import { Vfs } from "../../language/vfs";
+import { isValidFileName } from "../../model/workspace";
+import { useNotebookContext } from "./context";
 
 function validateNewFileName(vfs: Vfs, fileName: string) {
   if (!isValidFileName(fileName)) {
@@ -19,12 +19,12 @@ interface FileNameEntryProps {
   className?: string;
   style?: React.CSSProperties;
   currentFileName: string | null;
-  workspace: Workspace;
-  uiState: NotebookUIState;
 }
 
 export const FileNameEntry: React.FC<FileNameEntryProps> = (props) => {
-  const { className, style, currentFileName, workspace, uiState } = props;
+  const { className, style, currentFileName } = props;
+
+  const { workspace, events, endAction } = useNotebookContext();
 
   const validateFileName = useEventCallback((newFileName: string) => {
     const vfs = workspace.getState().vfs;
@@ -35,13 +35,10 @@ export const FileNameEntry: React.FC<FileNameEntryProps> = (props) => {
   });
 
   const handleOnFinishEdit = useEventCallback((newFileName: string | null) => {
-    if (
-      !uiState.getState().endAction(currentFileName == null ? "add" : "rename")
-    ) {
+    if (endAction(currentFileName == null ? "add" : "rename") == null) {
       return;
     }
 
-    const events = uiState.getState().events;
     if (newFileName != null) {
       ReactDOM.flushSync(() => {
         if (currentFileName != null) {
@@ -51,13 +48,11 @@ export const FileNameEntry: React.FC<FileNameEntryProps> = (props) => {
         }
       });
       events.dispatch({ kind: "show", fileName: newFileName });
-      if (currentFileName == null) {
-        events.dispatch({
-          kind: "focus",
-          target: "editor",
-          fileName: newFileName,
-        });
-      }
+      events.dispatch({
+        kind: "focus",
+        target: "editor",
+        fileName: newFileName,
+      });
     } else {
       events.dispatch({ kind: "focus", target: "nav" });
     }

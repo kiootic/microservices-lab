@@ -1,19 +1,18 @@
-import React from "react";
 import cn from "clsx";
+import React from "react";
 import { useStore } from "zustand";
-import { WorkspaceFile } from "../../model/workspace";
-import { NotebookUIState } from "./useNotebook";
+import { useNotebookContext } from "./context";
 
 interface FileHeaderProps {
   className?: string;
-  uiState: NotebookUIState;
-  file: WorkspaceFile;
+  fileName: string;
 }
 
 export const FileHeader: React.FC<FileHeaderProps> = (props) => {
-  const { className, uiState, file } = props;
+  const { className, fileName } = props;
 
-  const isOpened = useStore(uiState, (s) => s.isOpened(file.name));
+  const { state } = useNotebookContext();
+  const isOpened = useStore(state, (s) => !s.isCollapsed[fileName]);
 
   return (
     <div
@@ -31,7 +30,7 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
         />
       </span>
       <div className="truncate pl-2 pr-4">
-        <span className="font-mono">{file.name}</span>
+        <span className="font-mono">{fileName}</span>
       </div>
       <hr className="w-8 flex-shrink-0 flex-grow border-t-2" />
     </div>

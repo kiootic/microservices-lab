@@ -4,30 +4,30 @@ import { ListState, Selection } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
-import { Workspace } from "../../model/workspace";
 import { AppButton } from "../AppButton";
 import { AppDialog } from "../Dialog";
 import { ListBox } from "../ListBox";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
-import { NotebookUIState } from "./useNotebook";
+import { useNotebookContext } from "./context";
 
 interface SideNavProps {
   className?: string;
-  workspace: Workspace;
-  uiState: NotebookUIState;
 }
 
 export const SideNav: React.FC<SideNavProps> = (props) => {
-  const { className, workspace, uiState } = props;
+  const { className } = props;
 
-  const events = useStore(uiState, (s) => s.events);
+  const { workspace, events, state, startAction } = useNotebookContext();
 
   const fileNames = useStore(workspace, (w) => w.fileNames);
-  const visibleFileNames = useStore(uiState, (s) => s.visibleFileNames);
-  const activeFileName = fileNames.find((n) => visibleFileNames.has(n));
+  const visibleFileNames = useStore(state, (s) => s.visibleFileNames);
+  const activeFileName = useMemo(
+    () => fileNames.find((n) => visibleFileNames.has(n)) ?? null,
+    [fileNames, visibleFileNames],
+  );
 
-  const action = useStore(uiState, (s) => s.activeAction);
+  const action = useStore(state, (s) => s.activeAction);
   const fileEntryStyle = useMemo<React.CSSProperties>(() => {
     if (action?.kind === "add") {
       return {};
@@ -102,17 +102,13 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
         break;
       }
       case " ": {
-        uiState
-          .getState()
-          .startAction({ kind: "rename", fileName: focusedFileName });
+        startAction({ kind: "rename", fileName: focusedFileName });
         e.stopPropagation();
         e.preventDefault();
         break;
       }
       case "Delete": {
-        uiState
-          .getState()
-          .startAction({ kind: "delete", fileName: focusedFileName });
+        startAction({ kind: "delete", fileName: focusedFileName });
         e.stopPropagation();
         e.preventDefault();
         break;
@@ -122,17 +118,17 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
 
   useEvent(events, "focus", (e) => {
     if (e.target === "nav") {
-      const fileName = e.fileName ?? activeFileName;
+      const fileName = e.fileName;
       if (fileName != null) {
         stateRef.current?.selectionManager.setFocusedKey(fileName);
-        stateRef.current?.selectionManager.setFocused(true);
       }
+      stateRef.current?.selectionManager.setFocused(true);
     }
   });
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <SideNavToolbar className="flex-none" uiState={uiState} />
+      <SideNavToolbar className="flex-none" />
       <div
         className="flex-1 overflow-auto font-mono text-sm py-2"
         onKeyDownCapture={handleListOnKeyDown}
@@ -168,20 +164,13 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
           </ListBox>
 
           {action?.kind === "add" ? (
-            <FileNameEntry
-              style={fileEntryStyle}
-              workspace={workspace}
-              uiState={uiState}
-              currentFileName={null}
-            />
+            <FileNameEntry style={fileEntryStyle} currentFileName={null} />
           ) : null}
 
           {action?.kind === "rename" ? (
             <FileNameEntry
               key={action.fileName}
               style={fileEntryStyle}
-              workspace={workspace}
-              uiState={uiState}
               currentFileName={action.fileName}
             />
           ) : null}
@@ -190,8 +179,6 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
       <DeleteDialog
         isDeleting={action?.kind === "delete"}
         fileName={action?.kind === "delete" ? action.fileName : null}
-        workspace={workspace}
-        uiState={uiState}
       />
     </div>
   );
@@ -234,12 +221,12 @@ const NavItem: React.FC<NavItemProps> = (props) => {
 interface DeleteDialogProps {
   isDeleting: boolean;
   fileName: string | null;
-  workspace: Workspace;
-  uiState: NotebookUIState;
 }
 
 const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
-  const { isDeleting, fileName, workspace, uiState } = props;
+  const { isDeleting, fileName } = props;
+
+  const { workspace, events, endAction } = useNotebookContext();
 
   const [displayFileName, setDisplayFileName] = useState(fileName);
   useLayoutEffect(() => {
@@ -250,18 +237,18 @@ const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
 
   const handleOnOpenChange = useEventCallback((isOpen: boolean) => {
     if (!isOpen) {
-      uiState.getState().endAction("delete");
+      endAction("delete");
     }
   });
   const handleKeepOnClick = useEventCallback(() => {
-    uiState.getState().endAction("delete");
+    endAction("delete");
   });
 
   const handleDeleteOnClick = useEventCallback(() => {
-    const action = uiState.getState().endAction("delete");
+    const action = endAction("delete");
     if (action != null) {
       workspace.getState().vfs.delete(action.fileName);
-      uiState.getState().events.dispatch({ kind: "focus", target: "nav" });
+      events.dispatch({ kind: "focus", target: "nav" });
     }
   });
 

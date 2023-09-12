@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
-import { StoreApi, createStore, useStore } from "zustand";
-import { Workspace, WorkspaceFile } from "../../model/workspace";
+import { useMemo, useState } from "react";
+import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../../hooks/event-bus";
+import { Workspace } from "../../model/workspace";
 
 export type NotebookAction =
   | { kind: "add" }
@@ -14,91 +14,30 @@ export type NotebookUIEvent =
   | { kind: "focus"; target: "editor"; fileName: string }
   | { kind: "focus"; target: "nav-toolbar" };
 
-export interface NotebookUIStateValue {
-  rootElementRef: React.RefObject<HTMLDivElement>;
-  events: EventBus<NotebookUIEvent>;
-
-  isOpened: (fileName: string) => boolean;
-  toggleOpen: (fileName: string, force?: boolean) => boolean;
-
+export interface NotebookUIState {
+  isCollapsed: Partial<Record<string, boolean>>;
   visibleFileNames: Set<string>;
-  setIsVisible: (fileName: string, isVisible: boolean) => void;
-
   activeAction: NotebookAction | null;
-  startAction: (action: NotebookAction) => void;
-  endAction: <K extends NotebookAction["kind"]>(
-    kind: K,
-  ) => (NotebookAction & { kind: K }) | null;
-}
-export type NotebookUIState = StoreApi<NotebookUIStateValue>;
-
-function createUIState(): NotebookUIState {
-  interface NotebookUIStateInternalValue extends NotebookUIStateValue {
-    isCollapsed: Partial<Record<string, boolean>>;
-  }
-  return createStore<NotebookUIStateInternalValue>((set, get) => {
-    const events = createEventBus<NotebookUIEvent>();
-
-    return {
-      rootElementRef: React.createRef(),
-      events,
-
-      isCollapsed: {},
-      isOpened: (fileName) => !get().isCollapsed[fileName],
-      toggleOpen: (fileName, force) => {
-        set((s) => ({
-          isCollapsed: {
-            ...s.isCollapsed,
-            [fileName]: force != null ? !force : !s.isCollapsed[fileName],
-          },
-        }));
-        return !get().isCollapsed[fileName];
-      },
-
-      visibleFileNames: new Set(),
-      setIsVisible: (fileName, isVisible) =>
-        set((s) => {
-          const visibleFileNames = new Set(s.visibleFileNames);
-          if (isVisible) {
-            visibleFileNames.add(fileName);
-          } else {
-            visibleFileNames.delete(fileName);
-          }
-          return { visibleFileNames };
-        }),
-
-      activeAction: null,
-      startAction: (action) => set({ activeAction: action }),
-      endAction: <K extends NotebookAction["kind"]>(kind: K) => {
-        const action = get().activeAction;
-        if (action?.kind !== kind) {
-          return null;
-        }
-        set({ activeAction: null });
-        return action as NotebookAction & { kind: K };
-      },
-    };
-  });
 }
 
 export interface NotebookController {
   workspace: Workspace;
-  files: WorkspaceFile[];
-  uiState: NotebookUIState;
+  events: EventBus<NotebookUIEvent>;
+  state: StoreApi<NotebookUIState>;
 }
 
 export function useNotebook(workspace: Workspace): NotebookController {
-  const { fileNames, getFile } = useStore(workspace);
+  const [events] = useState(() => createEventBus<NotebookUIEvent>());
+  const [state] = useState(() =>
+    createStore<NotebookUIState>(() => ({
+      isCollapsed: {},
+      visibleFileNames: new Set(),
+      activeAction: null,
+    })),
+  );
 
-  const files = useMemo(() => fileNames.map(getFile), [fileNames, getFile]);
-  const [uiState] = useState(() => createUIState());
-
-  return useMemo(
-    () => ({
-      workspace,
-      files,
-      uiState,
-    }),
-    [workspace, files, uiState],
+  return useMemo<NotebookController>(
+    () => ({ workspace, events, state }),
+    [workspace, events, state],
   );
 }

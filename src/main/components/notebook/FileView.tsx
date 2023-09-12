@@ -1,3 +1,4 @@
+import { Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import React, { useEffect, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
@@ -5,45 +6,44 @@ import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useIntersection } from "../../hooks/intersection";
-import { WorkspaceFile } from "../../model/workspace";
+import { isIntersecting } from "../../utils/intersection";
 import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
-import { NotebookUIState } from "./useNotebook";
-import { Extension } from "@codemirror/state";
-import { isIntersecting } from "../../utils/intersection";
+import { useNotebookContext } from "./context";
 
 interface FileViewProps {
   className?: string;
-  file: WorkspaceFile;
-  uiState: NotebookUIState;
+  fileName: string;
 }
 
 export const FileView: React.FC<FileViewProps> = (props) => {
-  const { className, file, uiState } = props;
+  const { className, fileName } = props;
 
-  const isOpened = useStore(uiState, (s) => s.isOpened(file.name));
-  const toggleOpen = useStore(uiState, (s) => s.toggleOpen);
-  const setIsVisible = useStore(uiState, (s) => s.setIsVisible);
+  const { workspace, state, events, rootElementRef, toggleOpen, setIsVisible } =
+    useNotebookContext();
+
+  const file = useStore(workspace, (w) => w.getFile(fileName));
+
+  const isOpened = useStore(state, (s) => !s.isCollapsed[fileName]);
 
   const contentElementRef = useRef<HTMLDetailsElement | null>(null);
   const isVisible = useIntersection(contentElementRef);
   useEffect(() => {
-    setIsVisible(file.name, isVisible);
-  }, [setIsVisible, file.name, isVisible]);
+    setIsVisible(fileName, isVisible);
+  }, [setIsVisible, fileName, isVisible]);
 
   const editorRef = useRef<EditorView | null>(null);
 
-  const events = useStore(uiState, (s) => s.events);
   useEvent(events, "focus", (e) => {
-    if (e.target === "editor" && e.fileName === file.name) {
-      ReactDOM.flushSync(() => toggleOpen(file.name, true));
+    if (e.target === "editor" && e.fileName === fileName) {
+      ReactDOM.flushSync(() => toggleOpen(fileName, true));
       editorRef.current?.focus();
 
       if (editorRef.current != null) {
         const view = editorRef.current;
         const pos = view.state.selection.main.from;
         const element = view.domAtPos(pos).node.parentElement;
-        const rootElement = uiState.getState().rootElementRef.current;
+        const rootElement = rootElementRef.current;
         if (
           element != null &&
           rootElement != null &&
@@ -55,8 +55,8 @@ export const FileView: React.FC<FileViewProps> = (props) => {
     }
   });
   useEvent(events, "show", (e) => {
-    if (e.fileName === file.name) {
-      ReactDOM.flushSync(() => toggleOpen(file.name, true));
+    if (e.fileName === fileName) {
+      ReactDOM.flushSync(() => toggleOpen(fileName, true));
 
       contentElementRef.current?.scrollIntoView();
     }
@@ -64,15 +64,15 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   const handleSummaryOnClick = useEventCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    if (ReactDOM.flushSync(() => toggleOpen(file.name))) {
+    if (ReactDOM.flushSync(() => toggleOpen(fileName))) {
       editorRef.current?.focus();
     } else {
-      events.dispatch({ kind: "focus", target: "nav", fileName: file.name });
+      events.dispatch({ kind: "focus", target: "nav", fileName });
     }
   });
 
   const handleOnEscape = useEventCallback(() => {
-    events.dispatch({ kind: "focus", target: "nav", fileName: file.name });
+    events.dispatch({ kind: "focus", target: "nav", fileName });
   });
   const extension: Extension = useMemo(
     () => [
@@ -97,7 +97,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
           tabIndex={-1}
           onClick={handleSummaryOnClick}
         >
-          <FileHeader file={file} uiState={uiState} />
+          <FileHeader fileName={fileName} />
         </summary>
         <WorkspaceFileEditor
           ref={editorRef}
