@@ -27,7 +27,7 @@ import {
   rectangularSelection,
 } from "@codemirror/view";
 import { prettier } from "../../editor/prettier";
-import { foldGutter } from "./theme";
+import { foldGutter } from "../editor/theme";
 
 const tabKeymap: KeyBinding[] = [
   {

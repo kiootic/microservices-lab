@@ -7,7 +7,7 @@ import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useIntersection } from "../../hooks/intersection";
 import { isIntersecting } from "../../utils/intersection";
-import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
+import { FileEditor } from "./FileEditor";
 import { FileHeader } from "./FileHeader";
 import cn from "clsx";
 import { useNotebookContext } from "./context";
@@ -115,7 +115,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
           >
             <FileHeader fileName={fileName} />
           </summary>
-          <WorkspaceFileEditor
+          <FileEditor
             ref={editorRef}
             file={file}
             extension={extension}
