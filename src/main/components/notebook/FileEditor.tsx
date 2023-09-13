@@ -127,6 +127,11 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
             ".cm-lineNumbers": {
               minWidth: "3rem",
             },
+            "@media not all and (min-width: 480px)": {
+              ".cm-gutters": {
+                display: "none",
+              },
+            },
             ".cm-tooltip": {
               userSelect: "text",
             },

@@ -97,10 +97,12 @@ const theme = EditorView.theme({
   ".cm-activeLineGutter": {
     backgroundColor: "unset",
   },
-  ".cm-foldGutter": {
-    opacity: 0,
-    "&:hover": {
-      opacity: 1,
+  "@media (hover: hover) and (pointer: fine)": {
+    ".cm-foldGutter": {
+      opacity: 0,
+      "&:hover": {
+        opacity: 1,
+      },
     },
   },
   ".cm-lineNumbers .cm-gutterElement": {
