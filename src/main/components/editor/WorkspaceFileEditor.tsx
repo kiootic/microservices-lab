@@ -1,7 +1,7 @@
 import { historyField } from "@codemirror/commands";
 import { foldState } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { EditorView, tooltips } from "@codemirror/view";
 import React, {
   useCallback,
   useLayoutEffect,
@@ -63,6 +63,12 @@ export const WorkspaceFileEditor = React.forwardRef<
 
   const [editorProps, setEditorProps] = useState<EditorProps | null>(null);
 
+  // Fixed tooltip container is not cleaned up on destroy, manually clean it up.
+  const tooltipParentRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    return () => tooltipParentRef.current?.remove();
+  }, []);
+
   useLayoutEffect(() => {
     const doc = token.file.read() ?? "";
     const initialState: InitialEditorState = {
@@ -79,10 +85,15 @@ export const WorkspaceFileEditor = React.forwardRef<
       initialState.json = { ...(loadedState.json as object), doc };
     }
 
+    tooltipParentRef.current?.remove();
+    tooltipParentRef.current = document.createElement("div");
+    document.body.appendChild(tooltipParentRef.current);
+
     setEditorProps({
       initialState,
       extension: [
         setup,
+        tooltips({ position: "fixed", parent: tooltipParentRef.current }),
         typescriptIntegration(token.file),
         EditorView.updateListener.of((update) => {
           const state = update.state;

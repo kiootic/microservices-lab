@@ -1,5 +1,4 @@
 @import "../../codicon/codicon.css";
-@import "allotment/dist/style.css";
 @import "@fontsource/source-code-pro/400.css";
 @import "@fontsource/source-code-pro/600.css";
 
@@ -14,8 +13,6 @@
     -webkit-tap-highlight-color: transparent;
   }
   :root {
-    --separator-border: theme(borderColor.DEFAULT);
-    --focus-border: theme(colors.primary.600);
     --editor-font-family: theme(fontFamily.mono);
   }
 }

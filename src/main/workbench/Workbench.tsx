@@ -1,6 +1,5 @@
-import { Allotment } from "allotment";
-import cn from "clsx";
 import React, { useMemo, useRef } from "react";
+import { SplitLayout } from "../components/SplitLayout";
 import { useSize } from "../hooks/resize";
 import { Pane } from "./Pane";
 import {
@@ -8,7 +7,7 @@ import {
   WorkbenchContextValue,
   createContextValue,
 } from "./context";
-import { WorkbenchController, WorkbenchPane } from "./useWorkbench";
+import { WorkbenchController } from "./useWorkbench";
 
 const compactLayoutThreshold = 768;
 
@@ -27,27 +26,33 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   const ref = useRef<HTMLDivElement>(null);
   const useCompactLayout = useSize(ref, (w) => w < compactLayoutThreshold);
-  const enabledPanes = useMemo<WorkbenchPane[]>(
-    () => (useCompactLayout ? ["primary"] : ["primary", "secondary"]),
+
+  const paneA = useMemo<React.ReactNode>(
+    () => <Pane className="w-full h-full" pane="primary" />,
+    [],
+  );
+  const paneB = useMemo<React.ReactNode>(
+    () =>
+      useCompactLayout ? null : (
+        <Pane className="w-full h-full" pane="secondary" />
+      ),
     [useCompactLayout],
   );
 
   return (
     <WorkbenchContext.Provider value={context}>
-      <div ref={ref} className={cn(className)}>
-        {enabledPanes.length > 1 ? (
-          <Allotment className="w-full h-full" minSize={320}>
-            <Allotment.Pane>
-              <Pane className="h-full" pane="primary" />
-            </Allotment.Pane>
-            <Allotment.Pane preferredSize="40%">
-              <Pane className="h-full" pane="secondary" />
-            </Allotment.Pane>
-          </Allotment>
-        ) : (
-          <Pane className="w-full h-full" pane={enabledPanes[0]} />
-        )}
-      </div>
+      {paneA != null && paneB != null ? (
+        <SplitLayout
+          ref={ref}
+          className={className}
+          minSize="320px"
+          initialPaneASize="60%"
+          paneA={paneA}
+          paneB={paneB}
+        />
+      ) : (
+        <div className={className}>{paneA ?? paneB ?? null}</div>
+      )}
     </WorkbenchContext.Provider>
   );
 };

@@ -1,5 +1,11 @@
 import cn from "clsx";
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ListState } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
@@ -112,7 +118,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
     }
   });
 
-  const { setIsNavOpened } = useNavContext();
+  const { setIsNavOpened, isNavOpened } = useNavContext();
 
   useEvent(events, "focus", (e) => {
     if (e.target === "nav") {
@@ -124,6 +130,11 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
       stateRef.current?.selectionManager.setFocused(true);
     }
   });
+
+  useEffect(() => {
+    // Reset current action on nav open/close
+    internalState.setState({ activeAction: null });
+  }, [internalState, isNavOpened]);
 
   return (
     <div className={cn("flex flex-col", className)}>

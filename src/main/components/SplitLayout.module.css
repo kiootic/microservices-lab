@@ -1,0 +1,46 @@
+.root {
+  @apply isolate relative overflow-hidden touch-none;
+  min-width: calc(2 * var(--layout-min-pane-size));
+}
+
+.root[data-active] {
+  @apply pointer-events-none;
+}
+
+.pane-a {
+  @apply isolate absolute z-0;
+  @apply top-0 h-full left-0;
+  min-width: var(--layout-min-pane-size);
+  width: min(
+    100% - var(--layout-min-pane-size),
+    var(--layout-pane-size, var(--layout-initial-pane-size))
+  );
+}
+
+.pane-b {
+  @apply isolate absolute z-0;
+  @apply top-0 h-full right-0;
+  min-width: var(--layout-min-pane-size);
+  width: min(
+    100% - var(--layout-min-pane-size),
+    100% - var(--layout-pane-size, var(--layout-initial-pane-size))
+  );
+}
+
+.divider {
+  @apply isolate absolute z-10;
+  @apply top-0 h-full;
+  left: clamp(
+    var(--layout-min-pane-size),
+    var(--layout-pane-size, var(--layout-initial-pane-size)),
+    100% - var(--layout-min-pane-size)
+  );
+
+  @apply cursor-col-resize;
+  @apply border-transparent border-x-2 -ml-[2px];
+  @apply transition-colors data-[active]:border-primary-600;
+}
+
+.root[data-active] .divider {
+  @apply border-primary-600 pointer-events-auto;
+}
