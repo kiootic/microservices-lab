@@ -2,7 +2,6 @@ import { historyField } from "@codemirror/commands";
 import { foldState } from "@codemirror/language";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import cn from "clsx";
 import React, {
   useCallback,
   useLayoutEffect,
@@ -123,7 +122,7 @@ export const WorkspaceFileEditor = React.forwardRef<
     <Editor
       key={token.version}
       ref={ref}
-      className={cn("text-sm", className)}
+      className={className}
       {...editorProps}
     />
   ) : null;

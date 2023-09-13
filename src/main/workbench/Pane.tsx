@@ -36,14 +36,14 @@ export const Pane: React.FC<PaneProps> = (props) => {
     >
       <TabList
         className={cn(
-          "flex-none h-10 flex after:flex-1 after:bg-gray-100 after:border-t after:border-b-2",
+          "flex-none h-10 flex after:flex-grow after:w-4 after:bg-gray-100 after:border-t after:border-b-2",
         )}
         aria-label={paneName(pane)}
       >
         {views.map((view) => (
           <Tab
             className={cn(
-              "px-5 flex items-center",
+              "w-28 flex items-center justify-center",
               "border-b-2 border-t border-r-2 bg-gray-100",
               "cursor-pointer",
               "outline-none underline-offset-8 decoration-2 ra-focus-visible:underline ra-focus-visible:decoration-primary-400",

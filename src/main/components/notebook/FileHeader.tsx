@@ -30,7 +30,7 @@ export const FileHeader: React.FC<FileHeaderProps> = (props) => {
       {...mergeProps(pressProps, hoverProps)}
       className={cn(
         "flex h-10 items-center text-sm",
-        isHovered && "font-bold",
+        isHovered && "font-semibold",
         isPressed && "text-gray-600",
         className,
       )}

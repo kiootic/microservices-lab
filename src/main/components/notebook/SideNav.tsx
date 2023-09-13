@@ -124,7 +124,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
     <div className={cn("flex flex-col", className)}>
       <SideNavToolbar className="flex-none" />
       <div
-        className="flex-1 overflow-auto font-mono text-sm py-2"
+        className="flex-1 overflow-auto font-mono py-2"
         onKeyDownCapture={handleListOnKeyDown}
       >
         <div className="relative">
@@ -209,7 +209,7 @@ const NavItem: React.FC<NavItemProps> = (props) => {
       onDoubleClick={handleOnDoubleClick}
     >
       <span>{dirname}</span>
-      <span className={cn("text-primary-950", isActive && "font-bold")}>
+      <span className={cn("text-primary-950", isActive && "font-semibold")}>
         {basename}
       </span>
     </div>

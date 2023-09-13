@@ -59,9 +59,13 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   return (
     <WorkbenchContext.Provider value={context}>
-      <Allotment className={cn(className)} minSize={375}>
-        <Pane className="h-full" pane="primary" />
-        <Pane className="h-full" pane="secondary" />
+      <Allotment className={cn(className)} minSize={320}>
+        <Allotment.Pane>
+          <Pane className="h-full" pane="primary" />
+        </Allotment.Pane>
+        <Allotment.Pane preferredSize="30%">
+          <Pane className="h-full" pane="secondary" />
+        </Allotment.Pane>
       </Allotment>
     </WorkbenchContext.Provider>
   );

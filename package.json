@@ -18,6 +18,7 @@
     "@codemirror/lint": "6.4.1",
     "@codemirror/state": "6.2.1",
     "@codemirror/view": "6.17.1",
+    "@fontsource/source-code-pro": "5.0.8",
     "@lezer/highlight": "1.1.6",
     "@rollup/browser": "3.28.1",
     "@vitest/expect": "0.34.3",

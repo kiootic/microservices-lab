@@ -8,6 +8,7 @@ specifiers:
   '@codemirror/lint': 6.4.1
   '@codemirror/state': 6.2.1
   '@codemirror/view': 6.17.1
+  '@fontsource/source-code-pro': 5.0.8
   '@lezer/highlight': 1.1.6
   '@rollup/browser': 3.28.1
   '@types/chai': 4.3.5
@@ -50,6 +51,7 @@ dependencies:
   '@codemirror/lint': 6.4.1
   '@codemirror/state': 6.2.1
   '@codemirror/view': 6.17.1
+  '@fontsource/source-code-pro': 5.0.8
   '@lezer/highlight': 1.1.6
   '@rollup/browser': 3.28.1
   '@vitest/expect': 0.34.3
@@ -819,6 +821,10 @@ packages:
     resolution: {integrity: sha512-ZSjtmelB7IJfWD2Fvb7+Z+ChTIKWq6kjda95fLcQKNS5aheVHn4IkfgRQE3sIIzTcSLwLcLZUD9UBt+V7+h+Pw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
+
+  /@fontsource/source-code-pro/5.0.8:
+    resolution: {integrity: sha512-2RtauxYX8gMBZr3kO97M/M0jNeE2pItqTLofpJWxsIiZKY+ir8xXmxz0Bxg3XttHadjJu9lP8gQpmBKRSn0dXQ==}
+    dev: false
 
   /@formatjs/ecma402-abstract/1.17.1:
     resolution: {integrity: sha512-N2sjSUrmsEoynG8Q61pkrKlJ9PxcUGxJke1x3301aGyprGgl58wHWhgGUnzTfS4OHNNNQDxzjcXVp1t5fGW6yQ==}

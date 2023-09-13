@@ -1,5 +1,6 @@
 import reactAria from "tailwindcss-react-aria-components";
 import colors from "tailwindcss/colors";
+import defaultTheme from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -12,6 +13,9 @@ export default {
       red: colors.red,
     },
     extend: {
+      fontFamily: {
+        mono: ["Source Code Pro", defaultTheme.fontFamily.mono],
+      },
       ringColor: ({ theme }) => ({ DEFAULT: theme("colors.primary.400") }),
       animation: {
         "fade-in": "fade 150ms ease-out",
