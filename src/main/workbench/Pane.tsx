@@ -1,13 +1,17 @@
-import React, { useMemo } from "react";
 import cn from "clsx";
+import React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
-import { WorkbenchPane, WorkbenchView } from "./useWorkbench";
-import { useWorkbenchContext } from "./context";
 import { useStore } from "zustand";
-import { NotebookView } from "./views/NotebookView";
+import { useEventCallback } from "../hooks/event-callback";
+import { useWorkbenchContext } from "./context";
+import {
+  WorkbenchPane,
+  WorkbenchView,
+  allWorkbenchViews,
+} from "./useWorkbench";
 import { ExperimentView } from "./views/ExperimentView";
 import { JournalView } from "./views/JournalView";
-import { useEventCallback } from "../hooks/event-callback";
+import { NotebookView } from "./views/NotebookView";
 
 interface PaneProps {
   className?: string;
@@ -18,8 +22,7 @@ export const Pane: React.FC<PaneProps> = (props) => {
   const { className, pane } = props;
 
   const { state, switchView } = useWorkbenchContext();
-  const enabledViews = useStore(state, (s) => s.enabledViews);
-  const views = useMemo(() => enabledViews.map(viewDescriptor), [enabledViews]);
+  const views = viewDescriptors;
   const currentView = useStore(state, (s) => s.paneView[pane]);
 
   const handleOnSelectionChange = useEventCallback((key: React.Key) => {
@@ -95,3 +98,5 @@ function viewDescriptor(view: WorkbenchView): ViewDescriptor {
       return { id: view, name: "Journal", Component: JournalView };
   }
 }
+
+const viewDescriptors = allWorkbenchViews.map(viewDescriptor);

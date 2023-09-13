@@ -1,9 +1,10 @@
 import React, { useContext } from "react";
-import { StoreApi } from "zustand";
+import { StoreApi, createStore } from "zustand";
 import { EventBus } from "../../hooks/event-bus";
 import { Workspace } from "../../model/workspace";
 import {
   NotebookAction,
+  NotebookController,
   NotebookUIEvent,
   NotebookUIState,
 } from "./useNotebook";
@@ -29,6 +30,51 @@ export interface NotebookContextValue {
   endAction: <K extends NotebookAction["kind"]>(
     kind: K,
   ) => (NotebookAction & { kind: K }) | null;
+}
+
+export function createContextValue(
+  controller: NotebookController,
+): NotebookContextValue {
+  const internalState = createStore<NotebookInternalState>(() => ({
+    visibleFileNames: new Set(),
+    activeAction: null,
+  }));
+
+  return {
+    ...controller,
+    internalState,
+    rootElementRef: React.createRef(),
+    toggleOpen: (fileName, force) => {
+      controller.state.setState((s) => ({
+        isCollapsed: {
+          ...s.isCollapsed,
+          [fileName]: force != null ? !force : !s.isCollapsed[fileName],
+        },
+      }));
+      return !controller.state.getState().isCollapsed[fileName];
+    },
+
+    setIsVisible: (fileName, isVisible) =>
+      internalState.setState((s) => {
+        const visibleFileNames = new Set(s.visibleFileNames);
+        if (isVisible) {
+          visibleFileNames.add(fileName);
+        } else {
+          visibleFileNames.delete(fileName);
+        }
+        return { visibleFileNames };
+      }),
+
+    startAction: (action) => internalState.setState({ activeAction: action }),
+    endAction: <K extends NotebookAction["kind"]>(kind: K) => {
+      const action = internalState.getState().activeAction;
+      if (action?.kind !== kind) {
+        return null;
+      }
+      internalState.setState({ activeAction: null });
+      return action as NotebookAction & { kind: K };
+    },
+  };
 }
 
 export const NotebookContext = React.createContext<NotebookContextValue | null>(
