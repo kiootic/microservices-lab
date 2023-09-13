@@ -37,10 +37,19 @@
   );
 
   @apply cursor-col-resize;
-  @apply border-transparent border-x-2 -ml-[2px];
-  @apply transition-colors data-[active]:border-primary-600;
+  @apply w-[8px] -translate-x-1/2;
+
+  @apply after:block after:h-full after:w-0 after:mx-auto;
+  @apply after:border-x-2 after:border-primary-600;
+  @apply after:transition-opacity after:opacity-0;
 }
 
 .root[data-active] .divider {
-  @apply border-primary-600 pointer-events-auto;
+  @apply after:opacity-100 pointer-events-auto;
+}
+
+@media (pointer: coarse) {
+  .divider {
+    @apply w-[16px];
+  }
 }
