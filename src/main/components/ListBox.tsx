@@ -42,7 +42,7 @@ const ListBox = React.forwardRef(function ListBox<T extends object>(
     <ul
       {...mergeProps(listBoxProps, focusProps)}
       ref={ref}
-      className={cn("", className)}
+      className={cn("outline-none", className)}
       data-empty={state.collection.size === 0 || undefined}
       data-focused={isFocused || undefined}
       data-focus-visible={isFocusVisible || undefined}
