@@ -1,14 +1,18 @@
-import React, { useMemo } from "react";
+import { Allotment } from "allotment";
+import cn from "clsx";
+import React, { useMemo, useRef } from "react";
+import { useSize } from "../hooks/resize";
+import { Pane } from "./Pane";
 import { WorkbenchContext, WorkbenchContextValue } from "./context";
 import {
   WorkbenchController,
   WorkbenchPane,
   WorkbenchUIState,
   WorkbenchView,
+  allWorkbenchPanes,
 } from "./useWorkbench";
-import cn from "clsx";
-import { Pane } from "./Pane";
-import { Allotment } from "allotment";
+
+const compactLayoutThreshold = 768;
 
 interface WorkbenchProps {
   className?: string;
@@ -24,10 +28,7 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
       switchView: (pane, view) => {
         const state = controller.state.getState();
-        if (
-          !state.enabledPanes.includes(pane) ||
-          !state.enabledViews.includes(view)
-        ) {
+        if (!state.enabledViews.includes(view)) {
           return;
         }
 
@@ -57,16 +58,29 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
     [controller],
   );
 
+  const ref = useRef<HTMLDivElement>(null);
+  const useCompactLayout = useSize(ref, (w) => w < compactLayoutThreshold);
+  const enabledPanes = useMemo<WorkbenchPane[]>(
+    () => (useCompactLayout ? ["primary"] : ["primary", "secondary"]),
+    [useCompactLayout],
+  );
+
   return (
     <WorkbenchContext.Provider value={context}>
-      <Allotment className={cn(className)} minSize={320}>
-        <Allotment.Pane>
-          <Pane className="h-full" pane="primary" />
-        </Allotment.Pane>
-        <Allotment.Pane preferredSize="30%">
-          <Pane className="h-full" pane="secondary" />
-        </Allotment.Pane>
-      </Allotment>
+      <div ref={ref} className={cn(className)}>
+        {enabledPanes.length > 1 ? (
+          <Allotment className="w-full h-full" minSize={320}>
+            <Allotment.Pane>
+              <Pane className="h-full" pane="primary" />
+            </Allotment.Pane>
+            <Allotment.Pane preferredSize="40%">
+              <Pane className="h-full" pane="secondary" />
+            </Allotment.Pane>
+          </Allotment>
+        ) : (
+          <Pane className="w-full h-full" pane={enabledPanes[0]} />
+        )}
+      </div>
     </WorkbenchContext.Provider>
   );
 };
@@ -75,7 +89,7 @@ function findViewPane(
   state: WorkbenchUIState,
   view: WorkbenchView,
 ): WorkbenchPane | null {
-  for (const pane of state.enabledPanes) {
+  for (const pane of allWorkbenchPanes) {
     if (state.paneView[pane] === view) {
       return pane;
     }
@@ -85,7 +99,7 @@ function findViewPane(
 
 function findUnboundView(state: WorkbenchUIState): WorkbenchView | null {
   const views = new Set(state.enabledViews);
-  for (const pane of state.enabledPanes) {
+  for (const pane of allWorkbenchPanes) {
     views.delete(state.paneView[pane]);
   }
   return views.size === 0 ? null : Array.from(views)[0];

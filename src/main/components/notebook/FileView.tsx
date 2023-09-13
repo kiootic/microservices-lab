@@ -11,6 +11,7 @@ import { WorkspaceFileEditor } from "../editor/WorkspaceFileEditor";
 import { FileHeader } from "./FileHeader";
 import cn from "clsx";
 import { useNotebookContext } from "./context";
+import { useNavContext } from "../nav/context";
 
 interface FileViewProps {
   className?: string;
@@ -27,6 +28,8 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   const isOpened = useStore(state, (s) => !s.isCollapsed[fileName]);
 
+  const { setIsNavOpened } = useNavContext();
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentsRef = useRef<HTMLDetailsElement | null>(null);
   const isVisible = useIntersection(containerRef);
@@ -38,7 +41,10 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   useEvent(events, "focus", (e) => {
     if (e.target === "editor" && e.fileName === fileName) {
-      ReactDOM.flushSync(() => toggleOpen(fileName, true));
+      ReactDOM.flushSync(() => {
+        setIsNavOpened(false);
+        toggleOpen(fileName, true);
+      });
       editorRef.current?.focus();
 
       if (editorRef.current != null) {
@@ -58,7 +64,10 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   });
   useEvent(events, "show", (e) => {
     if (e.fileName === fileName) {
-      ReactDOM.flushSync(() => toggleOpen(fileName, true));
+      ReactDOM.flushSync(() => {
+        setIsNavOpened(false);
+        toggleOpen(fileName, true);
+      });
 
       contentsRef.current?.scrollIntoView();
     }

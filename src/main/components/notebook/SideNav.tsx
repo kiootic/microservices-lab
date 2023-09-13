@@ -10,6 +10,8 @@ import { ListBox } from "../ListBox";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
 import { useNotebookContext } from "./context";
+import { useNavContext } from "../nav/context";
+import ReactDOM from "react-dom";
 
 interface SideNavProps {
   className?: string;
@@ -37,7 +39,7 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
       return {
         position: "absolute",
         width: "100%",
-        top: `${fileNames.indexOf(action.fileName) * 1.75}rem`,
+        top: `${fileNames.indexOf(action.fileName) * 2}rem`,
       };
     }
     return {};
@@ -110,8 +112,11 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
     }
   });
 
+  const { setIsNavOpened } = useNavContext();
+
   useEvent(events, "focus", (e) => {
     if (e.target === "nav") {
+      ReactDOM.flushSync(() => setIsNavOpened(true));
       const fileName = e.fileName;
       if (fileName != null) {
         stateRef.current?.selectionManager.setFocusedKey(fileName);

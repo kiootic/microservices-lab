@@ -4,6 +4,7 @@ import { useNotebookContext } from "./context";
 import { useStore } from "zustand";
 import { FileView } from "./FileView";
 import { useEventCallback } from "../../hooks/event-callback";
+import { useNavContext } from "../nav/context";
 
 interface ContentProps {
   className?: string;
@@ -27,12 +28,15 @@ export const Content: React.FC<ContentProps> = (props) => {
     state.setState({ scrollY: e.currentTarget.scrollTop });
   });
 
+  const { useCompactLayout } = useNavContext();
+
   return (
     <div
       ref={ref}
       className={cn(
         className,
         "overflow-auto after:block after:h-[calc(100%-4rem)]",
+        useCompactLayout && "pt-10",
       )}
       onScroll={handleOnScroll}
     >

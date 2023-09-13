@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import x from "react/package.json?raw";
-import "./index.css";
 import { makeWorkspace } from "./model/workspace";
 import { Workbench } from "./workbench/Workbench";
 import { useWorkbench } from "./workbench/useWorkbench";
+
+import "./index.css";
 
 const workspace = makeWorkspace();
 workspace.getState().vfs.write("/index.ts", "import {X} from 'test';");

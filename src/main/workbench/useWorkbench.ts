@@ -9,8 +9,12 @@ export type WorkbenchView = "notebook" | "experiment" | "journal";
 
 export type WorkbenchPane = "primary" | "secondary";
 
+export const allWorkbenchPanes: readonly WorkbenchPane[] = [
+  "primary",
+  "secondary",
+];
+
 export interface WorkbenchUIState {
-  enabledPanes: WorkbenchPane[];
   enabledViews: WorkbenchView[];
   paneView: Record<WorkbenchPane, WorkbenchView>;
   paneLastView: Record<WorkbenchPane, WorkbenchView>;
@@ -29,7 +33,6 @@ export function useWorkbench(workspace: Workspace): WorkbenchController {
   const [events] = useState(() => createEventBus<WorkbenchUIEvent>());
   const [state] = useState(() =>
     createStore<WorkbenchUIState>(() => ({
-      enabledPanes: ["primary", "secondary"],
       enabledViews: ["notebook", "experiment", "journal"],
       paneView: {
         primary: "notebook",

@@ -1,6 +1,6 @@
-import cn from "clsx";
 import React, { useMemo, useRef, useState } from "react";
 import { createStore } from "zustand";
+import { NavView } from "../nav/NavView";
 import { Content } from "./Content";
 import { SideNav } from "./SideNav";
 import {
@@ -70,9 +70,15 @@ export const Notebook: React.FC<NotebookProps> = (props) => {
 
   return (
     <NotebookContext.Provider value={context}>
-      <div ref={ref} className={cn("flex", className)}>
-        <SideNav className="flex-none w-64 border-r-2" />
-        <Content className="flex-1" />
+      <div ref={ref} className={className}>
+        <NavView className="w-full h-full" label="Notebook">
+          <NavView.Nav>
+            <SideNav className="w-full h-full" />
+          </NavView.Nav>
+          <NavView.Content>
+            <Content className="w-full h-full" />
+          </NavView.Content>
+        </NavView>
       </div>
     </NotebookContext.Provider>
   );
