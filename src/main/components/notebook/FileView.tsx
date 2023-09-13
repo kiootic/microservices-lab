@@ -1,6 +1,6 @@
 import { Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
@@ -30,9 +30,10 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   const { setIsNavOpened } = useNavContext();
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerElement, setContainerElement] =
+    useState<HTMLDivElement | null>(null);
   const contentsRef = useRef<HTMLDetailsElement | null>(null);
-  const isVisible = useIntersection(containerRef);
+  const isVisible = useIntersection(containerElement);
   useEffect(() => {
     setIsVisible(fileName, isVisible);
   }, [setIsVisible, fileName, isVisible]);
@@ -106,7 +107,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
 
   return (
     <div className={cn("flow-root", className)}>
-      <div ref={containerRef} className="flow-root mb-4">
+      <div ref={setContainerElement} className="flow-root mb-4">
         <details className="-mb-4" ref={contentsRef} open={isOpened}>
           <summary
             className="marker:content-none cursor-pointer outline-none"

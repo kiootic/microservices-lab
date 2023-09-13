@@ -1,5 +1,5 @@
 import cn from "clsx";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Tab, TabList, TabPanel, TabProps, Tabs } from "react-aria-components";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useSize } from "../../hooks/resize";
@@ -18,8 +18,8 @@ const NavView: React.FC<NavViewProps> = (props) => {
   const { className, label, children } = props;
 
   const [isNavOpened, setIsNavOpened] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const useCompactLayout = useSize(ref, (w) => w < compactLayoutThreshold);
+  const [element, setElement] = useState<HTMLElement | null>(null);
+  const useCompactLayout = useSize(element, (w) => w < compactLayoutThreshold);
 
   const context = useMemo<NavContext>(
     () => ({
@@ -45,7 +45,7 @@ const NavView: React.FC<NavViewProps> = (props) => {
   return (
     <NavContext.Provider value={context}>
       <Tabs
-        ref={ref}
+        ref={setElement}
         className={className}
         isDisabled={!useCompactLayout}
         keyboardActivation="manual"

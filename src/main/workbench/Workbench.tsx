@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useState } from "react";
 import { SplitLayout } from "../components/SplitLayout";
 import { useSize } from "../hooks/resize";
 import { Pane } from "./Pane";
@@ -24,8 +24,8 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
     [controller],
   );
 
-  const ref = useRef<HTMLDivElement>(null);
-  const useCompactLayout = useSize(ref, (w) => w < compactLayoutThreshold);
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const useCompactLayout = useSize(element, (w) => w < compactLayoutThreshold);
 
   const paneA = useMemo<React.ReactNode>(
     () => <Pane className="w-full h-full" pane="primary" />,
@@ -41,18 +41,19 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   return (
     <WorkbenchContext.Provider value={context}>
-      {paneA != null && paneB != null ? (
-        <SplitLayout
-          ref={ref}
-          className={className}
-          minSize="320px"
-          initialPaneASize="60%"
-          paneA={paneA}
-          paneB={paneB}
-        />
-      ) : (
-        <div className={className}>{paneA ?? paneB ?? null}</div>
-      )}
+      <div ref={setElement} className={className}>
+        {paneA != null && paneB != null ? (
+          <SplitLayout
+            className="w-full h-full"
+            minSize="320px"
+            initialPaneASize="60%"
+            paneA={paneA}
+            paneB={paneB}
+          />
+        ) : (
+          paneA ?? paneB ?? null
+        )}
+      </div>
     </WorkbenchContext.Provider>
   );
 };

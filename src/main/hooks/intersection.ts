@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 const callbacks = new Map<Element, (isIntersecting: boolean) => void>();
 
@@ -9,17 +9,15 @@ const observer = new IntersectionObserver((entries) => {
   }
 });
 
-export function useIntersection(
-  element: React.RefObject<Element | null>,
-): boolean {
+export function useIntersection(element: Element | null): boolean {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useLayoutEffect(() => {
-    if (element.current == null) {
+    if (element == null) {
       return;
     }
 
-    const elem = element.current;
+    const elem = element;
     callbacks.set(elem, setIsIntersecting);
     observer.observe(elem);
 
