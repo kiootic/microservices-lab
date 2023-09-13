@@ -42,7 +42,6 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
     const { className, extension, initialState } = props;
 
     const element = useRef<HTMLDivElement>(null);
-    const initialStateRef = useRef(initialState);
     const viewRef = useRef<EditorView | null>(null);
     const [, render] = useState({});
 
@@ -50,6 +49,11 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
       ref,
       () => viewRef.current,
     );
+
+    const initialStateRef = useRef(initialState);
+    useLayoutEffect(() => {
+      initialStateRef.current = initialState;
+    }, [initialState]);
 
     useLayoutEffect(() => {
       if (element.current == null) {
