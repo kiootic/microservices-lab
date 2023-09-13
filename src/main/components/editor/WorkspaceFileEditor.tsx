@@ -112,6 +112,9 @@ export const WorkspaceFileEditor = React.forwardRef<
           ".cm-lineNumbers": {
             minWidth: "3rem",
           },
+          ".cm-tooltip": {
+            userSelect: "text",
+          },
         }),
         extraExt ?? [],
       ],
