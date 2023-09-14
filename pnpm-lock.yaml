@@ -10,6 +10,8 @@ specifiers:
   '@codemirror/view': 6.17.1
   '@fontsource/source-code-pro': 5.0.8
   '@lezer/highlight': 1.1.6
+  '@react-aria/actiongroup': 3.6.2
+  '@react-aria/focus': 3.14.1
   '@rollup/browser': 3.28.1
   '@types/chai': 4.3.5
   '@types/react': 18.2.21
@@ -52,6 +54,8 @@ dependencies:
   '@codemirror/view': 6.17.1
   '@fontsource/source-code-pro': 5.0.8
   '@lezer/highlight': 1.1.6
+  '@react-aria/actiongroup': 3.6.2_react@18.2.0
+  '@react-aria/focus': 3.14.1_react@18.2.0
   '@rollup/browser': 3.28.1
   '@vitest/expect': 0.34.3
   '@vscode/codicons': 0.0.33
@@ -983,6 +987,24 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
     dev: true
+
+  /@react-aria/actiongroup/3.6.2_react@18.2.0:
+    resolution: {integrity: sha512-GSR4o1RxiYaS/R3sKFAog/uujB8neJfJ41rNwImJ96GMT3zqt5nSPfj66KgQ3cbu4UbrHP4oiWV03UXltum7DA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+    dependencies:
+      '@react-aria/focus': 3.14.1_react@18.2.0
+      '@react-aria/i18n': 3.8.2_react@18.2.0
+      '@react-aria/interactions': 3.18.0_react@18.2.0
+      '@react-aria/selection': 3.16.2_react@18.2.0
+      '@react-aria/utils': 3.20.0_react@18.2.0
+      '@react-stately/collections': 3.10.1_react@18.2.0
+      '@react-stately/list': 3.9.2_react@18.2.0
+      '@react-types/actiongroup': 3.4.4_react@18.2.0
+      '@react-types/shared': 3.20.0_react@18.2.0
+      '@swc/helpers': 0.5.2
+      react: 18.2.0
+    dev: false
 
   /@react-aria/breadcrumbs/3.5.5_react@18.2.0:
     resolution: {integrity: sha512-8O+ntzq8yxmsXVQmLTJGovSespTAuJ17PWvgIL8HsYh7FOU/TRM/rhileaDlZBlIpZtI/hbs+d9MuC6ZOXkl7w==}
@@ -1967,6 +1989,16 @@ packages:
       '@react-aria/utils': 3.20.0_react@18.2.0
       '@react-types/shared': 3.20.0_react@18.2.0
       '@swc/helpers': 0.5.2
+      react: 18.2.0
+    dev: false
+
+  /@react-types/actiongroup/3.4.4_react@18.2.0:
+    resolution: {integrity: sha512-n/xNQ/27VMX0AyFG42IQjh2Il8aJ6qRv2BoFR8cGV/AZsTJmK6Zxs8u++j0ZEkejp7Zz+uuN5JnHsdowWj6d7A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+    dependencies:
+      '@react-types/button': 3.8.0_react@18.2.0
+      '@react-types/shared': 3.20.0_react@18.2.0
       react: 18.2.0
     dev: false
 

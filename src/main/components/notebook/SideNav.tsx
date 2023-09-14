@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import ReactDOM from "react-dom";
 import { ListState } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
@@ -13,11 +14,10 @@ import { useEventCallback } from "../../hooks/event-callback";
 import { AppButton } from "../AppButton";
 import { AppDialog } from "../Dialog";
 import { ListBox } from "../ListBox";
+import { useNavContext } from "../nav/context";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
 import { useNotebookContext } from "./context";
-import { useNavContext } from "../nav/context";
-import ReactDOM from "react-dom";
 
 interface SideNavProps {
   className?: string;
@@ -123,9 +123,17 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
   useEvent(events, "focus", (e) => {
     if (e.target === "nav") {
       ReactDOM.flushSync(() => setIsNavOpened(true));
-      const fileName = e.fileName;
-      if (fileName != null) {
-        stateRef.current?.selectionManager.setFocusedKey(fileName);
+      const state = stateRef.current;
+      if (state == null) {
+        return;
+      }
+
+      const targetKey =
+        e.fileName ??
+        state.selectionManager.focusedKey ??
+        state.collection.getFirstKey();
+      if (targetKey != null) {
+        stateRef.current?.selectionManager.setFocusedKey(targetKey);
       }
       stateRef.current?.selectionManager.setFocused(true);
     }

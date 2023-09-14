@@ -1,0 +1,4 @@
+.button--right:first-child,
+.button--left + .button--right {
+  margin-left: auto;
+}

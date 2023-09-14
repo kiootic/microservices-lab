@@ -1,9 +1,10 @@
-import cn from "clsx";
-import React from "react";
-import { FocusScope, useFocusManager } from "react-aria";
+import { createFocusManager } from "@react-aria/focus";
+import React, { useMemo, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useEvent } from "../../hooks/event-bus";
 import { useEventCallback } from "../../hooks/event-callback";
-import { IconButton } from "../IconButton";
+import { Toolbar, ToolbarItem } from "../Toolbar";
+import { useNavContext } from "../nav/context";
 import { useNotebookContext } from "./context";
 
 interface SideNavToolbarProps {
@@ -15,38 +16,41 @@ export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
 
   const { events, startAction } = useNotebookContext();
 
-  const handleAddOnCLick = useEventCallback(() => {
-    startAction({ kind: "add" });
-  });
+  const ref = useRef<HTMLDivElement>(null);
+  const focusManager = useMemo(() => createFocusManager(ref), []);
+
+  const rightItems = useMemo<ToolbarItem[]>(
+    () => [
+      {
+        key: "add",
+        label: "Add",
+        content: <span className="codicon codicon-add" />,
+        action: () => startAction({ kind: "add" }),
+      },
+    ],
+    [startAction],
+  );
 
   const handleOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       events.dispatch({ kind: "focus", target: "nav" });
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  const { setIsNavOpened } = useNavContext();
+
+  useEvent(events, "focus", (e) => {
+    if (e.kind === "focus" && e.target === "nav-toolbar") {
+      ReactDOM.flushSync(() => setIsNavOpened(true));
+      focusManager.focusFirst();
     }
   });
 
   return (
-    <div
-      className={cn("flex items-center justify-end p-1", className)}
-      onKeyDown={handleOnKeyDown}
-    >
-      <FocusScope>
-        <ToolbarSentinel />
-        <IconButton className="flex-none" onPress={handleAddOnCLick}>
-          <span className="codicon codicon-add" />
-        </IconButton>
-      </FocusScope>
+    <div ref={ref} className={className} onKeyDownCapture={handleOnKeyDown}>
+      <Toolbar className="w-full h-full" right={rightItems} />
     </div>
   );
-};
-
-const ToolbarSentinel: React.FC = () => {
-  const { events } = useNotebookContext();
-  const manager = useFocusManager();
-  useEvent(events, "focus", (e) => {
-    if (e.kind === "focus" && e.target === "nav-toolbar") {
-      manager.focusFirst();
-    }
-  });
-  return null;
 };
