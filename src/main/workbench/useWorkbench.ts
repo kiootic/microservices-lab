@@ -26,6 +26,7 @@ export interface WorkbenchUIState {
   viewAffinity: Record<WorkbenchView, WorkbenchPane | null>;
 
   notebookUIState: unknown;
+  experimentUIState: unknown;
 }
 
 export interface WorkbenchController {
@@ -52,6 +53,7 @@ export function useWorkbench(workspace: Workspace): WorkbenchController {
         journal: null,
       },
       notebookUIState: null,
+      experimentUIState: null,
     })),
   );
 
