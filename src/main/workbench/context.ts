@@ -1,30 +1,40 @@
 import React, { useContext } from "react";
-import { StoreApi } from "zustand";
-import { EventBus } from "../hooks/event-bus";
-import { Workspace } from "../model/workspace";
+import { StoreApi, createStore } from "zustand";
 import {
   WorkbenchController,
   WorkbenchPane,
-  WorkbenchUIEvent,
   WorkbenchUIState,
   WorkbenchView,
   allWorkbenchPanes,
   allWorkbenchViews,
 } from "./useWorkbench";
 
-export interface WorkbenchContextValue {
-  workspace: Workspace;
-  events: EventBus<WorkbenchUIEvent>;
-  state: StoreApi<WorkbenchUIState>;
+export type WorkbenchStatusBarItemKey = "notebook" | "experiment";
+
+export interface WorkbenchInternalState {
+  statusBarItems: Partial<Record<WorkbenchStatusBarItemKey, React.ReactNode>>;
+}
+
+export interface WorkbenchContextValue extends WorkbenchController {
+  internalState: StoreApi<WorkbenchInternalState>;
 
   switchView: (pane: WorkbenchPane, view: WorkbenchView) => void;
+  setStatusBarItem: (
+    key: WorkbenchStatusBarItemKey,
+    content: React.ReactNode,
+  ) => void;
 }
 
 export function createContextValue(
   controller: WorkbenchController,
 ): WorkbenchContextValue {
+  const internalState = createStore<WorkbenchInternalState>(() => ({
+    statusBarItems: {},
+  }));
+
   return {
     ...controller,
+    internalState,
 
     switchView: (pane, view) => {
       const state = controller.state.getState();
@@ -53,6 +63,11 @@ export function createContextValue(
       }
 
       controller.state.setState({ paneView, viewAffinity, paneLastView });
+    },
+    setStatusBarItem: (key, content) => {
+      internalState.setState((s) => ({
+        statusBarItems: { ...s.statusBarItems, [key]: content },
+      }));
     },
   };
 }

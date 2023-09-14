@@ -1,23 +1,13 @@
 import React, { useContext } from "react";
 import { StoreApi, createStore } from "zustand";
-import { EventBus } from "../../hooks/event-bus";
-import { Workspace } from "../../model/workspace";
-import {
-  NotebookAction,
-  NotebookController,
-  NotebookUIEvent,
-  NotebookUIState,
-} from "./useNotebook";
+import { NotebookAction, NotebookController } from "./useNotebook";
 
 export interface NotebookInternalState {
   visibleFileNames: Set<string>;
   activeAction: NotebookAction | null;
 }
 
-export interface NotebookContextValue {
-  workspace: Workspace;
-  events: EventBus<NotebookUIEvent>;
-  state: StoreApi<NotebookUIState>;
+export interface NotebookContextValue extends NotebookController {
   internalState: StoreApi<NotebookInternalState>;
 
   rootElementRef: React.RefObject<HTMLDivElement>;

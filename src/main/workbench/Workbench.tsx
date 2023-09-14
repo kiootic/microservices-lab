@@ -1,7 +1,9 @@
+import cn from "clsx";
 import React, { useMemo, useState } from "react";
 import { SplitLayout } from "../components/SplitLayout";
 import { useSize } from "../hooks/resize";
 import { Pane } from "./Pane";
+import { StatusBar } from "./StatusBar";
 import {
   WorkbenchContext,
   WorkbenchContextValue,
@@ -41,18 +43,22 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   return (
     <WorkbenchContext.Provider value={context}>
-      <div ref={setElement} className={className}>
+      <div
+        ref={setElement}
+        className={cn(className, "flex flex-col overflow-hidden")}
+      >
         {paneA != null && paneB != null ? (
           <SplitLayout
-            className="w-full h-full"
+            className="flex-1 min-h-0"
             minSize="320px"
             initialPaneASize="60%"
             paneA={paneA}
             paneB={paneB}
           />
         ) : (
-          paneA ?? paneB ?? null
+          <div className="flex-1 min-h-0">{paneA ?? paneB ?? null}</div>
         )}
+        <StatusBar className="flex-none" />
       </div>
     </WorkbenchContext.Provider>
   );

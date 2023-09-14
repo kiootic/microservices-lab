@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../../hooks/event-bus";
 import { Workspace } from "../../model/workspace";
@@ -24,12 +24,20 @@ export interface NotebookController {
   workspace: Workspace;
   events: EventBus<NotebookUIEvent>;
   state: StoreApi<NotebookUIState>;
+  setStatusBar?: (item: React.ReactNode) => void;
+}
+
+interface NotebookControllerParams {
+  persistedState?: NotebookUIState;
+  setStatusBar?: (item: React.ReactNode) => void;
 }
 
 export function useNotebook(
   workspace: Workspace,
-  persistedState?: NotebookUIState,
+  params?: NotebookControllerParams,
 ): NotebookController {
+  const { persistedState, setStatusBar } = params ?? {};
+
   const [events] = useState(() => createEventBus<NotebookUIEvent>());
   const [state] = useState(() =>
     createStore<NotebookUIState>(
@@ -43,7 +51,7 @@ export function useNotebook(
   );
 
   return useMemo<NotebookController>(
-    () => ({ workspace, events, state }),
-    [workspace, events, state],
+    () => ({ workspace, events, state, setStatusBar }),
+    [workspace, events, state, setStatusBar],
   );
 }

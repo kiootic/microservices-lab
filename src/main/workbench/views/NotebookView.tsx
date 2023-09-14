@@ -5,6 +5,7 @@ import {
   useNotebook,
 } from "../../components/notebook/useNotebook";
 import { useWorkbenchContext } from "../context";
+import { useEventCallback } from "../../hooks/event-callback";
 
 interface NotebookViewProps {
   className?: string;
@@ -13,13 +14,19 @@ interface NotebookViewProps {
 export const NotebookView: React.FC<NotebookViewProps> = (props) => {
   const { className } = props;
 
-  const { workspace, state } = useWorkbenchContext();
-  const notebook = useNotebook(
-    workspace,
-    (state.getState().notebookUIState ?? undefined) as
+  const { workspace, state, setStatusBarItem } = useWorkbenchContext();
+
+  const setStatusBar = useEventCallback((item: React.ReactNode) => {
+    setStatusBarItem("notebook", item);
+  });
+  useEffect(() => setStatusBar(null), [setStatusBar]);
+
+  const notebook = useNotebook(workspace, {
+    persistedState: (state.getState().notebookUIState ?? undefined) as
       | NotebookUIState
       | undefined,
-  );
+    setStatusBar,
+  });
 
   const notebookUIState = notebook.state;
   useEffect(() => {
