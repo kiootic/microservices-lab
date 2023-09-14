@@ -5,6 +5,8 @@ import {
   ExperimentContextValue,
   createContextValue,
 } from "./context";
+import cn from "clsx";
+import { ExperimentToolbar } from "./ExperimentToolbar";
 
 interface ExperimentProps {
   className?: string;
@@ -21,7 +23,9 @@ export const Experiment: React.FC<ExperimentProps> = (props) => {
 
   return (
     <ExperimentContext.Provider value={context}>
-      <div className={className}></div>
+      <div className={cn("flex flex-col", className)}>
+        <ExperimentToolbar className="flex-none" />
+      </div>
     </ExperimentContext.Provider>
   );
 };

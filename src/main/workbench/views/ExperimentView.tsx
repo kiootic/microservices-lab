@@ -14,14 +14,14 @@ interface ExperimentViewProps {
 export const ExperimentView: React.FC<ExperimentViewProps> = (props) => {
   const { className } = props;
 
-  const { workspace, state, setStatusBarItem } = useWorkbenchContext();
+  const { workspace, session, state, setStatusBarItem } = useWorkbenchContext();
 
   const setStatusBar = useEventCallback((item: React.ReactNode) => {
     setStatusBarItem("experiment", item);
   });
   useEffect(() => setStatusBar(null), [setStatusBar]);
 
-  const experiment = useExperiment(workspace, {
+  const experiment = useExperiment(workspace, session, {
     persistedState: (state.getState().notebookUIState ?? undefined) as
       | ExperimentUIState
       | undefined,

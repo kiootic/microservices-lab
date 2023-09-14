@@ -11,6 +11,7 @@ export default {
       gray: colors.slate,
       primary: colors.sky,
       red: colors.red,
+      green: colors.green,
     },
     extend: {
       fontFamily: {

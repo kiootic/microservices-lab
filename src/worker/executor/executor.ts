@@ -8,7 +8,7 @@ export async function execute(
 ): Promise<unknown> {
   const globals = makeGlobalObject(runtime.globals);
 
-  return runtime.scheduler.run(() => {
+  return runtime.scheduler.run(async () => {
     const module = load(globals, bundleJS, new Map()) as {
       default: () => Promise<unknown>;
     };

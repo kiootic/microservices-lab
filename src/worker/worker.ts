@@ -24,9 +24,9 @@ class WorkerHost implements Host {
 }
 
 class Worker implements WorkerAPI {
-  async run(bundleJS: string): Promise<unknown> {
+  async run(bundleJS: string): Promise<void> {
     const runtime = new Runtime(new WorkerHost());
-    return await execute(bundleJS, runtime);
+    await execute(bundleJS, runtime);
   }
 }
 

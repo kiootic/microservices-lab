@@ -1,4 +1,4 @@
-import { initialize, build, Plugin } from "esbuild-wasm";
+import { initialize, context, Plugin, BuildContext } from "esbuild-wasm";
 import ESBuildWasm from "esbuild-wasm/esbuild.wasm?url";
 
 const init$ = initialize({ wasmURL: ESBuildWasm });
@@ -15,6 +15,7 @@ function extname(path: string) {
 
 export async function makeBundle(
   modules: Map<string, string>,
+  cancel$: Promise<void>,
 ): Promise<string> {
   await init$;
 
@@ -65,19 +66,26 @@ export async function makeBundle(
     },
   };
 
-  const result = await build({
-    entryPoints: ["/index.ts"],
-    bundle: true,
-    write: false,
-    sourcemap: "inline",
-    format: "cjs",
-    target: "es2020",
-    supported: {
-      "async-await": false,
-      "async-generator": false,
-    },
-    plugins: [loader],
-  });
+  let ctx: BuildContext | undefined;
+  try {
+    ctx = await context({
+      entryPoints: ["/index.ts"],
+      bundle: true,
+      write: false,
+      sourcemap: "inline",
+      format: "cjs",
+      target: "es2020",
+      supported: {
+        "async-await": false,
+        "async-generator": false,
+      },
+      plugins: [loader],
+    });
+    cancel$.then(() => ctx?.cancel());
 
-  return result.outputFiles[0].text;
+    const result = await ctx.rebuild();
+    return result.outputFiles?.[0].text ?? "";
+  } finally {
+    await ctx?.dispose();
+  }
 }

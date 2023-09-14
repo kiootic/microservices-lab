@@ -6,6 +6,9 @@ export interface ExperimentInternalState {}
 
 export interface ExperimentContextValue extends ExperimentController {
   internalState: StoreApi<ExperimentInternalState>;
+
+  startSession: () => void;
+  stopSession: () => void;
 }
 
 export function createContextValue(
@@ -19,6 +22,13 @@ export function createContextValue(
   return {
     ...controller,
     internalState,
+
+    startSession: () => {
+      controller.session.start(controller.workspace.getState().vfs.content());
+    },
+    stopSession: () => {
+      controller.session.cancel();
+    },
   };
 }
 

@@ -1,9 +1,10 @@
 import * as Comlink from "comlink";
-import { SandboxAPI } from "../shared/comm";
+import { SandboxAPI } from "../../shared/comm";
 
 export class Sandbox {
-  private frame: HTMLIFrameElement;
-  private api: Comlink.Remote<SandboxAPI>;
+  private readonly frame: HTMLIFrameElement;
+  readonly api: Comlink.Remote<SandboxAPI>;
+  private disposed = false;
 
   private constructor(frame: HTMLIFrameElement) {
     this.frame = frame;
@@ -18,13 +19,11 @@ export class Sandbox {
     document.body.append(frame);
 
     try {
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         frame.addEventListener("load", () => resolve());
-        frame.addEventListener("error", (e) => reject(e.error));
       });
 
       const sandbox = new Sandbox(frame);
-      await sandbox.api.setup();
 
       return sandbox;
     } catch (err) {
@@ -34,11 +33,11 @@ export class Sandbox {
   }
 
   dispose() {
+    if (this.disposed) {
+      return;
+    }
     this.api[Comlink.releaseProxy]();
     this.frame.remove();
-  }
-
-  async run(modules: Map<string, string>) {
-    return this.api.run(modules);
+    this.disposed = true;
   }
 }

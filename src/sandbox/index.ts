@@ -1,30 +1,70 @@
 import * as Comlink from "comlink";
-import { SandboxAPI, WorkerAPI } from "../shared/comm";
-import { makeBundle } from "./bundler";
+import { SandboxAPI, SessionAPI, WorkerAPI } from "../shared/comm";
 import WorkerScriptURL from "../worker/worker?worker&url";
+import { makeBundle } from "./bundler";
+
+class Sandbox implements SandboxAPI {
+  ping(): void {}
+
+  run(modules: Map<string, string>) {
+    const session = new Session(modules);
+    return Comlink.proxy(session);
+  }
+}
 
 const trampolineScript = `import ${JSON.stringify(
   new URL(WorkerScriptURL, import.meta.url),
 )};`;
 
-class Sandbox implements SandboxAPI {
-  async setup(): Promise<void> {}
+class Session implements SessionAPI {
+  readonly cancel: () => void;
+  private readonly cancel$: Promise<void>;
 
-  async run(modules: Map<string, string>): Promise<unknown> {
-    const worker = new Worker(
+  private readonly worker: Worker;
+  private readonly api: Comlink.Remote<WorkerAPI>;
+  private disposed = false;
+
+  readonly done$: Promise<void>;
+
+  constructor(modules: Map<string, string>) {
+    let cancel!: () => void;
+    this.cancel$ = new Promise<void>((resolve) => {
+      cancel = resolve;
+    });
+    this.cancel = cancel;
+
+    this.worker = new Worker(
       "data:application/javascript;base64," + btoa(trampolineScript),
       { type: "module" },
     );
-    const workerAPI = Comlink.wrap<WorkerAPI>(worker);
+    this.api = Comlink.wrap<WorkerAPI>(this.worker);
 
+    this.done$ = this.run(modules);
+  }
+
+  async run(modules: Map<string, string>): Promise<void> {
     try {
-      const bundleJS = await makeBundle(modules);
-      const result = await workerAPI.run(bundleJS);
-      return result;
+      const bundleJS = await makeBundle(modules, this.cancel$);
+      await Promise.race([this.api.run(bundleJS), this.cancel$]);
     } finally {
-      worker.terminate();
-      workerAPI[Comlink.releaseProxy]();
+      this.dispose();
     }
+  }
+
+  ping(): void {}
+
+  done() {
+    return this.done$;
+  }
+
+  dispose() {
+    if (this.disposed) {
+      return;
+    }
+
+    this.worker.terminate();
+    this.api[Comlink.releaseProxy]();
+    this.disposed = true;
   }
 }
 
