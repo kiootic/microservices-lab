@@ -1,6 +1,6 @@
 import * as Comlink from "comlink";
 import { SandboxAPI, SessionAPI, WorkerAPI } from "../shared/comm";
-import WorkerScriptURL from "../worker/worker?worker&url";
+import WorkerScriptURL from "./worker/worker?worker&url";
 import { makeBundle } from "./bundler";
 
 class Sandbox implements SandboxAPI {

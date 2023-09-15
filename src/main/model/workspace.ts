@@ -1,7 +1,8 @@
 import { createStore, StoreApi } from "zustand";
 import { createLanguageService } from "../language/host";
-import { mapStore, Store, storeVfs, Vfs } from "../language/vfs";
+import { mapStore, overlayVfs, Store, storeVfs, Vfs } from "../language/vfs";
 import ts from "typescript";
+import { runtimeLibsVfs } from "./runtime";
 
 export function isValidFileName(fileName: string) {
   if (!fileName.startsWith("/")) {
@@ -113,8 +114,12 @@ export function makeWorkspace() {
   return createStore<WorkspaceValue>()((set, get, workspace) => {
     const store = mapStore();
     const vfs = storeVfs(wrapStore(store, workspace));
-    const lang = createLanguageService(vfs, compilerOptions);
+    const lang = createLanguageService(
+      overlayVfs(vfs, runtimeLibsVfs),
+      compilerOptions,
+    );
     const fileCache = new Map<string, WorkspaceFile>();
+
     return {
       isDirty: false,
       fileNames: [],

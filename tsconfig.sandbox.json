@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": true,
+    "lib": ["ES2020", "WebWorker"]
+  },
+  "include": ["src/sandbox/worker", "src/shared"]
+}

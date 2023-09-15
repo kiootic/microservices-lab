@@ -2,7 +2,7 @@ import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { transformSync } from "esbuild";
 
-const workerPath = new URL("src/worker", import.meta.url).pathname;
+const workerPath = new URL("src/sandbox/worker", import.meta.url).pathname;
 
 const WorkerAsyncPlugin: Plugin = {
   name: "worker-async",

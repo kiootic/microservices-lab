@@ -1,5 +1,5 @@
 import * as Comlink from "comlink";
-import { WorkerAPI } from "../shared/comm";
+import { WorkerAPI } from "../../shared/comm";
 import { execute } from "./executor/executor";
 import { Runtime } from "./runtime/runtime";
 import { Host, LogLevel } from "./runtime/host";

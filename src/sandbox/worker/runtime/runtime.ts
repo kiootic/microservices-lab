@@ -1,4 +1,4 @@
-import type * as RuntimeGlobals from "../../shared/runtime";
+import type * as RuntimeGlobals from "../../../shared/runtime";
 import { VirtualNetwork } from "../system/network";
 import { System } from "../system/system";
 import { Semaphore } from "../utils/async";
@@ -18,28 +18,35 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
     await system.reset();
   });
 
+  const globalOverrides: Partial<Record<keyof typeof globalThis, unknown>> = {
+    Date: runtime.scheduler.Date,
+    setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
+    clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
+  };
+
   return {
+    ...globalOverrides,
     console: {
       debug: console.debug,
       log: console.info,
       warn: console.warn,
       error: console.error,
     },
-    Date: runtime.scheduler.Date,
-    setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
-    clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
 
     expect,
-    defineTest: suite.defineTest.bind(suite),
-    runTests: suite.run.bind(suite),
-
-    defineServices: system.defineServices.bind(system),
-    setupSystem: system.setup.bind(system),
+    random: random,
     services: VirtualNetwork.proxy(() => system.network),
 
-    random: random,
-    Semaphore: Semaphore,
+    Runtime: {
+      defineTest: suite.defineTest.bind(suite),
+      runTests: suite.run.bind(suite),
+
+      defineServices: system.defineServices.bind(system),
+      setupSystem: system.setup.bind(system),
+
+      Semaphore: Semaphore,
+    },
   };
 }
 

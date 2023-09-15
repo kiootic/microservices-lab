@@ -24,7 +24,8 @@ export function createLanguageService(
 
   const defaultLibFileName = ts.getDefaultLibFileName(options);
   const host: ts.LanguageServiceHost = {
-    getDefaultLibFileName: () => "/types/" + defaultLibFileName,
+    getDefaultLibFileName: () =>
+      "/node_modules/typescript/lib/" + defaultLibFileName,
 
     getCompilationSettings: () => options,
     getScriptFileNames: () => vfs.fileNames(),
