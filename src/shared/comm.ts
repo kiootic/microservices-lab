@@ -2,7 +2,7 @@ import type { ProxyMarked } from "comlink";
 
 export interface SandboxAPI {
   ping(): void;
-  run(modules: ReadonlyMap<string, string>): SessionAPI & ProxyMarked;
+  run(modules: ReadonlyMap<string, string>): Promise<SessionAPI & ProxyMarked>;
 }
 
 export interface SessionAPI {

@@ -22,14 +22,6 @@ function defineProperty(
 export function makeGlobalObject(globals: object) {
   const globalObject = {};
 
-  for (const key of Reflect.ownKeys(globalThis)) {
-    Object.defineProperty(globalObject, key, {
-      value: undefined,
-      configurable: true,
-      enumerable: false,
-    });
-  }
-
   for (const key of builtInGlobals) {
     defineProperty(globalObject, key, function () {
       return (globalThis as Record<string, unknown>)[key];

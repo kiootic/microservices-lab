@@ -6,15 +6,24 @@ import { makeBundle } from "./bundler";
 class Sandbox implements SandboxAPI {
   ping(): void {}
 
-  run(modules: Map<string, string>) {
+  async run(modules: Map<string, string>) {
     const session = new Session(modules);
+    await session.init$;
     return Comlink.proxy(session);
   }
 }
 
-const trampolineScript = `import ${JSON.stringify(
-  new URL(WorkerScriptURL, import.meta.url),
-)};`;
+const trampolineScript = URL.createObjectURL(
+  new Blob(
+    [
+      `
+import(${JSON.stringify(new URL(WorkerScriptURL, import.meta.url))})
+  .finally(() => postMessage(null));
+`,
+    ],
+    { type: "application/javascript" },
+  ),
+);
 
 class Session implements SessionAPI {
   readonly cancel: () => void;
@@ -24,6 +33,7 @@ class Session implements SessionAPI {
   private readonly api: Comlink.Remote<WorkerAPI>;
   private disposed = false;
 
+  readonly init$: Promise<void>;
   readonly done$: Promise<void>;
 
   constructor(modules: Map<string, string>) {
@@ -33,13 +43,13 @@ class Session implements SessionAPI {
     });
     this.cancel = cancel;
 
-    this.worker = new Worker(
-      "data:application/javascript;base64," + btoa(trampolineScript),
-      { type: "module" },
-    );
+    this.worker = new Worker(trampolineScript);
     this.api = Comlink.wrap<WorkerAPI>(this.worker);
 
-    this.done$ = this.run(modules);
+    this.init$ = new Promise<void>((resolve) => {
+      this.worker.addEventListener("message", () => resolve(), { once: true });
+    });
+    this.done$ = this.init$.then(() => this.run(modules));
   }
 
   async run(modules: Map<string, string>): Promise<void> {

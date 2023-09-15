@@ -1,6 +1,19 @@
 import { initialize, context, Plugin, BuildContext } from "esbuild-wasm";
 import ESBuildWasm from "esbuild-wasm/esbuild.wasm?url";
 
+const wrapperJSPlaceholder = "###";
+const wrapperJS = `
+globalThis.$$module = function() {
+  with (this.guard) {
+    with (this.context) {
+      (function() {
+${wrapperJSPlaceholder}
+      })();
+    }
+  }
+};
+`;
+
 const init$ = initialize({ wasmURL: ESBuildWasm });
 
 function basename(path: string) {
@@ -78,6 +91,14 @@ export async function makeBundle(
       supported: {
         "async-await": false,
         "async-generator": false,
+      },
+      banner: {
+        js: wrapperJS.slice(0, wrapperJS.indexOf(wrapperJSPlaceholder)),
+      },
+      footer: {
+        js: wrapperJS.slice(
+          wrapperJS.indexOf(wrapperJSPlaceholder) + wrapperJSPlaceholder.length,
+        ),
       },
       plugins: [loader],
     });
