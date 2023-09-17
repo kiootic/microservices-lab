@@ -6,6 +6,7 @@ import { useEventCallback } from "../../hooks/event-callback";
 import { Toolbar, ToolbarItem } from "../Toolbar";
 import { useNavContext } from "../nav/context";
 import { useNotebookContext } from "./context";
+import { useIntl } from "react-intl";
 
 interface SideNavToolbarProps {
   className?: string;
@@ -13,6 +14,7 @@ interface SideNavToolbarProps {
 
 export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
   const { className } = props;
+  const intl = useIntl();
 
   const { events, startAction } = useNotebookContext();
 
@@ -23,12 +25,15 @@ export const SideNavToolbar: React.FC<SideNavToolbarProps> = (props) => {
     () => [
       {
         key: "add",
-        label: "Add",
+        label: intl.formatMessage({
+          id: "views.notebook.toolbar.add",
+          defaultMessage: "Add",
+        }),
         content: <span className="codicon codicon-add" />,
         action: () => startAction({ kind: "add" }),
       },
     ],
-    [startAction],
+    [intl, startAction],
   );
 
   const handleOnKeyDown = useEventCallback((e: React.KeyboardEvent) => {

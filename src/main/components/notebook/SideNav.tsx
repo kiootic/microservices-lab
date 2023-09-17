@@ -18,6 +18,7 @@ import { useNavContext } from "../nav/context";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
 import { useNotebookContext } from "./context";
+import { FormattedMessage, useIntl } from "react-intl";
 
 interface SideNavProps {
   className?: string;
@@ -25,6 +26,7 @@ interface SideNavProps {
 
 export const SideNav: React.FC<SideNavProps> = (props) => {
   const { className } = props;
+  const intl = useIntl();
 
   const { workspace, events, internalState, startAction } =
     useNotebookContext();
@@ -153,7 +155,10 @@ export const SideNav: React.FC<SideNavProps> = (props) => {
       >
         <div className="relative">
           <ListBox
-            aria-label="Navigation"
+            aria-label={intl.formatMessage({
+              id: "views.notebook.navigation",
+              defaultMessage: "Navigation",
+            })}
             onAction={handleListOnAction}
             selectionMode="none"
             stateRef={stateRef}
@@ -282,14 +287,23 @@ const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
     >
       <AppDialog.Modal>
         <AppDialog>
-          <AppDialog.Heading>Delete {displayFileName}</AppDialog.Heading>
+          <AppDialog.Heading>
+            <FormattedMessage
+              id="views.notebook.deleteFile.title"
+              defaultMessage="Delete {fileName}"
+              values={{ fileName: displayFileName }}
+            />
+          </AppDialog.Heading>
           <AppDialog.Actions>
             <AppButton
               variant="destructive"
               className="flex-none"
               onPress={handleDeleteOnClick}
             >
-              Delete
+              <FormattedMessage
+                id="views.notebook.deleteFile.confirm"
+                defaultMessage="Delete"
+              />
             </AppButton>
             <AppButton
               variant="secondary"
@@ -297,7 +311,10 @@ const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
               autoFocus
               onPress={handleKeepOnClick}
             >
-              Keep
+              <FormattedMessage
+                id="views.notebook.deleteFile.cancel"
+                defaultMessage="Keep"
+              />
             </AppButton>
           </AppDialog.Actions>
         </AppDialog>

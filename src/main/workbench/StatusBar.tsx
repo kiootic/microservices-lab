@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import cn from "clsx";
 import { useWorkbenchContext } from "./context";
 import { useStore } from "zustand";
+import { FormattedMessage } from "react-intl";
 
 interface StatusBarProps {
   className?: string;
@@ -26,7 +27,9 @@ export const StatusBar: React.FC<StatusBarProps> = (props) => {
         </React.Fragment>
       ))}
       <div className="border-l-2 border-gray-300 my-2 ml-auto" />
-      <h1 className="self-center">Microservices Lab</h1>
+      <h1 className="self-center">
+        <FormattedMessage id="app.name" defaultMessage="Microservices Lab" />
+      </h1>
     </div>
   );
 };

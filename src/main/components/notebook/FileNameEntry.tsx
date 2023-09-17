@@ -5,12 +5,19 @@ import { useEventCallback } from "../../hooks/event-callback";
 import { Vfs } from "../../language/vfs";
 import { isValidFileName } from "../../model/workspace";
 import { useNotebookContext } from "./context";
+import { MessageDescriptor, defineMessage, useIntl } from "react-intl";
 
 function validateNewFileName(vfs: Vfs, fileName: string) {
   if (!isValidFileName(fileName)) {
-    return "Invalid file name";
+    return defineMessage({
+      id: "views.notebook.errors.invalidFileName",
+      defaultMessage: "Invalid file name",
+    });
   } else if (vfs.exists(fileName) || vfs.readDir(fileName).length > 0) {
-    return "File already exists";
+    return defineMessage({
+      id: "views.notebook.errors.fileAlreadyExists",
+      defaultMessage: "File already exists",
+    });
   }
   return null;
 }
@@ -73,13 +80,14 @@ interface FileNameEditorProps {
   className?: string;
   style?: React.CSSProperties;
   initialFileName: string;
-  validateFileName: (fileName: string) => string | null;
+  validateFileName: (fileName: string) => MessageDescriptor | null;
   onFinishEdit: (fileName: string | null) => void;
 }
 
 const FileNameEditor: React.FC<FileNameEditorProps> = (props) => {
   const { className, style, initialFileName, validateFileName, onFinishEdit } =
     props;
+  const intl = useIntl();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -91,11 +99,13 @@ const FileNameEditor: React.FC<FileNameEditorProps> = (props) => {
   const handleOnChange = useEventCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const fileName = e.target.value;
-      let error = "";
+      let error: MessageDescriptor | null = null;
       if (fileName !== "") {
-        error = validateFileName("/" + fileName) ?? "";
+        error = validateFileName("/" + fileName) ?? null;
       }
-      e.target.setCustomValidity(error);
+      e.target.setCustomValidity(
+        error != null ? intl.formatMessage(error) : "",
+      );
       e.target.reportValidity();
       setFileName(e.target.value);
     },
@@ -123,7 +133,7 @@ const FileNameEditor: React.FC<FileNameEditorProps> = (props) => {
     if (error == null) {
       onFinishEdit("/" + fileName);
     } else if (inputRef.current != null) {
-      inputRef.current.setCustomValidity(error);
+      inputRef.current.setCustomValidity(intl.formatMessage(error));
       inputRef.current.reportValidity();
     }
   });

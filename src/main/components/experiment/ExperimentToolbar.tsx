@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from "react";
 import { Toolbar, ToolbarItem } from "../Toolbar";
 import { useExperimentContext } from "./context";
 import { useStore } from "zustand";
+import { useIntl } from "react-intl";
 
 interface ExperimentToolbarProps {
   className?: string;
@@ -9,6 +10,7 @@ interface ExperimentToolbarProps {
 
 export const ExperimentToolbar: React.FC<ExperimentToolbarProps> = (props) => {
   const { className } = props;
+  const intl = useIntl();
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -20,7 +22,10 @@ export const ExperimentToolbar: React.FC<ExperimentToolbarProps> = (props) => {
       sessionStatus === "idle" || sessionStatus === "disconnected"
         ? {
             key: "run",
-            label: "Run",
+            label: intl.formatMessage({
+              id: "views.experiment.toolbar.run",
+              defaultMessage: "Run",
+            }),
             content: (
               <span className="text-green-800 codicon codicon-debug-start" />
             ),
@@ -28,14 +33,17 @@ export const ExperimentToolbar: React.FC<ExperimentToolbarProps> = (props) => {
           }
         : {
             key: "stop",
-            label: "Stop",
+            label: intl.formatMessage({
+              id: "views.experiment.toolbar.stop",
+              defaultMessage: "Stop",
+            }),
             content: (
               <span className="text-red-800 codicon codicon-debug-stop" />
             ),
             action: () => stopSession(),
           },
     ],
-    [sessionStatus, startSession, stopSession],
+    [intl, sessionStatus, startSession, stopSession],
   );
 
   return (

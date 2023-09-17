@@ -1,6 +1,7 @@
 import cn from "clsx";
 import React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
+import { FormattedMessage, defineMessage, useIntl } from "react-intl";
 import { useStore } from "zustand";
 import { useEventCallback } from "../hooks/event-callback";
 import { useWorkbenchContext } from "./context";
@@ -20,6 +21,7 @@ interface PaneProps {
 
 export const Pane: React.FC<PaneProps> = (props) => {
   const { className, pane } = props;
+  const intl = useIntl();
 
   const { state, switchView } = useWorkbenchContext();
   const views = viewDescriptors;
@@ -41,7 +43,7 @@ export const Pane: React.FC<PaneProps> = (props) => {
         className={cn(
           "flex-none h-10 flex after:flex-grow after:w-4 after:bg-gray-100 after:border-t after:border-b-2",
         )}
-        aria-label={paneName(pane)}
+        aria-label={intl.formatMessage(paneName(pane))}
       >
         {views.map((view) => (
           <Tab
@@ -76,26 +78,60 @@ export const Pane: React.FC<PaneProps> = (props) => {
 function paneName(pane: WorkbenchPane) {
   switch (pane) {
     case "primary":
-      return "Primary pane";
+      return defineMessage({
+        id: "workbench.panes.primary",
+        defaultMessage: "Primary pane",
+      });
+
     case "secondary":
-      return "Secondary pane";
+      return defineMessage({
+        id: "workbench.panes.secondary",
+        defaultMessage: "Secondary pane",
+      });
   }
 }
 
 interface ViewDescriptor {
   id: WorkbenchView;
-  name: string;
+  name: React.ReactNode;
   Component: React.ComponentType<{ className?: string }>;
 }
 
 function viewDescriptor(view: WorkbenchView): ViewDescriptor {
   switch (view) {
     case "notebook":
-      return { id: view, name: "Notebook", Component: NotebookView };
+      return {
+        id: view,
+        name: (
+          <FormattedMessage
+            id="workbench.views.notebook"
+            defaultMessage="Notebook"
+          />
+        ),
+        Component: NotebookView,
+      };
     case "experiment":
-      return { id: view, name: "Experiment", Component: ExperimentView };
+      return {
+        id: view,
+        name: (
+          <FormattedMessage
+            id="workbench.views.experiment"
+            defaultMessage="Experiment"
+          />
+        ),
+        Component: ExperimentView,
+      };
     case "journal":
-      return { id: view, name: "Journal", Component: JournalView };
+      return {
+        id: view,
+        name: (
+          <FormattedMessage
+            id="workbench.views.journal"
+            defaultMessage="Journal"
+          />
+        ),
+        Component: JournalView,
+      };
   }
 }
 

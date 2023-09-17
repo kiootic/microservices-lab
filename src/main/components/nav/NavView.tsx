@@ -4,6 +4,7 @@ import { Tab, TabList, TabPanel, TabProps, Tabs } from "react-aria-components";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useSize } from "../../hooks/resize";
 import { NavContext, useNavContext } from "./context";
+import { FormattedMessage } from "react-intl";
 
 const compactLayoutThreshold = 768;
 const tabNav = "nav";
@@ -100,8 +101,18 @@ const Nav: React.FC<NavProps> = (props) => {
   return useCompactLayout ? (
     <>
       <TabList aria-label={label}>
-        <NavTabButton id={tabNav}>Navigation</NavTabButton>
-        <NavTabButton id={tabContent}>Content</NavTabButton>
+        <NavTabButton id={tabNav}>
+          <FormattedMessage
+            id="components.nav.navigation"
+            defaultMessage="Navigation"
+          />
+        </NavTabButton>
+        <NavTabButton id={tabContent}>
+          <FormattedMessage
+            id="components.nav.content"
+            defaultMessage="Content"
+          />
+        </NavTabButton>
       </TabList>
       <TabPanel
         className={cn(

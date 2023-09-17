@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { IntlProvider } from "react-intl";
 import x from "react/package.json?raw";
 import { makeWorkspace } from "./model/workspace";
 import { Workbench } from "./workbench/Workbench";
@@ -19,6 +20,8 @@ const Test: React.FC = () => {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Test />
+    <IntlProvider locale="en" defaultLocale="en">
+      <Test />
+    </IntlProvider>
   </React.StrictMode>,
 );
