@@ -1,8 +1,8 @@
 import { ProxyMarked, Remote, releaseProxy } from "comlink";
-import { SessionAPI } from "../../shared/comm";
-import { Sandbox } from "./sandbox";
 import { createStore } from "zustand";
+import { LogQuery, LogQueryPage, SessionAPI } from "../../shared/comm";
 import { setAsyncInternal } from "../utils/async-interval";
+import { Sandbox } from "./sandbox";
 
 async function withTimeout<T>(x: Promise<T>): Promise<T> {
   const token = Symbol();
@@ -39,6 +39,7 @@ async function ensureSandbox() {
 void ensureSandbox();
 
 export interface SessionState {
+  id: number;
   status: "idle" | "preparing" | "running" | "disconnected";
   logCount: number;
 }
@@ -107,6 +108,13 @@ class Session {
     }
   }
 
+  async queryLogs(query: LogQuery): Promise<LogQueryPage> {
+    if (!(await this.checkAlive())) {
+      return { previous: null, next: null, logs: [] };
+    }
+    return await this.session.queryLogs(query);
+  }
+
   async cancel() {
     if (!(await this.checkAlive())) {
       return;
@@ -146,6 +154,7 @@ export class SessionController {
   private session$: Promise<Session> | null = null;
 
   readonly state = createStore<SessionState>(() => ({
+    id: 1,
     status: "idle",
     logCount: 0,
   }));
@@ -169,8 +178,17 @@ export class SessionController {
       await session.dispose();
     }
 
-    this.state.setState({ status: "preparing" });
+    this.state.setState((s) => ({ id: s.id + 1, status: "preparing" }));
     this.session$ = this.startSession(modules);
+  }
+
+  async queryLogs(query: LogQuery): Promise<LogQueryPage> {
+    const session = await this.session$;
+    if (session == null) {
+      return { previous: null, next: null, logs: [] };
+    }
+
+    return session.queryLogs(query);
   }
 
   async cancel() {

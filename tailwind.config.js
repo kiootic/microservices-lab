@@ -8,6 +8,7 @@ export default {
   theme: {
     colors: {
       transparent: "transparent",
+      current: 'currentColor',
       gray: colors.slate,
       primary: colors.sky,
       red: colors.red,

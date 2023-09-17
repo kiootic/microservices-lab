@@ -9,14 +9,13 @@ const logBufferSize = 10000;
 class WorkerHost implements Host {
   private readonly host: Comlink.Remote<WorkerHostAPI>;
   private readonly logBuffer: LogEntry[] = [];
-  private logSequence = 0;
 
   constructor(host: Comlink.Remote<WorkerHostAPI>) {
     this.host = host;
   }
 
   writeLog(entry: HostLogEntry): void {
-    this.logBuffer.push({ sequence: this.logSequence++, ...entry });
+    this.logBuffer.push({ sequence: -1, ...entry });
     if (this.logBuffer.length >= logBufferSize) {
       this.flushLogs();
     }

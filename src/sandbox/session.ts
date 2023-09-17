@@ -5,8 +5,11 @@ import {
   WorkerHostAPI,
   LogEntry,
   SessionPollResult,
+  LogQuery,
+  LogQueryPage,
 } from "../shared/comm";
 import { makeBundle } from "./bundler";
+import { LogStore } from "./logs";
 
 class WorkerHost implements WorkerHostAPI {
   private readonly session: Session;
@@ -15,8 +18,7 @@ class WorkerHost implements WorkerHostAPI {
   }
 
   postLogs(logs: LogEntry[]): void {
-    this.session.logCount += logs.length;
-    this.session.logSegments.push(logs);
+    this.session.logs.add(logs);
   }
 }
 
@@ -29,8 +31,7 @@ export class Session implements SessionAPI {
   private disposed = false;
 
   isCompleted = false;
-  logCount = 0;
-  readonly logSegments: LogEntry[][] = [];
+  readonly logs = new LogStore();
 
   constructor(worker: Worker, modules: Map<string, string>) {
     let cancel!: () => void;
@@ -63,8 +64,12 @@ export class Session implements SessionAPI {
   poll(): SessionPollResult {
     return {
       isCompleted: this.isCompleted,
-      logCount: this.logCount,
+      logCount: this.logs.count,
     };
+  }
+
+  queryLogs(query: LogQuery): LogQueryPage {
+    return this.logs.query(query);
   }
 
   dispose() {

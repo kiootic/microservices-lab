@@ -1,7 +1,12 @@
 import cn from "clsx";
-import React, { useMemo } from "react";
-import { FormattedMessage } from "react-intl";
-import { LogEntry } from "../../../shared/comm";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
+import { useStore } from "zustand";
+import { LogEntry, LogQueryCursor, LogQueryPage } from "../../../shared/comm";
+import { Toolbar, ToolbarItem } from "../Toolbar";
+import { useExperimentContext } from "./context";
+
+const logPageLimit = 100;
 
 interface LogBoxProps {
   className?: string;
@@ -9,31 +14,118 @@ interface LogBoxProps {
 
 export const LogBox: React.FC<LogBoxProps> = (props) => {
   const { className } = props;
+  const intl = useIntl();
 
-  const logs = useMemo(
-    () =>
-      new Array(30).fill(0).map(
-        (_, i): LogEntry => ({
-          sequence: i,
-          timestamp: Math.random() * 1000,
-          level: (["debug", "warn", "error", "info"] as const)[
-            Math.floor(Math.random() * 4)
-          ],
-          message: "Labore ullamco incididunt excepteur ex enim id nisi.",
-          name: "name",
+  const { session } = useExperimentContext();
+  const sessionID = useStore(session.state, (s) => s.id);
+  const logCount = useStore(session.state, (s) => s.logCount);
+
+  const [page, setPage] = useState<LogQueryPage>({
+    previous: null,
+    next: null,
+    logs: [],
+  });
+  const [cursor, setCursor] = useState<LogQueryCursor>({ from: "start" });
+  const queryTokenRef = useRef<unknown>({});
+
+  useEffect(() => {
+    setPage({
+      previous: null,
+      next: null,
+      logs: [],
+    });
+    setCursor({ from: "start" });
+  }, [sessionID]);
+
+  useEffect(() => {
+    const token = {};
+    queryTokenRef.current = token;
+    session
+      .queryLogs({ cursor, limit: logPageLimit, criteria: {} })
+      .then((page) => {
+        if (queryTokenRef.current !== token) {
+          return;
+        }
+        setPage(page);
+      })
+      .catch(console.error);
+  }, [session, logCount, cursor]);
+
+  const paginationToolbarItems = useMemo<ToolbarItem[]>(
+    () => [
+      {
+        key: "first",
+        label: intl.formatMessage({
+          id: "views.experiment.logs.pagination.first",
+          defaultMessage: "First Page",
         }),
-      ),
-    [],
+        content: (
+          <span className="codicon codicon-chevron-left relative -left-[2px]">
+            <span className="codicon codicon-chevron-left absolute left-[4px]" />
+          </span>
+        ),
+        isDisabled: page.previous == null,
+        action: () => {
+          setCursor({ from: "start" });
+        },
+      },
+      {
+        key: "prev",
+        label: intl.formatMessage({
+          id: "views.experiment.logs.pagination.previous",
+          defaultMessage: "Previous Page",
+        }),
+        content: <span className="codicon codicon-chevron-left" />,
+        isDisabled: page.previous == null,
+        action: () => {
+          if (page.previous != null) {
+            setCursor(page.previous);
+          }
+        },
+      },
+      {
+        key: "next",
+        label: intl.formatMessage({
+          id: "views.experiment.logs.pagination.next",
+          defaultMessage: "Next Page",
+        }),
+        content: <span className="codicon codicon-chevron-right" />,
+        isDisabled: page.next == null,
+        action: () => {
+          if (page.next != null) {
+            setCursor(page.next);
+          }
+        },
+      },
+      {
+        key: "last",
+        label: intl.formatMessage({
+          id: "views.experiment.logs.pagination.last",
+          defaultMessage: "Last Page",
+        }),
+        content: (
+          <span className="codicon codicon-chevron-right relative -left-[2px]">
+            <span className="codicon codicon-chevron-right absolute left-[4px]" />
+          </span>
+        ),
+        isDisabled: page.next == null,
+        action: () => {
+          setCursor({ from: "end" });
+        },
+      },
+    ],
+    [intl, page],
   );
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="flex-none  bg-gray-100">
-        <div className="h-8" />
+      <div className="flex-none flex justify-between bg-gray-100">
+        <div />
+        <Toolbar className="h-10" right={paginationToolbarItems} />
       </div>
 
       <div tabIndex={0} className="flex-1 overflow-y-auto select-text">
-        <LogBoxTable className="w-full min-h-full" logs={logs} />
+        <LogBoxTable className="w-full min-h-full" logs={page.logs} />
       </div>
     </div>
   );
@@ -47,7 +139,7 @@ interface LogBoxTableProps {
 const LogBoxTable: React.FC<LogBoxTableProps> = (props) => {
   const { className, logs } = props;
   return (
-    <table className={cn("text-xs font-mono", className)}>
+    <table className={cn("text-xs font-mono relative", className)}>
       <thead className="sr-only">
         <tr>
           <th>
@@ -78,8 +170,17 @@ const LogBoxTable: React.FC<LogBoxTableProps> = (props) => {
       <tfoot className="h-full">
         <tr>
           <td></td>
-          <td className="border-r-2"></td>
-          <td></td>
+          <td className={logs.length > 0 ? "border-r-2" : ""}></td>
+          <td>
+            {logs.length === 0 ? (
+              <span className="absolute inset-0 flex items-center justify-center select-none">
+                <FormattedMessage
+                  id="views.experiment.logs.empty"
+                  defaultMessage="No logs found"
+                />
+              </span>
+            ) : null}
+          </td>
         </tr>
       </tfoot>
     </table>
@@ -104,8 +205,8 @@ export const LogRow: React.FC<LogRowProps> = (props) => {
         className,
       )}
     >
-      <td className="p-0 min-w-[2rem] text-center align-top">
-        <span className="inline-block pt-px">
+      <td className="p-0 text-right align-top">
+        <span className="inline-block w-6 pt-px">
           {log.level === "warn" ? (
             <span className="align-middle codicon codicon-warning"></span>
           ) : null}
@@ -118,13 +219,15 @@ export const LogRow: React.FC<LogRowProps> = (props) => {
         </span>
       </td>
       <td
-        className="p-0 py-0.5 pr-1 text-right border-r-2"
+        className="px-1 py-0.5 text-right border-r-2"
         data-timestamp={log.timestamp}
       >
-        <span>{formatTimestamp(log.timestamp)}</span>
+        <span className="min-w-min w-10 inline-block">
+          {formatTimestamp(log.timestamp)}
+        </span>
       </td>
       <td className="p-0 py-0.5 w-full -indent-2 pl-4 break-all">
-        <span className="font-semibold">{log.name} </span>
+        <span className="font-semibold">{log.name}&nbsp;&nbsp;</span>
         <span>{log.message}</span>
       </td>
     </tr>
@@ -132,23 +235,18 @@ export const LogRow: React.FC<LogRowProps> = (props) => {
 };
 
 function formatTimestamp(timestamp: number) {
+  timestamp /= 1000;
   const seconds = timestamp % 60;
   const minutes = Math.floor(timestamp / 60) % 60;
   const hours = Math.floor(timestamp / (60 * 60)) % 24;
-  const days = Math.floor(timestamp / (60 * 60 * 24));
 
   const result = [
     seconds.toFixed(3).padStart(6, "0"),
     minutes.toString().padStart(2, "0"),
   ];
 
-  if (hours !== 0 || days !== 0) {
-    result.push(
-      days === 0 ? hours.toString() : hours.toString().padStart(2, "0"),
-    );
-  }
-  if (days !== 0) {
-    result.push(days.toString());
+  if (hours !== 0) {
+    result.push(hours.toString());
   }
 
   return result.reverse().join(":");

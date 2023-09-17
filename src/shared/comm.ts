@@ -13,6 +13,7 @@ export interface SessionPollResult {
 export interface SessionAPI {
   ping(): void;
   poll(): SessionPollResult;
+  queryLogs(query: LogQuery): LogQueryPage;
   cancel(): void;
   dispose(): void;
 }
@@ -28,6 +29,28 @@ export interface LogEntry {
   name: string;
   message: string;
   context?: Record<string, string>;
+}
+
+export type LogQueryCursor =
+  | { from: "start" }
+  | { from: "end" }
+  | { from: "before"; before: number }
+  | { from: "after"; after: number };
+
+export interface LogQueryCriteria {
+  name?: string;
+}
+
+export type LogQuery = {
+  cursor: LogQueryCursor;
+  limit: number;
+  criteria: LogQueryCriteria;
+};
+
+export interface LogQueryPage {
+  previous: LogQueryCursor | null;
+  next: LogQueryCursor | null;
+  logs: LogEntry[];
 }
 
 export interface WorkerHostAPI {
