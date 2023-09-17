@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../hooks/event-bus";
-import { Session } from "../model/session";
+import { SessionController } from "../model/session";
 import { Workspace } from "../model/workspace";
 
 export type WorkbenchUIEvent = never;
@@ -31,7 +31,7 @@ export interface WorkbenchUIState {
 }
 
 export interface WorkbenchController {
-  session: Session;
+  session: SessionController;
   workspace: Workspace;
   events: EventBus<WorkbenchUIEvent>;
   state: StoreApi<WorkbenchUIState>;
@@ -59,7 +59,7 @@ export function useWorkbench(workspace: Workspace): WorkbenchController {
     })),
   );
 
-  const [session] = useState(() => new Session());
+  const [session] = useState(() => new SessionController());
 
   return useMemo<WorkbenchController>(
     () => ({ workspace, events, state, session }),

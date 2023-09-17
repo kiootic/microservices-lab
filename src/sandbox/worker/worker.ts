@@ -1,32 +1,49 @@
 import * as Comlink from "comlink";
-import { WorkerAPI } from "../../shared/comm";
+import { WorkerAPI, WorkerHostAPI, LogEntry } from "../../shared/comm";
 import { execute } from "./executor/executor";
+import { Host, HostLogEntry } from "./runtime/host";
 import { Runtime } from "./runtime/runtime";
-import { Host, LogLevel } from "./runtime/host";
+
+const logBufferSize = 10000;
 
 class WorkerHost implements Host {
-  writeLog(level: LogLevel, tag: string, entry: unknown[]): void {
-    switch (level) {
-      case "debug":
-        console.debug(`[${tag}]`, ...entry);
-        break;
-      case "info":
-        console.log(`[${tag}]`, ...entry);
-        break;
-      case "warn":
-        console.warn(`[${tag}]`, ...entry);
-        break;
-      case "error":
-        console.error(`[${tag}]`, ...entry);
-        break;
+  private readonly host: Comlink.Remote<WorkerHostAPI>;
+  private readonly logBuffer: LogEntry[] = [];
+  private logSequence = 0;
+
+  constructor(host: Comlink.Remote<WorkerHostAPI>) {
+    this.host = host;
+  }
+
+  writeLog(entry: HostLogEntry): void {
+    this.logBuffer.push({ sequence: this.logSequence++, ...entry });
+    if (this.logBuffer.length >= logBufferSize) {
+      this.flushLogs();
     }
+  }
+
+  dispose() {
+    this.flushLogs();
+  }
+
+  private flushLogs() {
+    this.host.postLogs(this.logBuffer.slice());
+    this.logBuffer.length = 0;
   }
 }
 
 class Worker implements WorkerAPI {
-  async run(bundleJS: string): Promise<void> {
-    const runtime = new Runtime(new WorkerHost());
-    await execute(bundleJS, runtime);
+  async run(
+    host: Comlink.Remote<WorkerHostAPI>,
+    bundleJS: string,
+  ): Promise<void> {
+    const workerHost = new WorkerHost(host);
+    try {
+      const runtime = new Runtime(workerHost);
+      await execute(bundleJS, runtime);
+    } finally {
+      workerHost.dispose();
+    }
   }
 }
 

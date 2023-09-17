@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../../hooks/event-bus";
 import { Workspace } from "../../model/workspace";
-import { Session } from "../../model/session";
+import { SessionController } from "../../model/session";
 
 export type ExperimentUIEvent = never;
 
@@ -10,7 +10,7 @@ export interface ExperimentUIState {}
 
 export interface ExperimentController {
   workspace: Workspace;
-  session: Session;
+  session: SessionController;
   events: EventBus<ExperimentUIEvent>;
   state: StoreApi<ExperimentUIState>;
 
@@ -24,7 +24,7 @@ interface ExperimentControllerParams {
 
 export function useExperiment(
   workspace: Workspace,
-  session: Session,
+  session: SessionController,
   params?: ExperimentControllerParams,
 ): ExperimentController {
   const { persistedState, setStatusBar } = params ?? {};

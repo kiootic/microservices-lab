@@ -4,7 +4,7 @@ import { System } from "../system/system";
 import { Semaphore } from "../utils/async";
 import { random } from "../utils/random";
 import { Host } from "./host";
-import { LoggerFactory } from "./logger";
+import { LoggerFactory, formatConsoleLog } from "./logger";
 import { Scheduler } from "./scheduler";
 import { Suite, expect } from "./test";
 
@@ -27,10 +27,10 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   return {
     ...globalOverrides,
     console: {
-      debug: console.debug,
-      log: console.info,
-      warn: console.warn,
-      error: console.error,
+      debug: (...args) => formatConsoleLog(console.debug, args),
+      log: (...args) => formatConsoleLog(console.info, args),
+      warn: (...args) => formatConsoleLog(console.warn, args),
+      error: (...args) => formatConsoleLog(console.error, args),
     },
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
 
@@ -53,15 +53,15 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
 export class Runtime {
   readonly host: Host;
 
-  readonly logger: LoggerFactory;
   readonly scheduler: Scheduler;
+  readonly logger: LoggerFactory;
 
   readonly globals: typeof RuntimeGlobals;
 
   constructor(host: Host) {
     this.host = host;
-    this.logger = new LoggerFactory(host);
     this.scheduler = new Scheduler();
+    this.logger = new LoggerFactory(host, this.scheduler);
 
     this.globals = makeGlobals(this);
   }

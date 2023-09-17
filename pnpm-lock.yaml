@@ -20,6 +20,7 @@ specifiers:
   '@typescript-eslint/parser': 6.5.0
   '@vitejs/plugin-react': 4.0.4
   '@vitest/expect': 0.34.3
+  '@vitest/utils': 0.34.4
   '@vscode/codicons': 0.0.33
   autoprefixer: 10.4.15
   chai: 4.3.8
@@ -58,6 +59,7 @@ dependencies:
   '@react-aria/focus': 3.14.1_react@18.2.0
   '@rollup/browser': 3.28.1
   '@vitest/expect': 0.34.3
+  '@vitest/utils': 0.34.4
   '@vscode/codicons': 0.0.33
   chai: 4.3.8
   clsx: 2.0.0
@@ -2468,6 +2470,14 @@ packages:
 
   /@vitest/utils/0.34.3:
     resolution: {integrity: sha512-kiSnzLG6m/tiT0XEl4U2H8JDBjFtwVlaE8I3QfGiMFR0QvnRDfYfdP3YvTBWM/6iJDAyaPY6yVQiCTUc7ZzTHA==}
+    dependencies:
+      diff-sequences: 29.6.3
+      loupe: 2.3.6
+      pretty-format: 29.6.3
+    dev: false
+
+  /@vitest/utils/0.34.4:
+    resolution: {integrity: sha512-yR2+5CHhp/K4ySY0Qtd+CAL9f5Yh1aXrKfAT42bq6CtlGPh92jIDDDSg7ydlRow1CP+dys4TrOrbELOyNInHSg==}
     dependencies:
       diff-sequences: 29.6.3
       loupe: 2.3.6

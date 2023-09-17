@@ -1,79 +1,65 @@
 import { Host, LogLevel } from "./host";
-
-function format(x: unknown) {
-  const seen = new Set<unknown>();
-  function doFormat(x: unknown): unknown {
-    switch (typeof x) {
-      case "bigint":
-      case "boolean":
-      case "number":
-      case "string":
-      case "undefined":
-        return x;
-
-      case "symbol":
-        return `Symbol(${x.description ?? ""})`;
-
-      case "function":
-        return `[Function: ${x.name || "<anonymous>"}]`;
-
-      case "object":
-        if (x == null) {
-          return x;
-        } else if (seen.has(x)) {
-          return "[Circular]";
-        }
-        seen.add(x);
-
-        if (x instanceof Date) {
-          return x.toISOString();
-        } else if (x instanceof RegExp) {
-          return String(x);
-        } else if (x instanceof Error) {
-          return x.stack;
-        }
-
-        if (Array.isArray(x)) {
-          return x.map(doFormat);
-        } else {
-          return Object.fromEntries(
-            Object.entries(x).map(([key, value]) => [key, doFormat(value)]),
-          );
-        }
-    }
-  }
-
-  return doFormat(x);
-}
+import { Scheduler } from "./scheduler";
+import { objDisplay, format } from "@vitest/utils";
 
 export class LoggerFactory {
   private readonly host: Host;
+  private readonly scheduler: Scheduler;
 
-  constructor(host: Host) {
+  constructor(host: Host, scheduler: Scheduler) {
     this.host = host;
+    this.scheduler = scheduler;
   }
 
-  make(tag: string): Logger {
+  make(name: string): Logger {
     return {
-      debug: this.writeLog.bind(this, tag, "debug"),
-      info: this.writeLog.bind(this, tag, "info"),
-      warn: this.writeLog.bind(this, tag, "warn"),
-      error: this.writeLog.bind(this, tag, "error"),
+      debug: this.writeLog.bind(this, name, "debug"),
+      info: this.writeLog.bind(this, name, "info"),
+      warn: this.writeLog.bind(this, name, "warn"),
+      error: this.writeLog.bind(this, name, "error"),
     };
   }
 
-  private writeLog(tag: string, level: LogLevel, ...args: unknown[]) {
-    this.host.writeLog(
+  private writeLog(
+    name: string,
+    level: LogLevel,
+    message: string,
+    context: Record<string, unknown> | undefined,
+  ) {
+    this.host.writeLog({
+      timestamp: this.scheduler.currentTime,
       level,
-      tag,
-      args.map((x) => format(x)),
-    );
+      name,
+      message,
+      context: context
+        ? Object.fromEntries(
+            Object.entries(context).map(([key, value]) => [
+              key,
+              objDisplay(value),
+            ]),
+          )
+        : undefined,
+    });
   }
 }
 
 export interface Logger {
-  debug(...args: unknown[]): void;
-  info(...args: unknown[]): void;
-  warn(...args: unknown[]): void;
-  error(...args: unknown[]): void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  info: (message: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, context?: Record<string, unknown>) => void;
+}
+
+export function formatConsoleLog(
+  logFn: (message: string, context?: Record<string, unknown>) => void,
+  args: unknown[],
+) {
+  const message = format(...args);
+  let context: Record<string, unknown> | undefined;
+  for (const arg of args) {
+    if (arg instanceof Error) {
+      context = { ...context, stack: arg.stack };
+    }
+  }
+  logFn(message, context);
 }

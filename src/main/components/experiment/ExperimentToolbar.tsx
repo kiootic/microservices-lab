@@ -17,22 +17,23 @@ export const ExperimentToolbar: React.FC<ExperimentToolbarProps> = (props) => {
 
   const leftItems = useMemo<ToolbarItem[]>(
     () => [
-      {
-        idle: {
-          key: "run",
-          label: "Run",
-          content: (
-            <span className="text-green-800 codicon codicon-debug-start" />
-          ),
-          action: () => startSession(),
-        },
-        running: {
-          key: "stop",
-          label: "Stop",
-          content: <span className="text-red-800 codicon codicon-debug-stop" />,
-          action: () => stopSession(),
-        },
-      }[sessionStatus],
+      sessionStatus === "idle" || sessionStatus === "disconnected"
+        ? {
+            key: "run",
+            label: "Run",
+            content: (
+              <span className="text-green-800 codicon codicon-debug-start" />
+            ),
+            action: () => startSession(),
+          }
+        : {
+            key: "stop",
+            label: "Stop",
+            content: (
+              <span className="text-red-800 codicon codicon-debug-stop" />
+            ),
+            action: () => stopSession(),
+          },
     ],
     [sessionStatus, startSession, stopSession],
   );

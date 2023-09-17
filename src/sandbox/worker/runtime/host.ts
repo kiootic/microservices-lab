@@ -1,5 +1,13 @@
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
+export interface HostLogEntry {
+  timestamp: number;
+  level: LogLevel;
+  name: string;
+  message: string;
+  context?: Record<string, string>;
+}
+
 export interface Host {
-  writeLog(level: LogLevel, tag: string, entry: unknown[]): void;
+  writeLog(entry: HostLogEntry): void;
 }
