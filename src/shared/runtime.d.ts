@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const console: {
   debug: (...args: unknown[]) => void;
   log: (...args: unknown[]) => void;

@@ -27,7 +27,7 @@ class WorkerHost implements Host {
   }
 
   private flushLogs() {
-    this.host.postLogs(this.logBuffer.slice());
+    void this.host.postLogs(this.logBuffer.slice());
     this.logBuffer.length = 0;
   }
 }

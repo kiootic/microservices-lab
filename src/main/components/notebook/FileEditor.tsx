@@ -106,7 +106,10 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
               token.fileVersion = token.file.getFileVersion();
             }
 
-            const json = state.toJSON(persistedFields);
+            const json = state.toJSON(persistedFields) as Record<
+              string,
+              unknown
+            >;
             delete json.doc;
 
             const savedState: SavedState = {

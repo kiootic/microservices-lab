@@ -42,7 +42,7 @@ export class Session implements SessionAPI {
     this.worker = worker;
     this.api = wrap<WorkerAPI>(this.worker);
 
-    this.run(modules);
+    void this.run(modules);
   }
 
   async run(modules: Map<string, string>): Promise<void> {

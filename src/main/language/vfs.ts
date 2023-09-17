@@ -1,28 +1,28 @@
 import { minimatch } from "minimatch";
 
 export interface Vfs {
-  getFileVersion(fileName: string): number;
-  fileNames(): string[];
-  content(): ReadonlyMap<string, string>;
-  subscribe(callback: () => void): () => void;
+  getFileVersion: (fileName: string) => number;
+  fileNames: () => string[];
+  content: () => ReadonlyMap<string, string>;
+  subscribe: (callback: () => void) => () => void;
 
-  readDir(dir: string): string[];
-  glob(patterns: string[]): string[];
-  exists(fileName: string): boolean;
-  read(fileName: string): string | undefined;
-  write(fileName: string, text: string): void;
-  delete(fileName: string): void;
+  readDir: (dir: string) => string[];
+  glob: (patterns: string[]) => string[];
+  exists: (fileName: string) => boolean;
+  read: (fileName: string) => string | undefined;
+  write: (fileName: string, text: string) => void;
+  delete: (fileName: string) => void;
 }
 
 export interface Store {
-  fileNames(): Iterable<string>;
-  content(): ReadonlyMap<string, string>;
-  subscribe(callback: () => void): () => void;
+  fileNames: () => Iterable<string>;
+  content: () => ReadonlyMap<string, string>;
+  subscribe: (callback: () => void) => () => void;
 
-  has(fileName: string): boolean;
-  get(fileName: string): string | undefined;
-  set(fileName: string, text: string): void;
-  delete(fileName: string): void;
+  has: (fileName: string) => boolean;
+  get: (fileName: string) => string | undefined;
+  set: (fileName: string, text: string) => void;
+  delete: (fileName: string) => void;
 }
 
 export function mapStore(): Store {

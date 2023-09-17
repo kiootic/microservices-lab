@@ -24,10 +24,12 @@ export function createContextValue(
     internalState,
 
     startSession: () => {
-      controller.session.start(controller.workspace.getState().vfs.content());
+      void controller.session.start(
+        controller.workspace.getState().vfs.content(),
+      );
     },
     stopSession: () => {
-      controller.session.cancel();
+      void controller.session.cancel();
     },
   };
 }

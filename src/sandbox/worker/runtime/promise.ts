@@ -71,20 +71,21 @@ export function makePromise(
         const result = new Array(promises.length);
         let completed = 0;
         return new this((resolve) => {
-          promises.forEach((p, i) =>
-            p
-              .then(
-                (value) => {
-                  result[i] = { status: "fulfilled", value };
-                },
-                (reason) => {
-                  result[i] = { status: "reject", reason };
-                },
-              )
-              .then(() => {
-                completed++;
-                if (completed == promises.length) resolve(result);
-              }),
+          promises.forEach(
+            (p, i) =>
+              void p
+                .then(
+                  (value) => {
+                    result[i] = { status: "fulfilled", value };
+                  },
+                  (reason) => {
+                    result[i] = { status: "reject", reason };
+                  },
+                )
+                .then(() => {
+                  completed++;
+                  if (completed == promises.length) resolve(result);
+                }),
           );
         });
       }
@@ -181,7 +182,10 @@ export function makePromise(
       }
 
       if (typeof then === "function") {
-        schedule(execute.bind(undefined, self), then.bind(value));
+        schedule(
+          execute.bind(undefined, self),
+          then.bind(value) as Promise["then"],
+        );
         return;
       }
     }

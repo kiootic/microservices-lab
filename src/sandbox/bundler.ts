@@ -48,7 +48,7 @@ export async function makeBundle(
         return null;
       }
 
-      build.onResolve({ filter: /.*/ }, async (args) => {
+      build.onResolve({ filter: /.*/ }, (args) => {
         const base = new URL(args.importer, "file://");
         const path = new URL(args.path, base).pathname;
 
@@ -71,7 +71,7 @@ export async function makeBundle(
         }
       });
 
-      build.onLoad({ filter: /.*/ }, async (args) => {
+      build.onLoad({ filter: /.*/ }, (args) => {
         if (modules.has(args.path)) {
           return { contents: modules.get(args.path), loader: "ts" };
         }
@@ -102,7 +102,7 @@ export async function makeBundle(
       },
       plugins: [loader],
     });
-    cancel$.then(() => ctx?.cancel());
+    void cancel$.then(() => ctx?.cancel());
 
     const result = await ctx.rebuild();
     return result.outputFiles?.[0].text ?? "";

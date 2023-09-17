@@ -56,6 +56,7 @@ export class System {
     await this.reset();
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async reset() {
     this.context.nextHostID = 1;
     this.context.hosts.clear();

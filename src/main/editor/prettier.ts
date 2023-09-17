@@ -30,7 +30,7 @@ const plugin = ViewPlugin.fromClass(
 
       const hasTooltip = update.state.facet(showTooltip).some((t) => t != null);
       if (!update.view.hasFocus && !hasTooltip && this.needFormat) {
-        this.applyPrettier(update.state.doc.toString());
+        void this.applyPrettier(update.state.doc.toString());
       }
     }
 

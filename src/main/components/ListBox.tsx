@@ -70,7 +70,10 @@ function Option<T extends object>({ state, item }: OptionProps<T>) {
   return (
     <li
       {...rest}
-      className={cn(className, item.props.className)}
+      className={cn(
+        className,
+        (item.props as ListBoxItemProps<unknown>).className,
+      )}
       ref={ref}
       data-selected={option.isSelected || undefined}
       data-disabled={option.isDisabled || undefined}
@@ -84,14 +87,16 @@ function Option<T extends object>({ state, item }: OptionProps<T>) {
   );
 }
 
+interface ListBoxItemProps<T> extends ItemProps<T> {
+  className?: string;
+}
+
 const ListBox_ = Object.assign(
   ListBox as <T>(
     props: ListBoxProps<T> & React.RefAttributes<HTMLUListElement>,
   ) => React.ReactElement,
   {
-    Item: Item as <T>(
-      props: ItemProps<T> & { className?: string },
-    ) => React.ReactElement,
+    Item: Item as <T>(props: ListBoxItemProps<T>) => React.ReactElement,
   },
 );
 

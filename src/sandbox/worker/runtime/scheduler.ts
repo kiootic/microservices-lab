@@ -65,7 +65,7 @@ export class Scheduler {
     apply: () => {
       return new Date(this.now()).toString();
     },
-    construct: (Date, args) => {
+    construct: (Date, args: unknown[]) => {
       if (args.length === 0) {
         return new Date(this.now());
       }

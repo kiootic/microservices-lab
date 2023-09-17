@@ -28,6 +28,9 @@ export class Host {
         `Function ${fnName} does not exists in service ${this.service}`,
       );
     }
-    return this.sema.run(1, async () => fn.apply(this.instance, args));
+    return this.sema.run(
+      1,
+      async () => fn.apply(this.instance, args) as Promise<unknown>,
+    );
   }
 }

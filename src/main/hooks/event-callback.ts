@@ -7,7 +7,7 @@ export function useEventCallback<T extends Function>(fn: T): T {
     fnRef.current = fn;
   }, [fn]);
 
-  const callbackRef = useRef<T>(((...args: unknown[]) =>
+  const callbackRef = useRef<T>(((...args: unknown[]): unknown =>
     fnRef.current(...args)) as unknown as T);
   return callbackRef.current;
 }

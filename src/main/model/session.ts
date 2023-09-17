@@ -36,7 +36,7 @@ async function ensureSandbox() {
   return sandbox;
 }
 
-ensureSandbox();
+void ensureSandbox();
 
 export interface SessionState {
   status: "idle" | "preparing" | "running" | "disconnected";

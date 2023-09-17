@@ -16,9 +16,11 @@ export function load(
     new Blob([bundleJS], { type: "application/javascript" }),
   );
   importScripts(bundleURL);
-  const moduleFn: (this: unknown) => void = Reflect.get(globalThis, "$$module");
+  const moduleFn = Reflect.get(globalThis, "$$module") as (
+    this: unknown,
+  ) => void;
 
-  const context = Object.assign(Object.create(globals), {
+  const context = Object.assign(Object.create(globals) as object, {
     module: { exports: {} },
     require,
   });
