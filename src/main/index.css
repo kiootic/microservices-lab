@@ -9,7 +9,7 @@
 @layer base {
   body {
     @apply text-base bg-gray-50 text-primary-950;
-    @apply select-none;
+    @apply select-none selection:bg-[#add6ff80];
     -webkit-tap-highlight-color: transparent;
   }
   :root {
