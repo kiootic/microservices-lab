@@ -74,7 +74,7 @@ const NavTabButton: React.FC<React.PropsWithChildren<TabProps>> = (props) => {
         "inline-flex items-center justify-center",
         "rounded z-20 cursor-pointer",
         isNav && "border",
-        "ra-hover:bg-gray-200/80 ra-pressed:bg-gray-300/80",
+        "bg-gray-100/80 ra-hover:bg-gray-200/80 ra-pressed:bg-gray-300/80",
         "outline-none ring-offset-1 ra-focus-visible:bg-gray-100/80 ra-focus-visible:ring-1",
         "ra-selected:text-primary-500",
         isSelected && "hidden",
