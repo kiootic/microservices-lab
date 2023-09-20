@@ -63,7 +63,7 @@ class Session {
   }
 
   init() {
-    this.setState({ status: "running", logCount: 0 });
+    this.setState({ status: "running" });
     this.disposePoll = setAsyncInternal(() => this.poll(), 50);
   }
 
@@ -178,7 +178,11 @@ export class SessionController {
       await session.dispose();
     }
 
-    this.state.setState((s) => ({ id: s.id + 1, status: "preparing" }));
+    this.state.setState((s) => ({
+      id: s.id + 1,
+      status: "preparing",
+      logCount: 0,
+    }));
     this.session$ = this.startSession(modules);
   }
 

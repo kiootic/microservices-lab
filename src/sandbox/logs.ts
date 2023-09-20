@@ -23,12 +23,8 @@ export class LogStore {
     const { cursor, limit, criteria } = query;
     const criteriaFn = checkLog.bind(undefined, criteria);
     switch (cursor.from) {
-      case "start":
-        return queryAfter(this.logs, 0, limit, criteriaFn);
       case "after":
         return queryAfter(this.logs, cursor.after, limit, criteriaFn);
-      case "end":
-        return queryBefore(this.logs, null, limit, criteriaFn);
       case "before":
         return queryBefore(this.logs, cursor.before, limit, criteriaFn);
     }
@@ -44,14 +40,13 @@ function checkLog(criteria: LogQueryCriteria, log: LogEntry): boolean {
 
 function queryAfter(
   logs: LogEntry[],
-  after: number | null,
+  after: number,
   limit: number,
   criteriaFn: (log: LogEntry) => boolean,
 ): LogQueryPage {
   const result: LogEntry[] = [];
 
-  const start = after ?? 0;
-  let i = start;
+  let i = after;
   for (; i < logs.length; i++) {
     if (criteriaFn(logs[i])) {
       if (result.length >= limit) {
@@ -60,25 +55,23 @@ function queryAfter(
       result.push(logs[i]);
     }
   }
-  const hasNext = i < logs.length;
 
   return {
-    previous: start === 0 ? null : { from: "before", before: start - 1 },
-    next: hasNext ? { from: "after", after: i } : null,
+    previous: { from: "before", before: after - 1 },
+    next: { from: "after", after: i },
     logs: result,
   };
 }
 
 function queryBefore(
   logs: LogEntry[],
-  before: number | null,
+  before: number,
   limit: number,
   criteriaFn: (log: LogEntry) => boolean,
 ): LogQueryPage {
   const result: LogEntry[] = [];
 
-  const start = before ?? logs.length - 1;
-  let i = start;
+  let i = before;
   for (; i >= 0; i--) {
     if (criteriaFn(logs[i])) {
       if (result.length >= limit) {
@@ -87,12 +80,10 @@ function queryBefore(
       result.push(logs[i]);
     }
   }
-  const hasPrevious = i >= 0;
 
   return {
-    previous: hasPrevious ? { from: "before", before: i } : null,
-    next:
-      start === logs.length - 1 ? null : { from: "after", after: start + 1 },
+    previous: { from: "before", before: i },
+    next: { from: "after", after: before + 1 },
     logs: result.reverse(),
   };
 }

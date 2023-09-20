@@ -32,8 +32,6 @@ export interface LogEntry {
 }
 
 export type LogQueryCursor =
-  | { from: "start" }
-  | { from: "end" }
   | { from: "before"; before: number }
   | { from: "after"; after: number };
 

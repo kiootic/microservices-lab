@@ -5,6 +5,15 @@ const console: {
   error: (...args: unknown[]) => void;
 };
 
+interface Logger {
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  info: (message: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, context?: Record<string, unknown>) => void;
+}
+
+function logger(name: string): Logger;
+
 function delay(ms: number): Promise<void>;
 
 const expect: import("@vitest/expect").ExpectStatic;
@@ -13,13 +22,6 @@ interface SystemServices {}
 const services: SystemServices;
 
 const random: Runtime.Random;
-
-interface Logger {
-  debug(...args: unknown[]): void;
-  info(...args: unknown[]): void;
-  warn(...args: unknown[]): void;
-  error(...args: unknown[]): void;
-}
 
 namespace Runtime {
   export interface VirtualUser {
@@ -85,4 +87,4 @@ namespace Runtime {
 
 // MARKER: exports
 
-export { console, delay, expect, services, random, Runtime };
+export { console, logger, delay, expect, services, random, Runtime };

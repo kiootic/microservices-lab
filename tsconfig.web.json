@@ -3,7 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "noEmit": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/main", "src/shared", "src/sandbox"],
   "exclude": ["src/sandbox/worker"]

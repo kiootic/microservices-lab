@@ -32,6 +32,7 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
       warn: (...args) => formatConsoleLog(console.warn, args),
       error: (...args) => formatConsoleLog(console.error, args),
     },
+    logger: runtime.logger.make.bind(runtime.logger),
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
 
     expect,

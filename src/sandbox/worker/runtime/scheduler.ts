@@ -2,6 +2,8 @@ import { deferred } from "../utils/async";
 import { Heap } from "../utils/heap";
 import { flushMicrotasks, observeMicrotasks, internals } from "./microtask";
 
+const yieldIntervalMS = 100;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Timer<T = any> {
   id: number;
@@ -144,7 +146,7 @@ export class Scheduler {
   run<T>(fn: () => Promise<T>): Promise<T> {
     switch (this.mode) {
       case "microtask":
-        return Promise.resolve(this.runMicrotasks(fn));
+        return this.runMicrotasks(fn);
       case "native":
         return this.runNative(fn);
     }
@@ -177,16 +179,34 @@ export class Scheduler {
     return result();
   }
 
-  private runMicrotasks<T>(fn: () => Promise<T>): T {
-    return observeMicrotasks(() => {
+  private async runMicrotasks<T>(fn: () => Promise<T>): Promise<T> {
+    const result = observeMicrotasks(() => {
       const result = settle(fn());
-
       flushMicrotasks();
+      return result;
+    });
+
+    let lastYield = Date.now();
+    const yieldToHost = () =>
+      new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+
+    const tick = () => {
       while (this.runTimer()) {
         flushMicrotasks();
+        if (Date.now() - lastYield > yieldIntervalMS) {
+          return true;
+        }
       }
+      return false;
+    };
 
-      return result();
-    });
+    while (observeMicrotasks(() => tick())) {
+      await yieldToHost();
+      lastYield = Date.now();
+    }
+
+    return result();
   }
 }

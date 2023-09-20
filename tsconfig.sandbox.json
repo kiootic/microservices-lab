@@ -3,7 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "noEmit": true,
-    "lib": ["ES2020", "WebWorker"]
+    "lib": ["ES2022", "WebWorker"]
   },
   "include": ["src/sandbox/worker", "src/shared"]
 }
