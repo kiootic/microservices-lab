@@ -6,7 +6,10 @@ import { SessionController } from "../../model/session";
 
 export type ExperimentUIEvent = never;
 
-export interface ExperimentUIState {}
+export interface ExperimentUIState {
+  showDebugLogs: boolean;
+  logSearch: string;
+}
 
 export interface ExperimentController {
   workspace: Workspace;
@@ -31,7 +34,9 @@ export function useExperiment(
 
   const [events] = useState(() => createEventBus<ExperimentUIEvent>());
   const [state] = useState(() =>
-    createStore<ExperimentUIState>(() => persistedState ?? {}),
+    createStore<ExperimentUIState>(
+      () => persistedState ?? { showDebugLogs: false, logSearch: "" },
+    ),
   );
 
   return useMemo<ExperimentController>(

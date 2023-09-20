@@ -32,8 +32,19 @@ export class LogStore {
 }
 
 function checkLog(criteria: LogQueryCriteria, log: LogEntry): boolean {
-  if (criteria.name != null && !log.name.includes(criteria.name)) {
+  const { showDebugLogs = false, search } = criteria;
+  if (!showDebugLogs && log.level === "debug") {
     return false;
+  }
+
+  if (search != null) {
+    const contents = [log.name, ": ", log.message];
+    for (const [key, value] of Object.entries(log.context ?? {})) {
+      contents.push(" ", key, ": ", value);
+    }
+    if (!contents.join("").toLowerCase().includes(search.toLowerCase())) {
+      return false;
+    }
   }
   return true;
 }

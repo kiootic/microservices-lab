@@ -22,7 +22,7 @@ export const ExperimentView: React.FC<ExperimentViewProps> = (props) => {
   useEffect(() => setStatusBar(null), [setStatusBar]);
 
   const experiment = useExperiment(workspace, session, {
-    persistedState: (state.getState().notebookUIState ?? undefined) as
+    persistedState: (state.getState().experimentUIState ?? undefined) as
       | ExperimentUIState
       | undefined,
     setStatusBar,

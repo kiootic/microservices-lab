@@ -6,9 +6,9 @@ import { FormattedMessage } from "react-intl";
 import { useStore } from "zustand";
 import { LogEntry, LogQueryCursor, LogQueryPage } from "../../../shared/comm";
 import { useEventCallback } from "../../hooks/event-callback";
-import { Toolbar } from "../Toolbar";
-import { useExperimentContext } from "./context";
 import { withScrollAnchor } from "../../utils/scroll-anchor";
+import { IconButton } from "../IconButton";
+import { useExperimentContext } from "./context";
 
 const logPageLimit = 100;
 
@@ -19,7 +19,7 @@ interface LogBoxProps {
 export const LogBox: React.FC<LogBoxProps> = (props) => {
   const { className } = props;
 
-  const { session } = useExperimentContext();
+  const { session, state: uiState } = useExperimentContext();
   const sessionID = useStore(session.state, (s) => s.id);
   const logCount = useStore(session.state, (s) => s.logCount);
 
@@ -28,11 +28,17 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
   const lastRowRef = useRef<HTMLTableRowElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
+  const showDebugLogs = useStore(uiState, (s) => s.showDebugLogs);
+  const search = useStore(uiState, (s) => s.logSearch);
+
   interface LogState {
     isTailing: boolean;
     pages: LogQueryPage[];
   }
-  const [state, setState] = useState<LogState>({ isTailing: true, pages: [] });
+  const [state, setState] = useState<LogState>({
+    isTailing: true,
+    pages: [],
+  });
 
   const loadTokenRef = useRef<unknown>({});
   const loadPage = useEventCallback(
@@ -44,7 +50,7 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
       const page = await session.queryLogs({
         cursor: queryCursor,
         limit: logPageLimit,
-        criteria: {},
+        criteria: { search, showDebugLogs },
       });
 
       if (loadTokenRef.current !== token) {
@@ -87,11 +93,16 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
     setState({ isTailing: true, pages: [] });
   }, [sessionID]);
 
+  const isTailing = state.isTailing;
   useEffect(() => {
-    if (state.isTailing) {
+    if (isTailing) {
       loadPage(null, true).catch(console.error);
     }
-  }, [loadPage, state.isTailing, logCount]);
+  }, [loadPage, isTailing, logCount]);
+
+  useEffect(() => {
+    loadPage(null, true).catch(console.error);
+  }, [loadPage, showDebugLogs, search]);
 
   const handleFirstPageOnPress = useEventCallback(() => {
     if (loadTokenRef.current == null) {
@@ -119,6 +130,16 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
     }
   });
 
+  const handleShowDebugLogOnPress = useEventCallback(() => {
+    uiState.setState((s) => ({ showDebugLogs: !s.showDebugLogs }));
+  });
+
+  const handleSearchOnChange = useEventCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      uiState.setState({ logSearch: e.target.value });
+    },
+  );
+
   const logs = useMemo(() => state.pages.flatMap((p) => p.logs), [state]);
 
   const isCursorValid = (cursor: LogQueryCursor | null | undefined) => {
@@ -133,8 +154,31 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="flex-none flex justify-between bg-gray-100">
-        <Toolbar className="h-10" />
+      <div className="flex-none h-10 flex items-center bg-gray-100">
+        <div className="flex-1 h-full relative">
+          <div className="absolute left-0 w-10 h-10 pointer-events-none flex items-center justify-center">
+            <span className="codicon codicon-search" />
+          </div>
+          <input
+            className={cn(
+              "w-full h-full pl-10 pr-3",
+              "bg-transparent font-mono",
+              "outline-none border-b-2 border-transparent focus-visible:border-primary-400",
+            )}
+            type="search"
+            value={search}
+            onChange={handleSearchOnChange}
+          />
+        </div>
+        <IconButton
+          className={cn(
+            "flex-none mx-2",
+            showDebugLogs && "bg-gray-200 text-primary-500",
+          )}
+          onPress={handleShowDebugLogOnPress}
+        >
+          <span className="codicon codicon-bug" />
+        </IconButton>
       </div>
 
       <div
@@ -164,6 +208,7 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
         <LogBoxTable
           className="w-full min-h-full"
           logs={logs}
+          isSearching={search !== ""}
           firstRowRef={firstRowRef}
           lastRowRef={lastRowRef}
         />
@@ -207,12 +252,13 @@ const LogBoxButton: React.FC<ButtonProps> = (props) => {
 interface LogBoxTableProps {
   className?: string;
   logs: LogEntry[];
+  isSearching?: boolean;
   firstRowRef?: React.RefObject<HTMLTableRowElement>;
   lastRowRef?: React.RefObject<HTMLTableRowElement>;
 }
 
 const LogBoxTable: React.FC<LogBoxTableProps> = (props) => {
-  const { className, logs, firstRowRef, lastRowRef } = props;
+  const { className, logs, isSearching, firstRowRef, lastRowRef } = props;
   return (
     <table className={cn("text-xs font-mono relative", className)}>
       <thead className="sr-only">
@@ -257,7 +303,7 @@ const LogBoxTable: React.FC<LogBoxTableProps> = (props) => {
           <td></td>
           <td className={logs.length > 0 ? "border-r-2" : ""}></td>
           <td>
-            {logs.length === 0 ? (
+            {isSearching && logs.length === 0 ? (
               <span className="absolute inset-0 flex items-center justify-center select-none">
                 <FormattedMessage
                   id="views.experiment.logs.empty"

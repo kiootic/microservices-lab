@@ -36,7 +36,8 @@ export type LogQueryCursor =
   | { from: "after"; after: number };
 
 export interface LogQueryCriteria {
-  name?: string;
+  search?: string;
+  showDebugLogs?: boolean;
 }
 
 export type LogQuery = {
