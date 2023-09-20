@@ -340,7 +340,7 @@ function formatTimestamp(timestamp: number) {
   timestamp /= 1000;
   const seconds = timestamp % 60;
   const minutes = Math.floor(timestamp / 60) % 60;
-  const hours = Math.floor(timestamp / (60 * 60)) % 24;
+  const hours = Math.floor(timestamp / (60 * 60));
 
   const result = [
     seconds.toFixed(3).padStart(6, "0"),
