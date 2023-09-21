@@ -1,10 +1,10 @@
 import cn from "clsx";
 import React, { useMemo, useState } from "react";
 import { Tab, TabList, TabPanel, TabProps, Tabs } from "react-aria-components";
+import { FormattedMessage } from "react-intl";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useSize } from "../../hooks/resize";
 import { NavContext, useNavContext } from "./context";
-import { FormattedMessage } from "react-intl";
 
 const compactLayoutThreshold = 768;
 const tabNav = "nav";
@@ -45,18 +45,22 @@ const NavView: React.FC<NavViewProps> = (props) => {
 
   return (
     <NavContext.Provider value={context}>
-      <Tabs
-        ref={setElement}
-        className={className}
-        isDisabled={!useCompactLayout}
-        keyboardActivation="manual"
-        selectedKey={selectedKey}
-        onSelectionChange={handleOnSelectionChange}
-      >
-        {useCompactLayout != null ? (
+      <div ref={setElement} className={className}>
+        {useCompactLayout === true ? (
+          <Tabs
+            className="w-full h-full"
+            isDisabled={!useCompactLayout}
+            keyboardActivation="manual"
+            selectedKey={selectedKey}
+            onSelectionChange={handleOnSelectionChange}
+          >
+            <div className="w-full h-full relative flex">{children}</div>
+          </Tabs>
+        ) : null}
+        {useCompactLayout === false ? (
           <div className="w-full h-full relative flex">{children}</div>
         ) : null}
-      </Tabs>
+      </div>
     </NavContext.Provider>
   );
 };
@@ -135,7 +139,9 @@ interface ContentProps extends React.PropsWithChildren {
 
 const Content: React.FC<ContentProps> = (props) => {
   const { className, children } = props;
-  return (
+  const { useCompactLayout } = useNavContext();
+
+  return useCompactLayout ? (
     <TabPanel
       className={cn("flex-1 min-w-0", className)}
       id={tabContent}
@@ -143,6 +149,8 @@ const Content: React.FC<ContentProps> = (props) => {
     >
       {children}
     </TabPanel>
+  ) : (
+    children
   );
 };
 

@@ -145,10 +145,6 @@ export function makeWorkspace() {
       },
 
       getFile: (fileName) => {
-        if (!vfs.exists(fileName)) {
-          vfs.write(fileName, "");
-        }
-
         let file = fileCache.get(fileName);
         if (file == null) {
           file = {

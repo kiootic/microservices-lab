@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import ReactDOM from "react-dom";
+import { FormattedMessage, useIntl } from "react-intl";
 import { ListState } from "react-stately";
 import { useStore } from "zustand";
 import { useEvent } from "../../hooks/event-bus";
@@ -18,7 +19,6 @@ import { useNavContext } from "../nav/context";
 import { FileNameEntry } from "./FileNameEntry";
 import { SideNavToolbar } from "./SideNavToolbar";
 import { useNotebookContext } from "./context";
-import { FormattedMessage, useIntl } from "react-intl";
 
 interface SideNavProps {
   className?: string;
