@@ -5,13 +5,33 @@ import { load } from "./loader";
 export async function execute(
   bundleJS: string,
   runtime: Runtime,
-): Promise<unknown> {
+): Promise<boolean> {
   const globals = makeGlobalObject(runtime.globals);
 
   return runtime.scheduler.run(async () => {
-    const module = load(globals, bundleJS, new Map()) as {
+    interface Module {
       default: () => Promise<unknown>;
-    };
-    return module.default();
+    }
+    try {
+      const module = load(
+        runtime.logger.main,
+        globals,
+        bundleJS,
+        new Map(),
+      ) as Module;
+
+      if (!("default" in module) || typeof module.default !== "function") {
+        runtime.logger.main.error("No default export function found.");
+        return false;
+      }
+
+      runtime.logger.main.info("Run started...");
+      await module.default();
+      runtime.logger.main.info("Run completed.");
+      return true;
+    } catch (err) {
+      runtime.logger.main.error("Run failed.", { error: err });
+      return false;
+    }
   });
 }

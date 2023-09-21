@@ -6,9 +6,12 @@ export class LoggerFactory {
   private readonly host: Host;
   private readonly scheduler: Scheduler;
 
+  readonly main: Logger;
+
   constructor(host: Host, scheduler: Scheduler) {
     this.host = host;
     this.scheduler = scheduler;
+    this.main = this.make("main");
   }
 
   make(name: string): Logger {
@@ -35,7 +38,7 @@ export class LoggerFactory {
         ? Object.fromEntries(
             Object.entries(context).map(([key, value]) => [
               key,
-              objDisplay(value),
+              formatArg(value),
             ]),
           )
         : undefined,
@@ -48,6 +51,19 @@ export interface Logger {
   info: (message: string, context?: Record<string, unknown>) => void;
   warn: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string, context?: Record<string, unknown>) => void;
+}
+
+function formatArg(arg: unknown) {
+  if (arg instanceof Error) {
+    const desc = String(arg);
+    if (arg.stack == null) {
+      return desc;
+    }
+    return arg.stack?.startsWith(desc)
+      ? arg.stack
+      : [desc, arg.stack].join("\n");
+  }
+  return objDisplay(arg);
 }
 
 export function formatConsoleLog(

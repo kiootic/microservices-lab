@@ -16,3 +16,10 @@
     --editor-font-family: theme(fontFamily.mono);
   }
 }
+
+@layer utilities {
+  .break-anywhere {
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+}

@@ -99,7 +99,7 @@ export class Suite {
         try {
           await test.testFn?.(user);
         } catch (err) {
-          this.log.error(`test failed for user ${user.id}:`, err);
+          this.log.error(`test failed for user ${user.id}:`, { error: err });
         }
       });
       await Promise.allSettled(threads);

@@ -1,6 +1,8 @@
+import { Logger } from "../runtime/logger";
 import { scopeGuard } from "./guard";
 
 export function load(
+  logger: Logger,
   globals: object,
   bundleJS: string,
   modules: Map<string, unknown>,
@@ -15,6 +17,8 @@ export function load(
   const bundleURL = URL.createObjectURL(
     new Blob([bundleJS], { type: "application/javascript" }),
   );
+  logger.debug("Loading bundle...", { bundleURL });
+
   importScripts(bundleURL);
   const moduleFn = Reflect.get(globalThis, "$$module") as (
     this: unknown,

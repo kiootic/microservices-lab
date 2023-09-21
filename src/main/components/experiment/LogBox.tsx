@@ -361,7 +361,7 @@ const LogRow = React.forwardRef<HTMLTableRowElement, LogRowProps>(
           data-timestamp={log.timestamp}
         >
           <span className="min-w-min w-10 inline-block">
-            {formatTimestamp(log.timestamp)}
+            {log.timestamp == null ? "" : formatTimestamp(log.timestamp)}
           </span>
         </td>
         <td className="p-0 py-0.5 w-full -indent-2 pl-4">

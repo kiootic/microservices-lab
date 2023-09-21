@@ -24,7 +24,7 @@ export interface WorkerAPI {
 
 export interface LogEntry {
   sequence: number;
-  timestamp: number;
+  timestamp?: number;
   level: "debug" | "info" | "warn" | "error";
   name: string;
   message: string;

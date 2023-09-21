@@ -13,7 +13,11 @@ export class LogStore {
     return this.logs.length;
   }
 
-  add(logs: LogEntry[]) {
+  add(log: Omit<LogEntry, "sequence">) {
+    this.logs.push({ ...log, sequence: this.sequence++ });
+  }
+
+  addBatch(logs: Omit<LogEntry, "sequence">[]) {
     for (const log of logs) {
       this.logs.push({ ...log, sequence: this.sequence++ });
     }
