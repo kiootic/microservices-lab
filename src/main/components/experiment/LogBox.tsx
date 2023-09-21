@@ -364,15 +364,19 @@ const LogRow = React.forwardRef<HTMLTableRowElement, LogRowProps>(
             {formatTimestamp(log.timestamp)}
           </span>
         </td>
-        <td className="p-0 py-0.5 w-full -indent-2 pl-4 break-all">
+        <td className="p-0 py-0.5 w-full -indent-2 pl-4">
           <span className="font-semibold">{log.name}&nbsp;&nbsp;</span>
-          <span>{log.message}</span>
-          {Object.entries(log.context ?? {}).map(([key, value], i) => (
+          <span className="break-anywhere whitespace-pre-wrap">
+            {log.message}
+          </span>
+          {Object.entries(log.context ?? {}).map(([key, value]) => (
             <React.Fragment key={key}>
-              {i === 0 ? <br /> : <span className="ml-4">&nbsp;</span>}
-              <span className="inline-block indent-0 pt-1">
+              <br />
+              <span className="inline-block -indent-2 pl-2 mt-0.5">
                 <span className="font-semibold">{key}: </span>
-                <span className="text-primary-600">{value}</span>
+                <span className="text-primary-600 break-anywhere whitespace-pre-wrap">
+                  {value}
+                </span>
               </span>
             </React.Fragment>
           ))}
