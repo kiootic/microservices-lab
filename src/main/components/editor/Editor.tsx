@@ -64,7 +64,7 @@ export const Editor = React.forwardRef<EditorView | null, EditorProps>(
       const initialState = initialStateRef.current;
       const config: EditorStateConfig = {
         doc: viewRef.current?.state.doc ?? "",
-        extensions: [minimalSetup, extension ?? []],
+        extensions: [extension ?? [], minimalSetup],
       };
       const state =
         initialState == null
