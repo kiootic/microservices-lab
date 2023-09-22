@@ -58,6 +58,23 @@ export function makePromise(
         return this.then(undefined, onReject);
       }
 
+      finally(onFinally?: () => unknown) {
+        return this.then(
+          typeof onFinally === "function"
+            ? (value) => {
+                return Promise.resolve(onFinally()).then(() => value);
+              }
+            : onFinally,
+          typeof onFinally === "function"
+            ? (reason) => {
+                return Promise.resolve(onFinally()).then(() => {
+                  throw reason;
+                });
+              }
+            : onFinally,
+        );
+      }
+
       static resolve(value: unknown) {
         if (value instanceof Promise) {
           return value;
@@ -67,26 +84,91 @@ export function makePromise(
         return promise;
       }
 
-      static allSettled(promises: Promise[]) {
-        const result = new Array(promises.length);
-        let completed = 0;
+      static reject(value: unknown) {
+        const promise = new Promise(raw);
+        reject(promise, value);
+        return promise;
+      }
+
+      static all(promises: Iterable<Promise>) {
+        const result: unknown[] = [];
+        return new this((resolve, reject) => {
+          let completed = 0;
+          let count = 0;
+          for (const p of promises) {
+            const index = count++;
+            result.push(null);
+
+            void Promise.resolve(p).then(
+              (value) => {
+                result[index] = value;
+                completed++;
+                if (completed === count) resolve(result);
+              },
+              (reason) => {
+                reject(reason);
+              },
+            );
+          }
+        });
+      }
+
+      static any(promises: Iterable<Promise>) {
+        const errors: unknown[] = [];
+        return new this((resolve, reject) => {
+          let completed = 0;
+          let count = 0;
+          for (const p of promises) {
+            const index = count++;
+            errors.push(null);
+
+            void Promise.resolve(p).then(
+              (value) => {
+                resolve(value);
+              },
+              (reason) => {
+                errors[index] = reason;
+                completed++;
+                if (completed === count) {
+                  const err = new AggregateError(errors);
+                  reject(err);
+                }
+              },
+            );
+          }
+        });
+      }
+
+      static race(promises: Iterable<Promise>) {
+        return new this((resolve, reject) => {
+          for (const p of promises) {
+            void Promise.resolve(p).then(resolve, reject);
+          }
+        });
+      }
+
+      static allSettled(promises: Iterable<Promise>) {
+        const result: unknown[] = [];
         return new this((resolve) => {
-          promises.forEach(
-            (p, i) =>
-              void p
-                .then(
-                  (value) => {
-                    result[i] = { status: "fulfilled", value };
-                  },
-                  (reason) => {
-                    result[i] = { status: "reject", reason };
-                  },
-                )
-                .then(() => {
-                  completed++;
-                  if (completed == promises.length) resolve(result);
-                }),
-          );
+          let completed = 0;
+          let count = 0;
+          for (const p of promises) {
+            const index = count++;
+            result.push(null);
+
+            void Promise.resolve(p).then(
+              (value) => {
+                result[index] = { status: "fulfilled", value };
+                completed++;
+                if (completed === count) resolve(result);
+              },
+              (reason) => {
+                result[index] = { status: "reject", reason };
+                completed++;
+                if (completed === count) resolve(result);
+              },
+            );
+          }
         });
       }
     },
