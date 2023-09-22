@@ -136,11 +136,16 @@ export class Scheduler {
     }
   }
 
-  reset(): void {
-    this.nextID = 0;
-    this.time = 0;
-    this.heap.clear();
-    this.timers.clear();
+  reset(): Promise<void> {
+    const promise = internals.make<void>();
+    this.setTimeout(() => {
+      flushMicrotasks();
+      this.nextID = 0;
+      this.heap.clear();
+      this.timers.clear();
+      internals.resolve(promise, undefined);
+    }, 0);
+    return promise;
   }
 
   run<T>(fn: () => Promise<T>): Promise<T> {

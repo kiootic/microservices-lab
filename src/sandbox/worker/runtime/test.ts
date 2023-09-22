@@ -24,7 +24,7 @@ export class VirtualUser {
 
   constructor(id: number, logger: LoggerFactory) {
     this.id = id;
-    this.log = logger.make(`user #${id}`);
+    this.log = logger.make(`vu/${id}`);
   }
 }
 
@@ -62,15 +62,21 @@ class Test {
   }
 }
 
+class TestError extends Error {
+  readonly vu: number;
+  constructor(cause: unknown, vu: number) {
+    super("Test failed", { cause });
+    this.vu = vu;
+  }
+}
+
 export class Suite {
   readonly tests: Test[] = [];
-  readonly setupFns: Array<() => Promise<void>> = [];
+  readonly setupFns: Array<() => void | Promise<void>> = [];
   readonly runtime: Runtime;
-  readonly log: Logger;
 
   constructor(runtime: Runtime) {
     this.runtime = runtime;
-    this.log = runtime.logger.make("test");
   }
 
   defineTest(name: string): Test {
@@ -79,36 +85,61 @@ export class Suite {
     return test;
   }
 
-  addSetupFn(fn: () => Promise<void>): void {
+  addSetupFn(fn: () => void | Promise<void>): void {
     this.setupFns.push(fn);
   }
 
-  async run(): Promise<number> {
+  async run(): Promise<void> {
     const start = performance.now();
+    let count = 0;
+    let pass = 0;
     for (const test of this.tests) {
-      this.log.info(`running test: ${test.name}`);
+      this.runtime.logger.main.info("Running test...", {
+        test: test.name,
+        vus: test.numUsers,
+      });
+      count++;
 
       for (const fn of this.setupFns) {
         await fn();
       }
       await test.setupFn?.();
 
-      const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
-        const user = new VirtualUser(i + 1, this.runtime.logger);
-        await Promise.resolve();
-        try {
-          await test.testFn?.(user);
-        } catch (err) {
-          this.log.error(`test failed for user ${user.id}:`, { error: err });
+      try {
+        const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
+          const user = new VirtualUser(i + 1, this.runtime.logger);
+          await Promise.resolve();
+          try {
+            await test.testFn?.(user);
+          } catch (err) {
+            throw new TestError(err, user.id);
+          }
+        });
+        await Promise.all(threads);
+        this.runtime.logger.main.debug("Test passed.", { test: test.name });
+        pass++;
+      } catch (err) {
+        const context: Record<string, unknown> = {};
+        context.test = test.name;
+        if (err instanceof TestError) {
+          context.vu = err.vu;
+          context.error = err.cause;
+        } else {
+          context.error = err;
         }
-      });
-      await Promise.allSettled(threads);
-      await test.teardownFn?.();
+        this.runtime.logger.main.error("Test failed.", context);
+      } finally {
+        await this.runtime.scheduler.reset();
+        await test.teardownFn?.();
+      }
     }
 
     const end = performance.now();
     const elaspsed = (end - start) / 1000;
-    this.log.info(`all tests completed; time taken: ${elaspsed.toFixed(2)}s`);
-    return elaspsed;
+    if (pass === count) {
+      this.runtime.logger.main.info("All tests passed.", {
+        elapsed: elaspsed,
+      });
+    }
   }
 }

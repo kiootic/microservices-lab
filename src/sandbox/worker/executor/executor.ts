@@ -25,9 +25,9 @@ export async function execute(
         return false;
       }
 
-      runtime.logger.main.info("Run started...");
+      runtime.logger.main.debug("Run started...");
       await module.default();
-      runtime.logger.main.info("Run completed.");
+      runtime.logger.main.debug("Run completed.");
       return true;
     } catch (err) {
       runtime.logger.main.error("Run failed.", { error: err });

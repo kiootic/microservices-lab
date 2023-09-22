@@ -10,13 +10,10 @@ import { Suite, expect } from "./test";
 
 function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const console = runtime.logger.make("console");
-  const system = new System();
+  const system = new System(runtime);
   const suite = new Suite(runtime);
 
-  suite.addSetupFn(async () => {
-    runtime.scheduler.reset();
-    await system.reset();
-  });
+  suite.addSetupFn(() => system.reset());
 
   const globalOverrides: Partial<Record<keyof typeof globalThis, unknown>> = {
     Date: runtime.scheduler.Date,

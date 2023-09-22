@@ -1,39 +1,39 @@
-import { Host } from "./host";
+import { Logger } from "../runtime/logger";
+import { Runtime } from "../runtime/runtime";
 import { LoadBalancer } from "./load-balancer";
 import { VirtualNetwork } from "./network";
-import { ServiceModule } from "./service";
+import { Node } from "./node";
+import type { ServiceModule } from "./service";
 
 export interface SystemContext {
-  nextHostID: number;
-
+  readonly runtime: Runtime;
   readonly modules: Map<string, ServiceModule>;
-  readonly hosts: Map<string, Host[]>;
+
+  nextNodeID: number;
+  readonly nodes: Map<string, Node[]>;
   readonly services: Map<string, LoadBalancer>;
 }
 
 export class System {
+  private readonly runtime: Runtime;
+  readonly logger: Logger;
   private readonly serviceModules = new Map<string, Promise<ServiceModule>>();
-  private hostType: typeof Host = Host;
-  private lbType: typeof LoadBalancer = LoadBalancer;
-  private vnetType: typeof VirtualNetwork = VirtualNetwork;
 
-  private readonly context: SystemContext = {
-    nextHostID: 1,
-    modules: new Map(),
-    hosts: new Map(),
-    services: new Map(),
-  };
-  private vnet: VirtualNetwork | null = null;
+  private readonly context: SystemContext;
+  readonly network: VirtualNetwork;
 
-  get network(): VirtualNetwork {
-    if (this.vnet == null) {
-      throw new TypeError("System is not setup");
-    }
-    return this.vnet;
-  }
+  constructor(runtime: Runtime) {
+    this.runtime = runtime;
+    this.logger = runtime.logger.make("system");
 
-  setHostType(type: typeof Host) {
-    this.hostType = type;
+    this.context = {
+      runtime: this.runtime,
+      nextNodeID: 1,
+      modules: new Map(),
+      nodes: new Map(),
+      services: new Map(),
+    };
+    this.network = new VirtualNetwork(this.context);
   }
 
   defineServices<T extends Record<string, Promise<ServiceModule>>>(
@@ -46,34 +46,42 @@ export class System {
   }
 
   async setup() {
-    const VirtualNetwork = this.vnetType;
     for (const [service, module$] of this.serviceModules) {
-      const module = await module$;
-      this.context.modules.set(service, module);
+      this.logger.debug("Setting up service...", { service });
+      try {
+        const module = await module$;
+        this.context.modules.set(service, module);
+      } catch (error) {
+        this.logger.error("Service setup failed.", { error });
+      }
     }
 
-    this.vnet = new VirtualNetwork(this.context);
-    await this.reset();
+    this.reset();
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async reset() {
-    this.context.nextHostID = 1;
-    this.context.hosts.clear();
+  private instantiateNode(service: string) {
+    const module = this.context.modules.get(service);
+    if (module == null) {
+      throw new TypeError(`Service ${service} not found`);
+    }
+
+    const nodeID = [service, this.context.nextNodeID++].join("/");
+    this.logger.debug("Instantiating node...", { nodeID });
+
+    const nodes = this.context.nodes.get(service)?.slice() ?? [];
+    nodes.push(new Node(this.context, nodeID, service, module));
+    this.context.nodes.set(service, nodes);
+  }
+
+  reset() {
+    this.context.nextNodeID = 1;
+    this.context.nodes.clear();
     this.context.services.clear();
 
-    const Host = this.hostType;
-    const LoadBalancer = this.lbType;
-    for (const [service, module] of this.context.modules) {
-      const hostID = this.context.nextHostID++;
-      const instance = module.instance(hostID);
-      const hosts = [new Host(hostID, service, instance)];
-
-      this.context.hosts.set(service, hosts);
-      this.context.services.set(
-        service,
-        new LoadBalancer(this.context, service),
-      );
+    for (const service of this.context.modules.keys()) {
+      const lb = new LoadBalancer(this.context, service);
+      this.context.services.set(service, lb);
+      this.instantiateNode(service);
     }
   }
 }

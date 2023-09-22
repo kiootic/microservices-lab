@@ -37,7 +37,7 @@ namespace Runtime {
   }
 
   export function defineTest(name: string): Test;
-  export function runTests(): Promise<number>;
+  export function runTests(): Promise<void>;
 }
 
 namespace Runtime {
@@ -55,8 +55,13 @@ namespace Runtime {
     [K in keyof T]: ServiceTypeMap<ReturnType<Awaited<T[K]>["instance"]>>;
   };
 
+  interface ServiceContext {
+    nodeID: string;
+    logger: Logger;
+  }
+
   interface ServiceModule {
-    instance: (hostID: number) => Record<string, unknown>;
+    instance: (ctx: ServiceContext) => Record<string, unknown>;
   }
 
   export function defineServices<
