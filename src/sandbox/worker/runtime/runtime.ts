@@ -13,10 +13,17 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const system = new System(runtime);
   const suite = new Suite(runtime);
 
-  suite.addSetupFn(() => system.reset());
+  suite.addSetupFn(() => {
+    system.reset();
+    random.reset();
+  });
+
+  const math = Object.create(Math) as typeof Math;
+  Object.defineProperty(math, "random", { value: random.uniform });
 
   const globalOverrides: Partial<Record<keyof typeof globalThis, unknown>> = {
     Date: runtime.scheduler.Date,
+    Math: math,
     setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
     clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
   };
