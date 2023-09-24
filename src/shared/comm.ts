@@ -19,7 +19,8 @@ export interface SessionAPI {
 }
 
 export interface WorkerAPI {
-  run(host: WorkerHostAPI, bundleJS: string): Promise<void>;
+  prepare(bundleJS: string): string;
+  run(host: WorkerHostAPI, scriptURL: string): Promise<void>;
 }
 
 export interface LogEntry {
@@ -28,7 +29,7 @@ export interface LogEntry {
   level: "debug" | "info" | "warn" | "error";
   name: string;
   message: string;
-  context?: Record<string, string>;
+  context: Record<string, string>;
 }
 
 export type LogQueryCursor =
@@ -52,6 +53,21 @@ export interface LogQueryPage {
   logs: LogEntry[];
 }
 
+export type WorkerLogContextValue =
+  | string
+  | {
+      $error: string;
+      stack: string;
+    };
+
+export interface WorkerLogEntry {
+  timestamp?: number;
+  level: "debug" | "info" | "warn" | "error";
+  name: string;
+  message: string;
+  context?: Record<string, WorkerLogContextValue>;
+}
+
 export interface WorkerHostAPI {
-  postLogs(logs: LogEntry[]): void;
+  postLogs(logs: WorkerLogEntry[]): void;
 }

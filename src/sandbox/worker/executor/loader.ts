@@ -4,7 +4,7 @@ import { scopeGuard } from "./guard";
 export function load(
   logger: Logger,
   globals: object,
-  bundleJS: string,
+  scriptURL: string,
   modules: Map<string, unknown>,
 ): unknown {
   const require = (id: string) => {
@@ -14,12 +14,9 @@ export function load(
     throw new TypeError(`Module ${id} not found`);
   };
 
-  const bundleURL = URL.createObjectURL(
-    new Blob([bundleJS], { type: "application/javascript" }),
-  );
-  logger.debug("Loading bundle...", { bundleURL });
+  logger.debug("Loading bundle...", { bundleURL: scriptURL });
 
-  importScripts(bundleURL);
+  importScripts(scriptURL);
   const moduleFn = Reflect.get(globalThis, "$$module") as (
     this: unknown,
   ) => void;

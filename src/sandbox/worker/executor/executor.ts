@@ -3,7 +3,7 @@ import { makeGlobalObject } from "./global";
 import { load } from "./loader";
 
 export async function execute(
-  bundleJS: string,
+  scriptURL: string,
   runtime: Runtime,
 ): Promise<boolean> {
   const globals = makeGlobalObject(runtime.globals);
@@ -16,7 +16,7 @@ export async function execute(
       const module = load(
         runtime.logger.main,
         globals,
-        bundleJS,
+        scriptURL,
         new Map(),
       ) as Module;
 

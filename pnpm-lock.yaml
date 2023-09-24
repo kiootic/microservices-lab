@@ -14,6 +14,7 @@ specifiers:
   '@react-aria/focus': 3.14.1
   '@rollup/browser': 3.28.1
   '@types/chai': 4.3.5
+  '@types/convert-source-map': 2.0.1
   '@types/react': 18.2.21
   '@types/react-dom': 18.2.7
   '@typescript-eslint/eslint-plugin': 6.5.0
@@ -26,6 +27,8 @@ specifiers:
   chai: 4.3.8
   clsx: 2.0.0
   comlink: 4.4.1
+  convert-source-map: 2.0.0
+  error-stack-parser-es: 0.1.1
   esbuild: 0.19.2
   esbuild-wasm: 0.19.2
   eslint: 8.48.0
@@ -41,6 +44,7 @@ specifiers:
   react-dom: 18.2.0
   react-intl: 6.4.6
   react-stately: 3.26.0
+  source-map-js: 1.0.2
   tailwindcss: 3.3.3
   tailwindcss-react-aria-components: 1.0.0-beta.0
   typescript: 5.2.2
@@ -66,6 +70,8 @@ dependencies:
   chai: 4.3.8
   clsx: 2.0.0
   comlink: 4.4.1
+  convert-source-map: 2.0.0
+  error-stack-parser-es: 0.1.1
   esbuild-wasm: 0.19.2
   minimatch: 9.0.3
   prettier: 3.0.3
@@ -75,11 +81,13 @@ dependencies:
   react-dom: 18.2.0_react@18.2.0
   react-intl: 6.4.6_met4wgzfujk7j64aelglgsjh3q
   react-stately: 3.26.0_react@18.2.0
+  source-map-js: 1.0.2
   typescript: 5.2.2
   zustand: 4.4.1_gq4reeurwxuj4hvyerswzzqthy
 
 devDependencies:
   '@types/chai': 4.3.5
+  '@types/convert-source-map': 2.0.1
   '@types/react': 18.2.21
   '@types/react-dom': 18.2.7
   '@typescript-eslint/eslint-plugin': 6.5.0_nvwva6txm3qs6xnog6dqanz5uy
@@ -2347,6 +2355,10 @@ packages:
     resolution: {integrity: sha512-mEo1sAde+UCE6b2hxn332f1g1E8WfYRu6p5SvTKr2ZKC1f7gFJXk4h5PyGP9Dt6gCaG8y8XhwnXWC6Iy2cmBng==}
     dev: true
 
+  /@types/convert-source-map/2.0.1:
+    resolution: {integrity: sha512-tm5Eb3AwhibN6ULRaad5TbNO83WoXVZLh2YRGAFH+qWkUz48l9Hu1jc+wJswB7T+ACWAG0cFnTeeQGpwedvlNw==}
+    dev: true
+
   /@types/hoist-non-react-statics/3.3.2:
     resolution: {integrity: sha512-YIQtIg4PKr7ZyqNPZObpxfHsHEmuB8dXCxd6qVcGuQVDK2bpsF7bYNnBJ4Nn7giuACZg+WewExgrtAJ3XnA4Xw==}
     dependencies:
@@ -2882,6 +2894,10 @@ packages:
     resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
     dev: true
 
+  /convert-source-map/2.0.0:
+    resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+    dev: false
+
   /crelt/1.0.6:
     resolution: {integrity: sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g==}
     dev: false
@@ -2982,6 +2998,10 @@ packages:
   /electron-to-chromium/1.4.503:
     resolution: {integrity: sha512-LF2IQit4B0VrUHFeQkWhZm97KuJSGF2WJqq1InpY+ECpFRkXd8yTIaTtJxsO0OKDmiBYwWqcrNaXOurn2T2wiA==}
     dev: true
+
+  /error-stack-parser-es/0.1.1:
+    resolution: {integrity: sha512-g/9rfnvnagiNf+DRMHEVGuGuIBlCIMDFoTA616HaP2l9PlCjGjVhD98PNbVSJvmK4TttqT5mV5tInMhoFgi+aA==}
+    dev: false
 
   /es-abstract/1.22.2:
     resolution: {integrity: sha512-YoxfFcDmhjOgWPWsV13+2RNjq1F6UQnfs+8TftwNqtzlmFzEXvlUwdrNrYeaizfjQzRMxkZ6ElWMOJIFKdVqwA==}
@@ -4512,7 +4532,6 @@ packages:
   /source-map-js/1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /string.prototype.matchall/4.0.10:
     resolution: {integrity: sha512-rGXbGmOEosIQi6Qva94HUjgPs9vKW+dkG7Y8Q5O2OYkWL6wFaTRZO8zM4mhP94uX55wgyrXzfS2aGtGzUL7EJQ==}

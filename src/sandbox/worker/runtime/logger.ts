@@ -54,14 +54,8 @@ export interface Logger {
 }
 
 function formatArg(arg: unknown) {
-  if (arg instanceof Error) {
-    const desc = String(arg);
-    if (arg.stack == null) {
-      return desc;
-    }
-    return arg.stack?.startsWith(desc)
-      ? arg.stack
-      : [desc, arg.stack].join("\n");
+  if (arg instanceof Error && arg.stack != null) {
+    return { $error: String(arg), stack: arg.stack };
   }
   return objDisplay(arg);
 }
@@ -74,7 +68,7 @@ export function formatConsoleLog(
   let context: Record<string, unknown> | undefined;
   for (const arg of args) {
     if (arg instanceof Error) {
-      context = { ...context, stack: arg.stack };
+      context = { ...context, error: arg };
     }
   }
   logFn(message, context);

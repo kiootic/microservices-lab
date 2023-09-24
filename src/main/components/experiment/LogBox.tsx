@@ -369,7 +369,7 @@ const LogRow = React.forwardRef<HTMLTableRowElement, LogRowProps>(
           <span className="break-anywhere whitespace-pre-wrap">
             {log.message}
           </span>
-          {Object.entries(log.context ?? {}).map(([key, value]) => (
+          {Object.entries(log.context).map(([key, value]) => (
             <React.Fragment key={key}>
               <br />
               <span className="inline-block -indent-2 pl-2 mt-0.5">

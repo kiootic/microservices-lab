@@ -3,23 +3,77 @@ import {
   LogQuery,
   LogQueryCriteria,
   LogQueryPage,
+  WorkerLogEntry,
 } from "../shared/comm";
+import { resolveStackTrace } from "./stack-trace";
 
 export class LogStore {
   private sequence = 0;
   private readonly logs: LogEntry[] = [];
+  private readonly pendingLogs: WorkerLogEntry[][] = [];
+  private scheduledResolve = false;
+  private resolve$: Promise<void> = Promise.resolve();
+
+  readonly sourceFiles = new Map<string, string>();
 
   get count() {
     return this.logs.length;
   }
 
-  add(log: Omit<LogEntry, "sequence">) {
-    this.logs.push({ ...log, sequence: this.sequence++ });
+  add(log: WorkerLogEntry) {
+    this.pendingLogs.push([log]);
+    this.scheduleResolveLogs();
   }
 
-  addBatch(logs: Omit<LogEntry, "sequence">[]) {
+  addWorkerBatch(logs: WorkerLogEntry[]) {
     for (const log of logs) {
-      this.logs.push({ ...log, sequence: this.sequence++ });
+      this.pendingLogs.push([log]);
+    }
+    this.scheduleResolveLogs();
+  }
+
+  async waitForResolve() {
+    try {
+      await this.resolve$;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  private scheduleResolveLogs() {
+    if (!this.scheduledResolve) {
+      this.scheduledResolve = true;
+      this.resolve$ = Promise.resolve()
+        .then(() => this.resolveLogs())
+        .finally(() => {
+          this.scheduledResolve = false;
+        });
+    }
+  }
+
+  private async resolveLogs() {
+    while (this.pendingLogs.length > 0) {
+      const pendingLogs = this.pendingLogs.flat();
+      this.pendingLogs.length = 0;
+
+      for (const log of pendingLogs) {
+        const sequence = this.sequence++;
+
+        const context: Record<string, string> = {};
+        for (const [key, value] of Object.entries(log.context ?? {})) {
+          if (typeof value === "string") {
+            context[key] = value;
+          } else {
+            context[key] = await resolveStackTrace(
+              value.$error,
+              value.stack,
+              this.sourceFiles,
+            );
+          }
+        }
+
+        this.logs.push({ ...log, sequence, context });
+      }
     }
   }
 
@@ -43,7 +97,7 @@ function checkLog(criteria: LogQueryCriteria, log: LogEntry): boolean {
 
   if (search != null) {
     const contents = [log.name, ": ", log.message];
-    for (const [key, value] of Object.entries(log.context ?? {})) {
+    for (const [key, value] of Object.entries(log.context)) {
       contents.push(" ", key, ": ", value);
     }
     if (!contents.join("").toLowerCase().includes(search.toLowerCase())) {

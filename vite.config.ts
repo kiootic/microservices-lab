@@ -30,6 +30,7 @@ export default defineConfig({
     plugins: [WorkerAsyncPlugin],
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       input: {
         main: new URL("index.html", import.meta.url).pathname,

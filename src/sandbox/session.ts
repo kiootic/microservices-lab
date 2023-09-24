@@ -7,6 +7,7 @@ import {
   SessionPollResult,
   LogQuery,
   LogQueryPage,
+  WorkerLogEntry,
 } from "../shared/comm";
 import { BuildError, makeBundle } from "./bundler";
 import { LogStore } from "./logs";
@@ -17,8 +18,8 @@ class WorkerHost implements WorkerHostAPI {
     this.session = session;
   }
 
-  postLogs(logs: LogEntry[]): void {
-    this.session.logs.addBatch(logs);
+  postLogs(logs: WorkerLogEntry[]): void {
+    this.session.logs.addWorkerBatch(logs);
   }
 }
 
@@ -80,7 +81,13 @@ export class Session implements SessionAPI {
 
       let isCancelled = false;
       await Promise.race([
-        this.api.run(proxy<WorkerHostAPI>(new WorkerHost(this)), bundleJS),
+        this.api.prepare(bundleJS).then((scriptURL) => {
+          this.logs.sourceFiles.set(scriptURL, bundleJS);
+          return this.api.run(
+            proxy<WorkerHostAPI>(new WorkerHost(this)),
+            scriptURL,
+          );
+        }),
         this.cancel$.then(() => {
           isCancelled = true;
         }),
@@ -101,6 +108,7 @@ export class Session implements SessionAPI {
       }
       this.log("error", "Unexpected error occured.", context);
     } finally {
+      await this.logs.waitForResolve();
       this.isCompleted = true;
       this.dispose();
     }

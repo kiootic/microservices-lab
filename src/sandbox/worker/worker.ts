@@ -1,5 +1,5 @@
 import * as Comlink from "comlink";
-import { WorkerAPI, WorkerHostAPI, LogEntry } from "../../shared/comm";
+import { WorkerAPI, WorkerHostAPI, WorkerLogEntry } from "../../shared/comm";
 import { execute } from "./executor/executor";
 import { Host, HostLogEntry } from "./runtime/host";
 import { Runtime } from "./runtime/runtime";
@@ -10,7 +10,7 @@ const logFlushInterval = 50;
 class WorkerHost implements Host {
   private readonly host: Comlink.Remote<WorkerHostAPI>;
   private flushTimer: number;
-  private readonly logBuffer: LogEntry[] = [];
+  private readonly logBuffer: WorkerLogEntry[] = [];
 
   constructor(host: Comlink.Remote<WorkerHostAPI>) {
     this.host = host;
@@ -18,7 +18,7 @@ class WorkerHost implements Host {
   }
 
   writeLog(entry: HostLogEntry): void {
-    this.logBuffer.push({ sequence: -1, ...entry });
+    this.logBuffer.push(entry);
     if (this.logBuffer.length >= logBufferSize) {
       this.flushLogs();
     }
@@ -36,14 +36,20 @@ class WorkerHost implements Host {
 }
 
 class Worker implements WorkerAPI {
+  prepare(bundleJS: string) {
+    return URL.createObjectURL(
+      new Blob([bundleJS], { type: "application/javascript" }),
+    );
+  }
+
   async run(
     host: Comlink.Remote<WorkerHostAPI>,
-    bundleJS: string,
+    scriptURL: string,
   ): Promise<void> {
     const workerHost = new WorkerHost(host);
     try {
       const runtime = new Runtime(workerHost);
-      await execute(bundleJS, runtime);
+      await execute(scriptURL, runtime);
     } finally {
       workerHost.dispose();
     }
