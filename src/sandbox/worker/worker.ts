@@ -20,18 +20,19 @@ class WorkerHost implements Host {
   writeLog(entry: HostLogEntry): void {
     this.logBuffer.push(entry);
     if (this.logBuffer.length >= logBufferSize) {
-      this.flushLogs();
+      void this.flushLogs();
     }
   }
 
-  dispose() {
-    this.flushLogs();
+  async dispose() {
+    await this.flushLogs();
     clearInterval(this.flushTimer);
   }
 
-  private flushLogs() {
-    void this.host.postLogs(this.logBuffer.slice());
+  private async flushLogs() {
+    const logs = this.logBuffer.slice();
     this.logBuffer.length = 0;
+    await this.host.postLogs(logs);
   }
 }
 
@@ -51,7 +52,7 @@ class Worker implements WorkerAPI {
       const runtime = new Runtime(workerHost);
       await execute(scriptURL, runtime);
     } finally {
-      workerHost.dispose();
+      await workerHost.dispose();
     }
   }
 }
