@@ -299,7 +299,7 @@ const LogBoxTable: React.FC<LogBoxTableProps> = (props) => {
         ))}
       </tbody>
       <tfoot className="h-full">
-        <tr>
+        <tr className="h-full">
           <td></td>
           <td className={logs.length > 0 ? "border-r-2" : ""}></td>
           <td>
