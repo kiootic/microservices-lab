@@ -12,6 +12,8 @@ export interface PromiseInternals {
   make<T>(): Promise<T>;
   resolve<T>(promise: Promise<T>, value: T | PromiseLike<T>): void;
   reject<T>(promise: Promise<T>, reason: unknown): void;
+
+  context: ReadonlyMap<symbol, unknown>;
 }
 
 type Executor = (
@@ -19,11 +21,37 @@ type Executor = (
   reject: (reason: unknown) => void,
 ) => void;
 
+const stackMarkerName = `stackMarker__43c597ba`;
+const callWithStackMarker = {
+  [stackMarkerName]<T extends CallableFunction>(fn: T, ...args: unknown[]) {
+    return fn(...args) as unknown;
+  },
+}[stackMarkerName];
+
+const extractStack = (() => {
+  if ("captureStackTrace" in Error) {
+    const endRegex = new RegExp(`\n.*${stackMarkerName}`);
+    return (stack: string) => {
+      const start = /^\s*at\s*/m.exec(stack)?.index ?? 0;
+      const end = endRegex.exec(stack)?.index;
+      return stack.slice(start, end);
+    };
+  } else {
+    const endRegex = new RegExp(`\n.*${stackMarkerName}@`);
+    return (stack: string) => {
+      const end = endRegex.exec(stack)?.index;
+      return stack.slice(0, end);
+    };
+  }
+})();
+
 export function makePromise(
   name: string,
   schedule = scheduleMicrotask,
 ): [PromiseConstructor, PromiseInternals] {
   const raw = Symbol();
+  const stack = Symbol();
+  let context = new Map<symbol, unknown>();
 
   const Promise = {
     [name]: class {
@@ -33,8 +61,10 @@ export function makePromise(
       __sibling: Promise | undefined = undefined;
       __onFulfill: ((value: unknown) => unknown) | undefined = undefined;
       __onReject: ((reason: unknown) => unknown) | undefined = undefined;
+      __context: Map<symbol, unknown>;
 
       constructor(executor: typeof raw | Executor) {
+        this.__context = context;
         if (executor === raw) {
           return;
         }
@@ -45,7 +75,11 @@ export function makePromise(
         onFulfill?: (value: unknown) => unknown,
         onReject?: (value: unknown) => unknown,
       ) {
+        const old = context;
+        context = withStackTrace(context);
         const promise = new Promise(raw);
+        context = old;
+
         promise.__onFulfill =
           typeof onFulfill === "function" ? onFulfill : undefined;
         promise.__onReject =
@@ -176,9 +210,22 @@ export function makePromise(
   type Promise = InstanceType<typeof Promise>;
 
   const internal = {
-    make: () => new Promise(raw),
+    make: () => {
+      const old = context;
+      context = withStackTrace(context);
+      const promise = new Promise(raw);
+      context = old;
+
+      return promise;
+    },
     resolve,
     reject,
+    get context() {
+      return context;
+    },
+    set context(value) {
+      context = value;
+    },
   };
 
   return [
@@ -186,33 +233,66 @@ export function makePromise(
     internal as unknown as PromiseInternals,
   ];
 
-  function reaction(self: Promise, state: PromiseState, value: unknown) {
-    const onFulfill = self.__onFulfill;
-    const onReject = self.__onReject;
-    self.__onFulfill = undefined;
-    self.__onReject = undefined;
+  function withStackTrace(context: Map<symbol, unknown>) {
+    let stackTrace = context.get(stack) as Error | undefined;
+    stackTrace = new Error(undefined, { cause: stackTrace });
 
-    if (state === FULFILLED) {
-      if (onFulfill) {
-        try {
-          resolve(self, onFulfill(value));
-        } catch (err) {
-          reject(self, err);
+    return new Map(context).set(stack, stackTrace);
+  }
+
+  function enhanceStackTrace(context: Map<symbol, unknown>, err: unknown) {
+    if (err instanceof Error) {
+      let stackTrace = context.get(stack) as Error | undefined;
+      const segments = [extractStack(err.stack!)];
+      while (stackTrace != null) {
+        let stack = extractStack(stackTrace.stack!);
+        let skip = 2;
+        while (skip > 0) {
+          stack = stack.slice(stack.indexOf("\n") + 1);
+          skip--;
         }
-      } else {
-        resolve(self, value);
+        segments.push(stack);
+        stackTrace = stackTrace.cause as Error | undefined;
       }
+
+      err.stack = segments.join("\n");
     }
-    if (state === REJECTED) {
-      if (onReject) {
-        try {
-          resolve(self, onReject(value));
-        } catch (err) {
-          reject(self, err);
+    return err;
+  }
+
+  function reaction(self: Promise, state: PromiseState, value: unknown) {
+    const old = context;
+    context = self.__context;
+    try {
+      const onFulfill = self.__onFulfill;
+      const onReject = self.__onReject;
+      self.__onFulfill = undefined;
+      self.__onReject = undefined;
+
+      if (state === FULFILLED) {
+        if (onFulfill) {
+          try {
+            resolve(self, callWithStackMarker(onFulfill, value));
+          } catch (err) {
+            reject(self, err);
+          }
+        } else {
+          resolve(self, value);
         }
-      } else {
-        reject(self, value);
       }
+      if (state === REJECTED) {
+        if (onReject) {
+          try {
+            resolve(self, callWithStackMarker(onReject, value));
+          } catch (err) {
+            reject(self, err);
+          }
+        } else {
+          reject(self, value);
+        }
+      }
+    } finally {
+      context = old;
     }
   }
 
@@ -276,7 +356,7 @@ export function makePromise(
   }
 
   function reject(self: Promise, reason: unknown) {
-    settle(self, reason, REJECTED);
+    settle(self, enhanceStackTrace(self.__context, reason), REJECTED);
   }
 
   function execute(self: Promise, fn: Executor) {

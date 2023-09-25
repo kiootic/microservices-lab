@@ -29,6 +29,9 @@ export default defineConfig({
   worker: {
     plugins: [WorkerAsyncPlugin],
   },
+  esbuild:{
+    minifyIdentifiers:false
+  },
   build: {
     sourcemap: true,
     rollupOptions: {
@@ -36,7 +39,7 @@ export default defineConfig({
         main: new URL("index.html", import.meta.url).pathname,
         sandbox: new URL("sandbox.html", import.meta.url).pathname,
       },
-    },
+    }
   },
   optimizeDeps: {
     exclude: ["util"],
