@@ -25,8 +25,8 @@ export interface Store {
   delete: (fileName: string) => void;
 }
 
-export function mapStore(): Store {
-  const files = new Map<string, string>();
+export function mapStore(initialFiles?: ReadonlyMap<string, string>): Store {
+  const files = new Map<string, string>(initialFiles);
   const subscribers = new Set<() => void>();
 
   let isNotifying = false;

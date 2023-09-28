@@ -55,15 +55,24 @@ export interface WorkspaceFile {
 }
 
 export interface WorkspaceValue {
+  sessionID: string;
+
   isDirty: boolean;
   fileNames: string[];
   vfs: Vfs;
   lang: ts.LanguageService;
 
+  getState(): WorkspaceState;
+
   renameFile: (fileName: string, newFileName: string) => boolean;
   getFile: (fileName: string) => WorkspaceFile;
 }
 export type Workspace = StoreApi<WorkspaceValue>;
+
+export interface WorkspaceState {
+  sessionID: string;
+  files: ReadonlyMap<string, string>;
+}
 
 function wrapStore(inner: Store, workspace: Workspace): Store {
   return {
@@ -110,9 +119,12 @@ const compilerOptions = {
   strict: true,
 };
 
-export function makeWorkspace() {
+export function makeWorkspace(state?: WorkspaceState) {
   return createStore<WorkspaceValue>()((set, get, workspace) => {
-    const store = mapStore();
+    const { sessionID = crypto.randomUUID(), files: initialFiles = new Map() } =
+      state ?? {};
+
+    const store = mapStore(initialFiles);
     const vfs = storeVfs(wrapStore(store, workspace));
     const lang = createLanguageService(
       overlayVfs(vfs, runtimeLibsVfs),
@@ -121,10 +133,16 @@ export function makeWorkspace() {
     const fileCache = new Map<string, WorkspaceFile>();
 
     return {
+      sessionID,
       isDirty: false,
       fileNames: [],
       vfs,
       lang,
+
+      getState: () => ({
+        sessionID,
+        files: store.content(),
+      }),
 
       renameFile: (fileName: string, newFileName: string) => {
         if (
