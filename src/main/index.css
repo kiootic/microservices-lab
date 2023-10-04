@@ -7,11 +7,21 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply w-full h-full;
+  }
+
   body {
+    @apply w-full h-full;
     @apply text-base bg-gray-50 text-primary-950;
     @apply select-none selection:bg-[#add6ff80];
     -webkit-tap-highlight-color: transparent;
   }
+
+  #root {
+    @apply w-full h-full;
+  }
+
   :root {
     --editor-font-family: theme(fontFamily.mono);
   }

@@ -1,0 +1,31 @@
+.save-icon--pending {
+  animation: save-icon--pending 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.save-icon--completed {
+  animation: save-icon--completed 700ms both linear;
+}
+
+@keyframes save-icon--pending {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes save-icon--completed {
+  0% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

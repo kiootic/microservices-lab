@@ -4,7 +4,10 @@ import { EventBus, createEventBus } from "../hooks/event-bus";
 import { SessionController } from "../model/session";
 import { Workspace } from "../model/workspace";
 
-export type WorkbenchUIEvent = never;
+export type WorkbenchUIEvent = {
+  kind: "save";
+  state: "saving" | "succeed" | "failed";
+};
 
 export type WorkbenchView = "notebook" | "experiment" | "journal";
 

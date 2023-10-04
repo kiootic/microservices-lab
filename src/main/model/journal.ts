@@ -5,10 +5,10 @@ import type { WorkspaceState } from "./workspace";
 export interface JournalEntryHandle {
   type: "session" | "named";
   id: string;
+  updatedAt: string;
 }
 
 export interface JournalEntry extends JournalEntryHandle {
-  updatedAt: string;
   files: Record<string, string>;
 }
 
@@ -59,39 +59,28 @@ export function makeJournal() {
       localStorage.setItem(keyTimestamps, JSON.stringify(timestamps));
     };
 
-    const saveEntry = (entry: JournalEntry) => {
-      const key = makeStorageKey(entry);
-      updateTimestamp(key, entry.updatedAt);
-      localStorage.setItem(key, JSON.stringify(entry));
-    };
-
-    const loadEntry = (handle: JournalEntryHandle) => {
-      const key = makeStorageKey(handle);
-      return parseEntry(localStorage.getItem(key));
-    };
-
     const loadJournal = () => {
       const keys = Object.keys(localStorage);
-      let timestamps: Partial<Record<string, string>> = {};
       const sessionJournal: JournalEntryHandle[] = [];
       const namedJournal: JournalEntryHandle[] = [];
 
+      const timestamps = parseTimestamps(localStorage.getItem(keyTimestamps));
       keys.sort((a, b) =>
         (timestamps[a] ?? a).localeCompare(timestamps[b] ?? b),
       );
 
       for (const key of keys) {
-        if (key === keyTimestamps) {
-          timestamps = parseTimestamps(localStorage.getItem(key));
-        } else if (key.startsWith(prefixSession)) {
+        if (key.startsWith(prefixSession)) {
           sessionJournal.push({
             type: "session",
             id: key.slice(prefixSession.length),
+            updatedAt: timestamps[key] ?? new Date().toISOString(),
           });
         } else if (key.startsWith(prefixNamed)) {
           namedJournal.push({
             type: "named",
             id: key.slice(prefixNamed.length),
+            updatedAt: timestamps[key] ?? new Date().toISOString(),
           });
         }
       }
@@ -112,6 +101,20 @@ export function makeJournal() {
         set({ sessionJournal, namedJournal });
       }, 100);
     });
+
+    const saveEntry = (entry: JournalEntry) => {
+      const key = makeStorageKey(entry);
+      updateTimestamp(key, entry.updatedAt);
+      localStorage.setItem(key, JSON.stringify(entry));
+
+      const { sessionJournal, namedJournal } = loadJournal();
+      set({ sessionJournal, namedJournal });
+    };
+
+    const loadEntry = (handle: JournalEntryHandle) => {
+      const key = makeStorageKey(handle);
+      return parseEntry(localStorage.getItem(key));
+    };
 
     const { sessionJournal, namedJournal } = loadJournal();
     return {
