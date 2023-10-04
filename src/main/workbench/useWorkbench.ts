@@ -3,7 +3,7 @@ import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../hooks/event-bus";
 import { SessionController } from "../model/session";
 import { Workspace } from "../model/workspace";
-import { Journal } from "../model/journal";
+import { Journal, JournalEntryHandle } from "../model/journal";
 
 export type WorkbenchUIEvent = {
   kind: "save";
@@ -40,11 +40,18 @@ export interface WorkbenchController {
   journal: Journal;
   events: EventBus<WorkbenchUIEvent>;
   state: StoreApi<WorkbenchUIState>;
+
+  loadJournal?: (handle: JournalEntryHandle) => void;
+}
+
+interface WorkbenchControllerParams {
+  loadJournal?: (handle: JournalEntryHandle) => void;
 }
 
 export function useWorkbench(
   workspace: Workspace,
   journal: Journal,
+  params?: WorkbenchControllerParams,
 ): WorkbenchController {
   const [events] = useState(() => createEventBus<WorkbenchUIEvent>());
   const [state] = useState(() =>
@@ -70,7 +77,7 @@ export function useWorkbench(
   const [session] = useState(() => new SessionController());
 
   return useMemo<WorkbenchController>(
-    () => ({ workspace, journal, events, state, session }),
-    [workspace, journal, events, state, session],
+    () => ({ workspace, journal, events, state, session, ...params }),
+    [workspace, journal, events, state, session, params],
   );
 }

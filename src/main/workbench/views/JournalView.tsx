@@ -11,6 +11,9 @@ import { useStore } from "zustand";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useTimer } from "../../hooks/timer";
 import { useWorkbenchContext } from "../context";
+import { JournalEntryHandle } from "../../model/journal";
+
+const sessionIDPrefix = "session:";
 
 interface JournalViewProps {
   className?: string;
@@ -20,11 +23,20 @@ export const JournalView: React.FC<JournalViewProps> = (props) => {
   const { className } = props;
   const intl = useIntl();
 
-  const { journal } = useWorkbenchContext();
+  const { journal, loadJournal } = useWorkbenchContext();
   const sessionJournal = useStore(journal, (j) => j.sessionJournal);
 
   const handleOnAction = useEventCallback((key: React.Key) => {
-    console.log(key);
+    let handle: JournalEntryHandle | undefined;
+
+    if (typeof key === "string" && key.startsWith(sessionIDPrefix)) {
+      const id = key.slice(sessionIDPrefix.length);
+      handle = sessionJournal.find((h) => h.id === id);
+    }
+
+    if (handle != null) {
+      loadJournal?.(handle);
+    }
   });
 
   return (

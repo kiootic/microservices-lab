@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { makeJournal } from "../model/journal";
-import { makeWorkspace } from "../model/workspace";
+import React, { useEffect } from "react";
+import { Journal, JournalEntryHandle } from "../model/journal";
+import { Workspace } from "../model/workspace";
 import { Workbench } from "../workbench/Workbench";
 import { useWorkbench } from "../workbench/useWorkbench";
 
-export const WorkbenchHost: React.FC = () => {
-  const [journal] = useState(() => makeJournal());
+interface WorkbenchHostProps {
+  workspace: Workspace;
+  journal: Journal;
 
-  const [workspace] = useState(() => {
-    const workspace = makeWorkspace();
-    workspace.getState().vfs.write("/index.ts", "console.log('Hello!');\n");
-    return workspace;
-  });
+  loadJournal: (handle: JournalEntryHandle) => void;
+}
 
-  const controller = useWorkbench(workspace, journal);
+export const WorkbenchHost: React.FC<WorkbenchHostProps> = (props) => {
+  const { workspace, journal, loadJournal } = props;
+
+  const controller = useWorkbench(workspace, journal, { loadJournal });
 
   useEffect(() => {
     let timeoutHandle: number | null = null;
