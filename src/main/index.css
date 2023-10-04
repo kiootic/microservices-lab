@@ -33,3 +33,13 @@
     overflow-wrap: anywhere;
   }
 }
+
+@layer components {
+  .round-focus-ring {
+    @apply relative;
+  }
+
+  .round-focus-ring::before {
+    @apply absolute inset-1 rounded-full ring-1;
+  }
+}

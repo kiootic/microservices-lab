@@ -6,15 +6,18 @@ import { useStore } from "zustand";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Journal, JournalEntryHandle } from "../../model/journal";
 import { JournalTimestamp } from "./JournalTimestamp";
+import { JournalToolbar } from "./JournalToolbar";
+import { Workspace } from "../../model/workspace";
 
 interface JournalUIProps {
   className?: string;
   journal: Journal;
+  workspace: Workspace;
   loadJournal?: (handle: JournalEntryHandle) => void;
 }
 
 export const JournalUI: React.FC<JournalUIProps> = (props) => {
-  const { className, journal, loadJournal } = props;
+  const { className, journal, workspace, loadJournal } = props;
   const intl = useIntl();
 
   const sessionJournal = useStore(journal, (j) => j.sessionJournal);
@@ -35,28 +38,35 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
   });
 
   return (
-    <div className={cn("overflow-auto", className)}>
-      <ListBox
-        aria-label={intl.formatMessage({
-          id: "views.journal.title",
-          defaultMessage: "Journal",
-        })}
-        onAction={handleOnAction}
-      >
-        <Section className="border-b-8 border-gray-100">
-          {sessionJournal
-            .slice()
-            .reverse()
-            .map((handle, i) => (
+    <div className={cn("flex flex-col", className)}>
+      <JournalToolbar
+        className="flex-none mb-4"
+        journal={journal}
+        workspace={workspace}
+      />
+      <div className="flex-shrink pb-16 overflow-auto">
+        <ListBox
+          aria-label={intl.formatMessage({
+            id: "views.journal.title",
+            defaultMessage: "Journal",
+          })}
+          onAction={handleOnAction}
+        >
+          <Section className="border-b-8 border-gray-100">
+            {sessionJournal
+              .slice()
+              .reverse()
+              .map((handle, i) => (
+                <JournalItem key={handle.id} handle={handle} ordinal={i + 1} />
+              ))}
+          </Section>
+          <Section>
+            {namedJournal.map((handle, i) => (
               <JournalItem key={handle.id} handle={handle} ordinal={i + 1} />
             ))}
-        </Section>
-        <Section>
-          {namedJournal.map((handle, i) => (
-            <JournalItem key={handle.id} handle={handle} ordinal={i + 1} />
-          ))}
-        </Section>
-      </ListBox>
+          </Section>
+        </ListBox>
+      </div>
     </div>
   );
 };
@@ -96,7 +106,11 @@ const JournalItem: React.FC<JournalItemProps> = (props) => {
         "outline-none ring-inset ra-focus-visible:ring-1 ra-focus-visible:bg-gray-100",
       )}
     >
-      <span className="flex-1 truncate">{text}</span>
+      <span
+        className={cn("flex-1 truncate", handle.type === "session" && "italic")}
+      >
+        {text}
+      </span>
       <span className="flex-none text-gray-500" title={handle.updatedAt}>
         <JournalTimestamp value={handle.updatedAt} />
       </span>

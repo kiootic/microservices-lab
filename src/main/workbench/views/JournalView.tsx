@@ -8,11 +8,12 @@ interface JournalViewProps {
 
 export const JournalView: React.FC<JournalViewProps> = (props) => {
   const { className } = props;
-  const { journal, loadJournal } = useWorkbenchContext();
+  const { journal, workspace, loadJournal } = useWorkbenchContext();
   return (
     <JournalUI
       className={className}
       journal={journal}
+      workspace={workspace}
       loadJournal={loadJournal}
     />
   );

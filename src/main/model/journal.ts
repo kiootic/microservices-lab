@@ -87,6 +87,8 @@ export function makeJournal() {
         }
       }
 
+      namedJournal.sort((a, b) => a.id.localeCompare(b.id));
+
       return { sessionJournal, namedJournal };
     };
 
@@ -161,7 +163,7 @@ export function makeJournal() {
       saveNamed: (state, name) => {
         const files = Object.fromEntries(state.files);
         saveEntry({
-          type: "session",
+          type: "named",
           id: name,
           updatedAt: new Date().toISOString(),
           files,
