@@ -28,7 +28,8 @@ export function createLanguageService(
       "/node_modules/typescript/lib/" + defaultLibFileName,
 
     getCompilationSettings: () => options,
-    getScriptFileNames: () => vfs.fileNames(),
+    getScriptFileNames: () =>
+      vfs.fileNames().filter((f) => /\.(ts|js)$/.test(f)),
     getScriptSnapshot: (fileName) => {
       const contents = vfs.read(fileName);
       return contents != null
