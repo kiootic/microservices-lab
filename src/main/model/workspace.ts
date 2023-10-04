@@ -121,10 +121,8 @@ const compilerOptions = {
 
 export function makeWorkspace(state?: WorkspaceState) {
   return createStore<WorkspaceValue>()((set, get, workspace) => {
-    const {
-      sessionID = crypto.randomUUID(),
-      files: initialFiles = new Map<string, string>(),
-    } = state ?? {};
+    const { files: initialFiles = new Map<string, string>() } = state ?? {};
+    const sessionID = crypto.randomUUID();
 
     const store = mapStore(initialFiles);
     const vfs = storeVfs(wrapStore(store, workspace));
