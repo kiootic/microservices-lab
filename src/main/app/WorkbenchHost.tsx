@@ -13,7 +13,7 @@ export const WorkbenchHost: React.FC = () => {
     return workspace;
   });
 
-  const controller = useWorkbench(workspace);
+  const controller = useWorkbench(workspace, journal);
 
   useEffect(() => {
     let timeoutHandle: number | null = null;

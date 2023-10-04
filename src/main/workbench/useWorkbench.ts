@@ -3,6 +3,7 @@ import { StoreApi, createStore } from "zustand";
 import { EventBus, createEventBus } from "../hooks/event-bus";
 import { SessionController } from "../model/session";
 import { Workspace } from "../model/workspace";
+import { Journal } from "../model/journal";
 
 export type WorkbenchUIEvent = {
   kind: "save";
@@ -36,11 +37,15 @@ export interface WorkbenchUIState {
 export interface WorkbenchController {
   session: SessionController;
   workspace: Workspace;
+  journal: Journal;
   events: EventBus<WorkbenchUIEvent>;
   state: StoreApi<WorkbenchUIState>;
 }
 
-export function useWorkbench(workspace: Workspace): WorkbenchController {
+export function useWorkbench(
+  workspace: Workspace,
+  journal: Journal,
+): WorkbenchController {
   const [events] = useState(() => createEventBus<WorkbenchUIEvent>());
   const [state] = useState(() =>
     createStore<WorkbenchUIState>(() => ({
@@ -65,7 +70,7 @@ export function useWorkbench(workspace: Workspace): WorkbenchController {
   const [session] = useState(() => new SessionController());
 
   return useMemo<WorkbenchController>(
-    () => ({ workspace, events, state, session }),
-    [workspace, events, state, session],
+    () => ({ workspace, journal, events, state, session }),
+    [workspace, journal, events, state, session],
   );
 }
