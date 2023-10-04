@@ -1,0 +1,21 @@
+.item [role="gridcell"] {
+  @apply flex;
+}
+
+.item--session + .item--named {
+  @apply border-t-8 border-gray-100;
+}
+
+@media (hover: hover) {
+  .delete-button {
+    opacity: 0;
+  }
+}
+
+.item[data-hovered] .delete-button {
+  opacity: 1;
+}
+
+.delete-button[data-focus-visible] {
+  opacity: 1;
+}

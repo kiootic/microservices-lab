@@ -44,6 +44,7 @@ export interface JournalValue {
   namedJournal: JournalEntryHandle[];
 
   load: (handle: JournalEntryHandle) => WorkspaceState;
+  delete: (handle: JournalEntryHandle) => void;
   saveSession: (state: WorkspaceState) => void;
   saveNamed: (state: WorkspaceState, name: string) => void;
 }
@@ -168,6 +169,20 @@ export function makeJournal() {
           updatedAt: new Date().toISOString(),
           files,
         });
+      },
+      delete: (handle) => {
+        const rawTimestamps = localStorage.getItem(keyTimestamps);
+        const timestamps =
+          rawTimestamps != null ? parseTimestamps(rawTimestamps) : {};
+
+        const key = makeStorageKey(handle);
+        localStorage.removeItem(key);
+        delete timestamps[key];
+
+        localStorage.setItem(keyTimestamps, JSON.stringify(timestamps));
+
+        const { sessionJournal, namedJournal } = loadJournal();
+        set({ sessionJournal, namedJournal });
       },
     };
   });

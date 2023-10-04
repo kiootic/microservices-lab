@@ -57,7 +57,9 @@ const AppModal: React.FC<ModalOverlayProps> = (props) => {
 const AppDialogHeading: React.FC<HeadingProps> = (props) => {
   const { className, ...rest } = props;
 
-  return <Heading className={cn("text-lg", className)} {...rest} />;
+  return (
+    <Heading className={cn("text-lg break-anywhere", className)} {...rest} />
+  );
 };
 
 interface AppDialogActionsProps extends React.PropsWithChildren {

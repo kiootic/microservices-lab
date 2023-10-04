@@ -1,13 +1,15 @@
 import cn from "clsx";
-import React, { useMemo } from "react";
-import { Item, ListBox, Section } from "react-aria-components";
-import { useIntl } from "react-intl";
+import React, { useLayoutEffect, useState } from "react";
+import { GridList } from "react-aria-components";
+import { FormattedMessage, useIntl } from "react-intl";
 import { useStore } from "zustand";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Journal, JournalEntryHandle } from "../../model/journal";
-import { JournalTimestamp } from "./JournalTimestamp";
-import { JournalToolbar } from "./JournalToolbar";
 import { Workspace } from "../../model/workspace";
+import { JournalItem } from "./JournalItem";
+import { JournalToolbar } from "./JournalToolbar";
+import { AppDialog } from "../Dialog";
+import { AppButton } from "../AppButton";
 
 interface JournalUIProps {
   className?: string;
@@ -37,6 +39,17 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
     }
   });
 
+  const [entryToBeDelete, setEntryToBeDelete] =
+    useState<JournalEntryHandle | null>(null);
+
+  const handleOnDelete = useEventCallback((handle: JournalEntryHandle) => {
+    setEntryToBeDelete(handle);
+  });
+
+  const handleDeleteDialogOnClose = useEventCallback(() => {
+    setEntryToBeDelete(null);
+  });
+
   return (
     <div className={cn("flex flex-col", className)}>
       <JournalToolbar
@@ -45,75 +58,131 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
         workspace={workspace}
       />
       <div className="flex-shrink pb-16 overflow-auto">
-        <ListBox
+        <GridList
           aria-label={intl.formatMessage({
             id: "views.journal.title",
             defaultMessage: "Journal",
           })}
           onAction={handleOnAction}
         >
-          <Section className="border-b-8 border-gray-100">
-            {sessionJournal
-              .slice()
-              .reverse()
-              .map((handle, i) => (
-                <JournalItem key={handle.id} handle={handle} ordinal={i + 1} />
-              ))}
-          </Section>
-          <Section>
-            {namedJournal.map((handle, i) => (
-              <JournalItem key={handle.id} handle={handle} ordinal={i + 1} />
+          {sessionJournal
+            .slice()
+            .reverse()
+            .map((handle, i) => (
+              <JournalItem
+                key={handle.id}
+                handle={handle}
+                ordinal={i + 1}
+                onDelete={handleOnDelete}
+              />
             ))}
-          </Section>
-        </ListBox>
+          {namedJournal.map((handle, i) => (
+            <JournalItem
+              key={handle.id}
+              handle={handle}
+              ordinal={i + 1}
+              onDelete={handleOnDelete}
+            />
+          ))}
+        </GridList>
       </div>
+      <DeleteDialog
+        journal={journal}
+        handle={entryToBeDelete}
+        onClose={handleDeleteDialogOnClose}
+      />
     </div>
   );
 };
 
-interface JournalItemProps {
-  handle: JournalEntryHandle;
-  ordinal: number;
+interface DeleteDialogProps {
+  journal: Journal;
+  handle: JournalEntryHandle | null;
+  onClose: () => void;
 }
 
-const JournalItem: React.FC<JournalItemProps> = (props) => {
-  const { handle, ordinal } = props;
+const DeleteDialog: React.FC<DeleteDialogProps> = (props) => {
+  const { journal, handle, onClose } = props;
   const intl = useIntl();
 
-  const text = useMemo<string>(() => {
-    switch (handle.type) {
-      case "session":
-        return intl.formatMessage(
-          {
-            id: "views.journal.autosave",
-            defaultMessage: "Autosave {ordinal}",
-          },
-          { ordinal },
-        );
-
-      case "named":
-        return handle.id;
+  const [displaySaveName, setDisplaySaveName] = useState(handle?.id);
+  useLayoutEffect(() => {
+    if (handle != null) {
+      switch (handle.type) {
+        case "session":
+          setDisplaySaveName(
+            intl.formatMessage(
+              {
+                id: "views.journal.deleteSave.autosave",
+                defaultMessage: "Autosave ({id})",
+              },
+              { id: handle.id },
+            ),
+          );
+          break;
+        case "named":
+          setDisplaySaveName(handle.id);
+          break;
+      }
     }
-  }, [intl, handle, ordinal]);
+  }, [handle, intl]);
+
+  const handleOnOpenChange = useEventCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      onClose();
+    }
+  });
+  const handleKeepOnClick = useEventCallback(() => {
+    onClose();
+  });
+
+  const handleDeleteOnClick = useEventCallback(() => {
+    if (handle != null) {
+      journal.getState().delete(handle);
+    }
+    onClose();
+  });
 
   return (
-    <Item
-      id={handle.type + ":" + handle.id}
-      textValue={text}
-      className={cn(
-        "flex justify-between px-4 py-2 gap-x-2",
-        "cursor-pointer ra-hover:bg-gray-200",
-        "outline-none ring-inset ra-focus-visible:ring-1 ra-focus-visible:bg-gray-100",
-      )}
+    <AppDialog.ModalOverlay
+      isOpen={handle != null}
+      isDismissable={true}
+      onOpenChange={handleOnOpenChange}
     >
-      <span
-        className={cn("flex-1 truncate", handle.type === "session" && "italic")}
-      >
-        {text}
-      </span>
-      <span className="flex-none text-gray-500" title={handle.updatedAt}>
-        <JournalTimestamp value={handle.updatedAt} />
-      </span>
-    </Item>
+      <AppDialog.Modal>
+        <AppDialog>
+          <AppDialog.Heading>
+            <FormattedMessage
+              id="views.journal.deleteSave.title"
+              defaultMessage="Delete {saveName}"
+              values={{ saveName: displaySaveName }}
+            />
+          </AppDialog.Heading>
+          <AppDialog.Actions>
+            <AppButton
+              variant="destructive"
+              className="flex-none"
+              onPress={handleDeleteOnClick}
+            >
+              <FormattedMessage
+                id="views.journal.deleteSave.confirm"
+                defaultMessage="Delete"
+              />
+            </AppButton>
+            <AppButton
+              variant="secondary"
+              className="flex-none"
+              autoFocus
+              onPress={handleKeepOnClick}
+            >
+              <FormattedMessage
+                id="views.journal.deleteSave.cancel"
+                defaultMessage="Keep"
+              />
+            </AppButton>
+          </AppDialog.Actions>
+        </AppDialog>
+      </AppDialog.Modal>
+    </AppDialog.ModalOverlay>
   );
 };
