@@ -2,6 +2,8 @@ import { createStore, StoreApi } from "zustand";
 import { parse, Parser } from "../utils/parse";
 import type { WorkspaceState } from "./workspace";
 
+const maxSessionJournalEntry = 5;
+
 export interface JournalEntryHandle {
   type: "session" | "named";
   id: string;
@@ -102,11 +104,30 @@ export function makeJournal() {
       }, 100);
     });
 
+    const trimJournal = () => {
+      const { sessionJournal } = loadJournal();
+      if (sessionJournal.length < maxSessionJournalEntry) {
+        return;
+      }
+      const toBeRemoved = sessionJournal.slice(0, -maxSessionJournalEntry);
+
+      const rawTimestamps = localStorage.getItem(keyTimestamps);
+      const timestamps =
+        rawTimestamps != null ? parseTimestamps(rawTimestamps) : {};
+      for (const entry of toBeRemoved) {
+        const key = makeStorageKey(entry);
+        localStorage.removeItem(key);
+        delete timestamps[key];
+      }
+      localStorage.setItem(keyTimestamps, JSON.stringify(timestamps));
+    };
+
     const saveEntry = (entry: JournalEntry) => {
       const key = makeStorageKey(entry);
       updateTimestamp(key, entry.updatedAt);
       localStorage.setItem(key, JSON.stringify(entry));
 
+      trimJournal();
       const { sessionJournal, namedJournal } = loadJournal();
       set({ sessionJournal, namedJournal });
     };
