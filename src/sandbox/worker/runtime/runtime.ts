@@ -1,5 +1,6 @@
 import type * as RuntimeGlobals from "../../../shared/runtime";
 import { VirtualNetwork } from "../system/network";
+import { Service, ServiceConstructor } from "../system/service";
 import { System } from "../system/system";
 import { Semaphore } from "../utils/async";
 import { random } from "../utils/random";
@@ -41,13 +42,18 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
 
     expect,
     random: random,
+    Service: <Name extends string>(name: Name) =>
+      class extends Service {
+        static readonly __name = name;
+      } satisfies ServiceConstructor<Name> as never,
     services: VirtualNetwork.proxy(() => system.network),
 
     Runtime: {
       defineTest: suite.defineTest.bind(suite),
       runTests: suite.run.bind(suite),
 
-      defineServices: system.defineServices.bind(system),
+      Service,
+      defineService: system.defineService.bind(system),
       setupSystem: system.setup.bind(system),
 
       Semaphore: Semaphore,

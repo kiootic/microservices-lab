@@ -115,6 +115,7 @@ const compilerOptions = {
   baseUrl: "/",
   module: "ES2020",
   moduleResolution: "bundler",
+  moduleDetection: "force",
   isolatedModules: true,
   strict: true,
 };

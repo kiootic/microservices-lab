@@ -1,6 +1,6 @@
 import { Logger } from "../runtime/logger";
 import { Semaphore } from "../utils/async";
-import { ServiceModule } from "./service";
+import { Service, ServiceConstructor } from "./service";
 import { SystemContext } from "./system";
 
 export class Node {
@@ -8,7 +8,7 @@ export class Node {
   readonly service: string;
   readonly logger: Logger;
   private readonly sema: Semaphore;
-  private readonly instance: Record<string, unknown>;
+  private readonly instance: Service & Record<string | symbol, unknown>;
 
   get load(): number {
     return this.sema.active / this.sema.max;
@@ -22,17 +22,17 @@ export class Node {
     ctx: SystemContext,
     id: string,
     service: string,
-    module: ServiceModule,
+    Service: ServiceConstructor,
   ) {
     this.id = id;
     this.service = service;
     this.logger = ctx.runtime.logger.make(id);
     this.sema = new Semaphore(this.concurrency);
 
-    this.instance = module.instance({
+    this.instance = new Service({
       nodeID: id,
       logger: this.logger,
-    });
+    }) as Service & Record<string | symbol, unknown>;
   }
 
   invoke(fnName: string, args: unknown[]): Promise<unknown> {

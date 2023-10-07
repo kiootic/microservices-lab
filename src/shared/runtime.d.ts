@@ -18,6 +18,10 @@ function delay(ms: number): Promise<void>;
 
 const expect: import("@vitest/expect").ExpectStatic;
 
+function Service<Name extends string>(
+  name: Name,
+): Runtime.ServiceConstructor<Name>;
+
 interface SystemServices {}
 const services: SystemServices;
 
@@ -41,33 +45,34 @@ namespace Runtime {
 }
 
 namespace Runtime {
-  type ServiceTypeMap<T> = {
-    [K in keyof T]: T[K] extends (...args: infer Args) => infer Ret
-      ? Ret extends PromiseLike<infer V>
-        ? (...args: Args) => Promise<V>
-        : (...args: Args) => Promise<Ret>
-      : never;
-  };
+  abstract class Service {
+    static readonly __name: string;
 
-  export type ServicesType<
-    T extends Record<string, PromiseLike<ServiceModule>>,
-  > = {
-    [K in keyof T]: ServiceTypeMap<ReturnType<Awaited<T[K]>["instance"]>>;
-  };
+    readonly nodeID: string;
+    readonly logger: Logger;
 
-  interface ServiceContext {
-    nodeID: string;
-    logger: Logger;
+    constructor(ctx: unknown);
   }
 
-  interface ServiceModule {
-    instance: (ctx: ServiceContext) => Record<string, unknown>;
+  interface ServiceConstructor<Name extends string = string> {
+    readonly __name: Name;
+    new (ctx: unknown): Service;
   }
 
-  export function defineServices<
-    T extends Record<string, Promise<ServiceModule>>,
-  >(services: T): T;
-  export function setupSystem(): Promise<void>;
+  type ServiceFunctions<T extends Service> = {
+    [K in keyof Omit<T, keyof Service>]: T[K] extends (
+      ...args: infer Args
+    ) => infer Ret
+      ? (...args: Args) => Promise<Awaited<Ret>>
+      : T[K];
+  };
+  export type ServiceType<T extends ServiceConstructor> = {
+    [K in T["__name"]]: ServiceFunctions<InstanceType<T>>;
+  };
+
+  export function defineService<T extends ServiceConstructor>(service: T): void;
+
+  export function setupSystem(): void;
 }
 
 namespace Runtime {
@@ -92,4 +97,4 @@ namespace Runtime {
 
 // MARKER: exports
 
-export { console, logger, delay, expect, services, random, Runtime };
+export { console, logger, delay, expect, Service, services, random, Runtime };

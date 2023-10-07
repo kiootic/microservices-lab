@@ -11,7 +11,7 @@ export class VirtualNetwork {
   }
 
   invoke(service: string, fn: string, args: unknown[]): Promise<unknown> {
-    const lb = this.ctx.services.get(service);
+    const lb = this.ctx.loadBalancers.get(service);
     if (lb == null) {
       throw new ServiceUnavailableError(service);
     }
