@@ -54,10 +54,15 @@ export function makeJournal() {
   return createStore<JournalValue>()((set) => {
     const sessionID = crypto.randomUUID();
 
-    const updateTimestamp = (key: string, timestamp: string) => {
+    const loadTimestamps = () => {
       const rawTimestamps = localStorage.getItem(keyTimestamps);
       const timestamps =
         rawTimestamps != null ? parseTimestamps(rawTimestamps) : {};
+      return timestamps;
+    };
+
+    const updateTimestamp = (key: string, timestamp: string) => {
+      const timestamps = loadTimestamps();
       timestamps[key] = timestamp;
       localStorage.setItem(keyTimestamps, JSON.stringify(timestamps));
     };
@@ -67,7 +72,7 @@ export function makeJournal() {
       const sessionJournal: JournalEntryHandle[] = [];
       const namedJournal: JournalEntryHandle[] = [];
 
-      const timestamps = parseTimestamps(localStorage.getItem(keyTimestamps));
+      const timestamps = loadTimestamps();
       keys.sort((a, b) =>
         (timestamps[a] ?? a).localeCompare(timestamps[b] ?? b),
       );
@@ -114,9 +119,7 @@ export function makeJournal() {
       }
       const toBeRemoved = sessionJournal.slice(0, -maxSessionJournalEntry);
 
-      const rawTimestamps = localStorage.getItem(keyTimestamps);
-      const timestamps =
-        rawTimestamps != null ? parseTimestamps(rawTimestamps) : {};
+      const timestamps = loadTimestamps();
       for (const entry of toBeRemoved) {
         const key = makeStorageKey(entry);
         localStorage.removeItem(key);
@@ -171,9 +174,7 @@ export function makeJournal() {
         });
       },
       delete: (handle) => {
-        const rawTimestamps = localStorage.getItem(keyTimestamps);
-        const timestamps =
-          rawTimestamps != null ? parseTimestamps(rawTimestamps) : {};
+        const timestamps = loadTimestamps();
 
         const key = makeStorageKey(handle);
         localStorage.removeItem(key);
