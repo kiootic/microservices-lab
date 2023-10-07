@@ -47,6 +47,12 @@ export async function makeBundle(
   try {
     await init$;
 
+    const entryPoint = "/index.ts";
+    if (!modules.has(entryPoint)) {
+      modules = new Map(modules);
+      modules.set(entryPoint, "");
+    }
+
     const loader: Plugin = {
       name: "loader",
       setup(build) {
@@ -97,7 +103,7 @@ export async function makeBundle(
     let ctx: BuildContext | undefined;
     try {
       ctx = await context({
-        entryPoints: ["/index.ts"],
+        entryPoints: [entryPoint],
         bundle: true,
         write: false,
         sourcemap: "inline",
