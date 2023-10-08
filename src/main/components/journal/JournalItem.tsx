@@ -43,13 +43,11 @@ export const JournalItem: React.FC<JournalItemProps> = (props) => {
       textValue={text}
       className={cn(
         styles["item"],
-        handle.type === "session" && styles["item--session"],
-        handle.type === "named" && styles["item--named"],
         "cursor-pointer ra-hover:bg-gray-200",
         "outline-none ring-inset ra-focus-visible:ring-1 ra-focus-visible:bg-gray-100",
       )}
     >
-      <span className="flex-1 min-w-0 flex justify-between px-4 py-2 gap-x-2">
+      <span className="flex-1 min-w-0 flex justify-between pl-4 py-2 gap-x-2">
         <span
           className={cn(
             "flex-1 truncate",

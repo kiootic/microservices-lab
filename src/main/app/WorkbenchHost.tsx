@@ -3,18 +3,23 @@ import { Journal, JournalEntryHandle } from "../model/journal";
 import { Workspace } from "../model/workspace";
 import { Workbench } from "../workbench/Workbench";
 import { useWorkbench } from "../workbench/useWorkbench";
+import { Scenario } from "../model/scenarios";
 
 interface WorkbenchHostProps {
   workspace: Workspace;
   journal: Journal;
 
   loadJournal: (handle: JournalEntryHandle) => void;
+  loadScenario: (scenario: Scenario) => void;
 }
 
 export const WorkbenchHost: React.FC<WorkbenchHostProps> = (props) => {
-  const { workspace, journal, loadJournal } = props;
+  const { workspace, journal, loadJournal, loadScenario } = props;
 
-  const controller = useWorkbench(workspace, journal, { loadJournal });
+  const controller = useWorkbench(workspace, journal, {
+    loadJournal,
+    loadScenario,
+  });
 
   useEffect(() => {
     let timeoutHandle: number | null = null;

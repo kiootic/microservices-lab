@@ -4,6 +4,7 @@ import { EventBus, createEventBus } from "../hooks/event-bus";
 import { SessionController } from "../model/session";
 import { Workspace } from "../model/workspace";
 import { Journal, JournalEntryHandle } from "../model/journal";
+import { Scenario } from "../model/scenarios";
 
 export type WorkbenchUIEvent = {
   kind: "save";
@@ -42,10 +43,12 @@ export interface WorkbenchController {
   state: StoreApi<WorkbenchUIState>;
 
   loadJournal?: (handle: JournalEntryHandle) => void;
+  loadScenario?: (scenario: Scenario) => void;
 }
 
 interface WorkbenchControllerParams {
   loadJournal?: (handle: JournalEntryHandle) => void;
+  loadScenario?: (scenario: Scenario) => void;
 }
 
 export function useWorkbench(

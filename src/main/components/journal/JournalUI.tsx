@@ -1,41 +1,62 @@
 import cn from "clsx";
-import React, { useLayoutEffect, useState } from "react";
-import { GridList } from "react-aria-components";
+import React, { useLayoutEffect, useMemo, useState } from "react";
+import { GridList, Item } from "react-aria-components";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useStore } from "zustand";
 import { useEventCallback } from "../../hooks/event-callback";
 import { Journal, JournalEntryHandle } from "../../model/journal";
 import { Workspace } from "../../model/workspace";
+import { AppButton } from "../AppButton";
+import { AppDialog } from "../Dialog";
 import { JournalItem } from "./JournalItem";
 import { JournalToolbar } from "./JournalToolbar";
-import { AppDialog } from "../Dialog";
-import { AppButton } from "../AppButton";
+import "../../model/scenarios";
+import { Scenario, scenarios } from "../../model/scenarios";
+import { ScenarioItem } from "./ScenarioItem";
 
 interface JournalUIProps {
   className?: string;
   journal: Journal;
   workspace: Workspace;
   loadJournal?: (handle: JournalEntryHandle) => void;
+  loadScenario?: (scenario: Scenario) => void;
 }
 
 export const JournalUI: React.FC<JournalUIProps> = (props) => {
-  const { className, journal, workspace, loadJournal } = props;
+  const { className, journal, workspace, loadJournal, loadScenario } = props;
   const intl = useIntl();
 
   const sessionJournal = useStore(journal, (j) => j.sessionJournal);
   const namedJournal = useStore(journal, (j) => j.namedJournal);
 
   const handleOnAction = useEventCallback((key: React.Key) => {
-    let handle: JournalEntryHandle | undefined;
-
-    if (typeof key === "string") {
-      const [type, id] = key.split(":");
-      const journal = type === "session" ? sessionJournal : namedJournal;
-      handle = journal.find((h) => h.id === id);
+    if (typeof key !== "string") {
+      return;
     }
 
-    if (handle != null) {
-      loadJournal?.(handle);
+    const [type, id] = key.split(":");
+    switch (type) {
+      case "session": {
+        const handle = sessionJournal.find((h) => h.id === id);
+        if (handle != null) {
+          loadJournal?.(handle);
+        }
+        break;
+      }
+      case "named": {
+        const handle = namedJournal.find((h) => h.id === id);
+        if (handle != null) {
+          loadJournal?.(handle);
+        }
+        break;
+      }
+      case "scenario": {
+        const scenario = scenarios.find((s) => s.key === id);
+        if (scenario != null) {
+          loadScenario?.(scenario);
+        }
+        break;
+      }
     }
   });
 
@@ -50,10 +71,15 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
     setEntryToBeDelete(null);
   });
 
+  const disabledKeys = useMemo(
+    () => ["saves-header", "separator", "scenario-header"],
+    [],
+  );
+
   return (
     <div className={cn("flex flex-col", className)}>
       <JournalToolbar
-        className="flex-none mb-4"
+        className="flex-none"
         journal={journal}
         workspace={workspace}
       />
@@ -63,8 +89,21 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
             id: "views.journal.title",
             defaultMessage: "Journal",
           })}
+          disabledKeys={disabledKeys}
           onAction={handleOnAction}
         >
+          {sessionJournal.length > 0 || namedJournal.length > 0 ? (
+            <Item
+              id="saves-header"
+              className="px-2.5 py-3 text-sm tracking-wide font-medium text-gray-500 uppercase"
+            >
+              {intl.formatMessage({
+                id: "views.journal.section.saves",
+                defaultMessage: "Saves",
+              })}
+            </Item>
+          ) : null}
+
           {sessionJournal
             .slice()
             .reverse()
@@ -76,6 +115,11 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
                 onDelete={handleOnDelete}
               />
             ))}
+
+          {sessionJournal.length > 0 && namedJournal.length > 0 ? (
+            <Item id="separator" textValue=" " className="my-2 mx-4 border-t" />
+          ) : null}
+
           {namedJournal.map((handle, i) => (
             <JournalItem
               key={handle.id}
@@ -83,6 +127,24 @@ export const JournalUI: React.FC<JournalUIProps> = (props) => {
               ordinal={i + 1}
               onDelete={handleOnDelete}
             />
+          ))}
+
+          <Item
+            id="scenario-header"
+            className={cn(
+              "px-2.5 py-3 text-sm tracking-wide font-medium text-gray-500 uppercase",
+              (sessionJournal.length > 0 || namedJournal.length > 0) &&
+                "mt-2 border-t-8 border-gray-100",
+            )}
+          >
+            {intl.formatMessage({
+              id: "views.journal.section.scenarios",
+              defaultMessage: "Scenarios",
+            })}
+          </Item>
+
+          {scenarios.map((scenario) => (
+            <ScenarioItem key={scenario.key} scenario={scenario} />
           ))}
         </GridList>
       </div>

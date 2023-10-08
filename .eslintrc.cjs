@@ -22,6 +22,7 @@ module.exports = {
       "./tsconfig.web.json",
       "./tsconfig.sandbox.json",
       "./tsconfig.node.json",
+      "./tsconfig.scenarios.json",
     ],
     tsconfigRootDir: __dirname,
   },

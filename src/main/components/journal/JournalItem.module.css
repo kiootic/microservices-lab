@@ -2,10 +2,6 @@
   @apply flex;
 }
 
-.item--session + .item--named {
-  @apply border-t-8 border-gray-100;
-}
-
 @media (hover: hover) {
   .delete-button {
     opacity: 0;
