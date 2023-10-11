@@ -53,6 +53,21 @@ export interface LogQueryPage {
   logs: LogEntry[];
 }
 
+export type MetricsTimeSeriesType = "counter" | "gauge" | "histogram";
+
+export interface MetricsTimeSeriesMeta {
+  name: string;
+  labels: Partial<Record<string, string>>;
+  type: MetricsTimeSeriesType;
+}
+
+export interface MetricsPartitionState {
+  sequence: number;
+  size: number;
+  samples: Float32Array;
+  series: Map<number, MetricsTimeSeriesMeta>;
+}
+
 export type WorkerLogContextValue =
   | string
   | {

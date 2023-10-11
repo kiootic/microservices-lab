@@ -6,6 +6,7 @@ import { Semaphore } from "../utils/async";
 import { random } from "../utils/random";
 import { Host } from "./host";
 import { LoggerFactory, formatConsoleLog } from "./logger";
+import { MetricsManager } from "./metrics";
 import { Scheduler } from "./scheduler";
 import { Suite, expect } from "./test";
 
@@ -38,6 +39,7 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
       error: (...args) => formatConsoleLog(console.error, args),
     },
     logger: runtime.logger.make.bind(runtime.logger),
+    metrics: runtime.metrics.factory,
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
 
     expect,
@@ -66,6 +68,7 @@ export class Runtime {
 
   readonly scheduler: Scheduler;
   readonly logger: LoggerFactory;
+  readonly metrics: MetricsManager;
 
   readonly globals: typeof RuntimeGlobals;
 
@@ -73,7 +76,12 @@ export class Runtime {
     this.host = host;
     this.scheduler = new Scheduler();
     this.logger = new LoggerFactory(host, this.scheduler);
+    this.metrics = new MetricsManager(host, this.scheduler);
 
     this.globals = makeGlobals(this);
+  }
+
+  dispose() {
+    this.metrics.dispose();
   }
 }

@@ -1,5 +1,10 @@
 import * as Comlink from "comlink";
-import { WorkerAPI, WorkerHostAPI, WorkerLogEntry } from "../../shared/comm";
+import {
+  MetricsPartitionState,
+  WorkerAPI,
+  WorkerHostAPI,
+  WorkerLogEntry,
+} from "../../shared/comm";
 import { execute } from "./executor/executor";
 import { Host, HostLogEntry } from "./runtime/host";
 import { Runtime } from "./runtime/runtime";
@@ -22,6 +27,10 @@ class WorkerHost implements Host {
     if (this.logBuffer.length >= logBufferSize) {
       void this.flushLogs();
     }
+  }
+
+  writePartition(state: MetricsPartitionState): void {
+    console.log(state);
   }
 
   async dispose() {
@@ -48,10 +57,12 @@ class Worker implements WorkerAPI {
     scriptURL: string,
   ): Promise<void> {
     const workerHost = new WorkerHost(host);
+    let runtime: Runtime | undefined;
     try {
-      const runtime = new Runtime(workerHost);
+      runtime = new Runtime(workerHost);
       await execute(scriptURL, runtime);
     } finally {
+      runtime?.dispose();
       await workerHost.dispose();
     }
   }

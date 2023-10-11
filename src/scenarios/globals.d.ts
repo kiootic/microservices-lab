@@ -5,6 +5,7 @@ import console = __rt.console;
 import delay = __rt.delay;
 import expect = __rt.expect;
 import logger = __rt.logger;
+import metrics = __rt.metrics;
 import random = __rt.random;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -5,14 +5,9 @@ const console: {
   error: (...args: unknown[]) => void;
 };
 
-interface Logger {
-  debug: (message: string, context?: Record<string, unknown>) => void;
-  info: (message: string, context?: Record<string, unknown>) => void;
-  warn: (message: string, context?: Record<string, unknown>) => void;
-  error: (message: string, context?: Record<string, unknown>) => void;
-}
+function logger(name: string): Runtime.Logger;
 
-function logger(name: string): Logger;
+const metrics: Runtime.MetricFactory;
 
 function delay(ms: number): Promise<void>;
 
@@ -95,6 +90,60 @@ namespace Runtime {
   }
 }
 
+namespace Runtime {
+  export interface Logger {
+    debug: (message: string, context?: Record<string, unknown>) => void;
+    info: (message: string, context?: Record<string, unknown>) => void;
+    warn: (message: string, context?: Record<string, unknown>) => void;
+    error: (message: string, context?: Record<string, unknown>) => void;
+  }
+
+  export type MetricsLabel = Record<string, string>;
+
+  export interface MetricVec<T> {
+    get(labelValue: string): T;
+  }
+
+  export interface MetricCounter {
+    withLabels(labels: MetricsLabel): this;
+    vec(labelName: string): MetricVec<MetricCounter>;
+    add(increase: number): void;
+    increment(): void;
+  }
+
+  export interface MetricGauge {
+    withLabels(labels: MetricsLabel): this;
+    vec(labelName: string): MetricVec<MetricGauge>;
+    set(value: number): void;
+    add(increase: number): void;
+    subtract(decrease: number): void;
+    increment(): void;
+    decrement(): void;
+  }
+
+  export interface MetricHistogram {
+    withLabels(labels: MetricsLabel): this;
+    vec(labelName: string): MetricVec<MetricHistogram>;
+    observe(value: number): void;
+  }
+
+  export interface MetricFactory {
+    counter(name: string, labels?: MetricsLabel): MetricCounter;
+    gauge(name: string, labels?: MetricsLabel): MetricGauge;
+    histogram(name: string, labels?: MetricsLabel): MetricHistogram;
+  }
+}
+
 // MARKER: exports
 
-export { console, logger, delay, expect, Service, services, random, Runtime };
+export {
+  console,
+  logger,
+  metrics,
+  delay,
+  expect,
+  Service,
+  services,
+  random,
+  Runtime,
+};
