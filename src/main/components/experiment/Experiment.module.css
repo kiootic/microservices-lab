@@ -1,0 +1,10 @@
+.section-header {
+  @apply px-2 py-1 text-xs uppercase font-medium tracking-wider text-gray-500;
+  @apply hidden;
+}
+
+@media screen and (min-height: 640px) {
+  .section-header {
+    display: block;
+  }
+}

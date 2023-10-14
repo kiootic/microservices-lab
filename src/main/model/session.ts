@@ -3,6 +3,7 @@ import { createStore } from "zustand";
 import { LogQuery, LogQueryPage, SessionAPI } from "../../shared/comm";
 import { setAsyncInternal } from "../utils/async-interval";
 import { Sandbox } from "./sandbox";
+import { shallow } from "zustand/shallow";
 
 async function withTimeout<T>(x: Promise<T>): Promise<T> {
   const token = Symbol();
@@ -99,10 +100,13 @@ class Session {
       return;
     }
 
+    const oldMetricNames = this.owner.state.getState().metricNames;
     this.setState({
       status: result.isCompleted ? "idle" : "running",
       logCount: result.logCount,
-      metricNames: result.metricNames,
+      metricNames: shallow(oldMetricNames, result.metricNames)
+        ? oldMetricNames
+        : result.metricNames,
     });
     if (result.isCompleted) {
       this.disposePoll?.();
