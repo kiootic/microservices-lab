@@ -8,9 +8,11 @@ import {
   LogQuery,
   LogQueryPage,
   WorkerLogEntry,
+  MetricsPartitionState,
 } from "../shared/comm";
 import { BuildError, makeBundle } from "./bundler";
 import { LogStore } from "./logs";
+import { MetricsStore } from "./metrics";
 
 class WorkerHost implements WorkerHostAPI {
   private readonly session: Session;
@@ -20,6 +22,10 @@ class WorkerHost implements WorkerHostAPI {
 
   postLogs(logs: WorkerLogEntry[]): void {
     this.session.logs.addWorkerBatch(logs);
+  }
+
+  postMetrics(partition: MetricsPartitionState): void {
+    this.session.metrics.add(partition);
   }
 }
 
@@ -33,6 +39,7 @@ export class Session implements SessionAPI {
 
   isCompleted = false;
   readonly logs = new LogStore();
+  readonly metrics = new MetricsStore();
 
   constructor(worker: Worker, modules: Map<string, string>) {
     let cancel!: () => void;
@@ -120,6 +127,7 @@ export class Session implements SessionAPI {
     return {
       isCompleted: this.isCompleted,
       logCount: this.logs.count,
+      metricNames: this.metrics.metricNames,
     };
   }
 

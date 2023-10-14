@@ -30,7 +30,7 @@ class WorkerHost implements Host {
   }
 
   writePartition(state: MetricsPartitionState): void {
-    console.log(state);
+    void this.host.postMetrics(state);
   }
 
   async dispose() {

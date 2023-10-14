@@ -8,6 +8,7 @@ export interface SandboxAPI {
 export interface SessionPollResult {
   isCompleted: boolean;
   logCount: number;
+  metricNames: string[];
 }
 
 export interface SessionAPI {
@@ -85,4 +86,5 @@ export interface WorkerLogEntry {
 
 export interface WorkerHostAPI {
   postLogs(logs: WorkerLogEntry[]): void;
+  postMetrics(partition: MetricsPartitionState): void;
 }

@@ -42,6 +42,7 @@ export interface SessionState {
   id: number;
   status: "idle" | "preparing" | "running" | "disconnected";
   logCount: number;
+  metricNames: string[];
 }
 
 class Session {
@@ -101,6 +102,7 @@ class Session {
     this.setState({
       status: result.isCompleted ? "idle" : "running",
       logCount: result.logCount,
+      metricNames: result.metricNames,
     });
     if (result.isCompleted) {
       this.disposePoll?.();
@@ -157,6 +159,7 @@ export class SessionController {
     id: 1,
     status: "idle",
     logCount: 0,
+    metricNames: [],
   }));
 
   private async startSession(modules: ReadonlyMap<string, string>) {
@@ -182,6 +185,7 @@ export class SessionController {
       id: s.id + 1,
       status: "preparing",
       logCount: 0,
+      metricNames: [],
     }));
     this.session$ = this.startSession(modules);
   }
