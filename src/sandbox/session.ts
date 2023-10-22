@@ -8,7 +8,9 @@ import {
   LogQuery,
   LogQueryPage,
   WorkerLogEntry,
-  MetricsPartitionState,
+  WorkerMetricsPartitionState,
+  MetricsTimeSeries,
+  MetricsTimeSeriesSamples,
 } from "../shared/comm";
 import { BuildError, makeBundle } from "./bundler";
 import { LogStore } from "./logs";
@@ -24,7 +26,7 @@ class WorkerHost implements WorkerHostAPI {
     this.session.logs.addWorkerBatch(logs);
   }
 
-  postMetrics(partition: MetricsPartitionState): void {
+  postMetrics(partition: WorkerMetricsPartitionState): void {
     this.session.metrics.add(partition);
   }
 }
@@ -128,7 +130,16 @@ export class Session implements SessionAPI {
       isCompleted: this.isCompleted,
       logCount: this.logs.count,
       metricNames: this.metrics.metricNames,
+      metricSampleCount: this.metrics.numSamples,
     };
+  }
+
+  getMetrics(name: string, max?: number): MetricsTimeSeries[] {
+    return this.metrics.getMetrics(name, max);
+  }
+
+  queryMetrics(ids: number[]): MetricsTimeSeriesSamples[] {
+    return this.metrics.queryMetrics(ids);
   }
 
   queryLogs(query: LogQuery): LogQueryPage {

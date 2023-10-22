@@ -7,6 +7,7 @@ import { useStore } from "zustand";
 import { LogEntry, LogQueryCursor, LogQueryPage } from "../../../shared/comm";
 import { useEventCallback } from "../../hooks/event-callback";
 import { withScrollAnchor } from "../../utils/scroll-anchor";
+import { formatTimestamp } from "../../utils/timestamp";
 import { IconButton } from "../IconButton";
 import { useExperimentContext } from "./context";
 
@@ -385,21 +386,3 @@ const LogRow = React.forwardRef<HTMLTableRowElement, LogRowProps>(
     );
   },
 );
-
-function formatTimestamp(timestamp: number) {
-  timestamp /= 1000;
-  const seconds = timestamp % 60;
-  const minutes = Math.floor(timestamp / 60) % 60;
-  const hours = Math.floor(timestamp / (60 * 60));
-
-  const result = [
-    seconds.toFixed(3).padStart(6, "0"),
-    minutes.toString().padStart(2, "0"),
-  ];
-
-  if (hours !== 0) {
-    result.push(hours.toString());
-  }
-
-  return result.reverse().join(":");
-}

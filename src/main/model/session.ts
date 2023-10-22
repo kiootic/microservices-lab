@@ -1,6 +1,12 @@
 import { ProxyMarked, Remote, releaseProxy } from "comlink";
 import { createStore } from "zustand";
-import { LogQuery, LogQueryPage, SessionAPI } from "../../shared/comm";
+import {
+  LogQuery,
+  LogQueryPage,
+  MetricsTimeSeries,
+  MetricsTimeSeriesSamples,
+  SessionAPI,
+} from "../../shared/comm";
 import { setAsyncInternal } from "../utils/async-interval";
 import { Sandbox } from "./sandbox";
 import { shallow } from "zustand/shallow";
@@ -44,6 +50,7 @@ export interface SessionState {
   status: "idle" | "preparing" | "running" | "disconnected";
   logCount: number;
   metricNames: string[];
+  metricSampleCount: number;
 }
 
 class Session {
@@ -107,11 +114,26 @@ class Session {
       metricNames: shallow(oldMetricNames, result.metricNames)
         ? oldMetricNames
         : result.metricNames,
+      metricSampleCount: result.metricSampleCount,
     });
     if (result.isCompleted) {
       this.disposePoll?.();
       this.disposePoll = null;
     }
+  }
+
+  async getMetrics(name: string, max?: number): Promise<MetricsTimeSeries[]> {
+    if (!(await this.checkAlive())) {
+      return [];
+    }
+    return await this.session.getMetrics(name, max);
+  }
+
+  async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {
+    if (!(await this.checkAlive())) {
+      return [];
+    }
+    return await this.session.queryMetrics(ids);
   }
 
   async queryLogs(query: LogQuery): Promise<LogQueryPage> {
@@ -164,6 +186,7 @@ export class SessionController {
     status: "idle",
     logCount: 0,
     metricNames: [],
+    metricSampleCount: 0,
   }));
 
   private async startSession(modules: ReadonlyMap<string, string>) {
@@ -190,8 +213,27 @@ export class SessionController {
       status: "preparing",
       logCount: 0,
       metricNames: [],
+      metricSampleCount: 0,
     }));
     this.session$ = this.startSession(modules);
+  }
+
+  async getMetrics(name: string, max?: number): Promise<MetricsTimeSeries[]> {
+    const session = await this.session$;
+    if (session == null) {
+      return [];
+    }
+
+    return session.getMetrics(name, max);
+  }
+
+  async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {
+    const session = await this.session$;
+    if (session == null) {
+      return [];
+    }
+
+    return session.queryMetrics(ids);
   }
 
   async queryLogs(query: LogQuery): Promise<LogQueryPage> {

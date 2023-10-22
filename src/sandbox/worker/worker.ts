@@ -1,6 +1,6 @@
 import * as Comlink from "comlink";
 import {
-  MetricsPartitionState,
+  WorkerMetricsPartitionState,
   WorkerAPI,
   WorkerHostAPI,
   WorkerLogEntry,
@@ -29,7 +29,7 @@ class WorkerHost implements Host {
     }
   }
 
-  writePartition(state: MetricsPartitionState): void {
+  writePartition(state: WorkerMetricsPartitionState): void {
     void this.host.postMetrics(state);
   }
 

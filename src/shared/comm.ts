@@ -9,11 +9,14 @@ export interface SessionPollResult {
   isCompleted: boolean;
   logCount: number;
   metricNames: string[];
+  metricSampleCount: number;
 }
 
 export interface SessionAPI {
   ping(): void;
   poll(): SessionPollResult;
+  getMetrics(name: string, max?: number): MetricsTimeSeries[];
+  queryMetrics(ids: number[]): MetricsTimeSeriesSamples[];
   queryLogs(query: LogQuery): LogQueryPage;
   cancel(): void;
   dispose(): void;
@@ -22,6 +25,26 @@ export interface SessionAPI {
 export interface WorkerAPI {
   prepare(bundleJS: string): string;
   run(host: WorkerHostAPI, scriptURL: string): Promise<void>;
+}
+
+export type MetricsTimeSeriesType = "counter" | "gauge" | "histogram";
+
+export interface MetricsTimeSeries {
+  id: number;
+  name: string;
+  labels: Partial<Record<string, string>>;
+  type: MetricsTimeSeriesType;
+
+  numSamples: number;
+  min: number;
+  max: number;
+  firstTimestamp: number;
+  lastTimestamp: number;
+}
+
+export interface MetricsTimeSeriesSamples {
+  timestamps: Float32Array;
+  values: Float32Array;
 }
 
 export interface LogEntry {
@@ -54,19 +77,17 @@ export interface LogQueryPage {
   logs: LogEntry[];
 }
 
-export type MetricsTimeSeriesType = "counter" | "gauge" | "histogram";
-
-export interface MetricsTimeSeriesMeta {
+export interface WorkerMetricsTimeSeriesMeta {
   name: string;
   labels: Partial<Record<string, string>>;
   type: MetricsTimeSeriesType;
 }
 
-export interface MetricsPartitionState {
+export interface WorkerMetricsPartitionState {
   sequence: number;
   size: number;
   samples: Float32Array;
-  series: Map<number, MetricsTimeSeriesMeta>;
+  series: Map<number, WorkerMetricsTimeSeriesMeta>;
 }
 
 export type WorkerLogContextValue =
@@ -86,5 +107,5 @@ export interface WorkerLogEntry {
 
 export interface WorkerHostAPI {
   postLogs(logs: WorkerLogEntry[]): void;
-  postMetrics(partition: MetricsPartitionState): void;
+  postMetrics(partition: WorkerMetricsPartitionState): void;
 }

@@ -1,4 +1,4 @@
-import { MetricsPartitionState } from "../../../shared/comm";
+import { WorkerMetricsPartitionState } from "../../../shared/comm";
 import { Partition } from "./partition";
 
 export type SeriesType = "counter" | "gauge" | "histogram";
@@ -12,7 +12,7 @@ interface SeriesMeta {
 
 export class MetricsStore {
   private readonly now: () => number;
-  private readonly flushPartition: (state: MetricsPartitionState) => void;
+  private readonly flushPartition: (state: WorkerMetricsPartitionState) => void;
 
   private readonly seriesID = new Map<string, number>();
   private readonly series = new Map<number, SeriesMeta>();
@@ -23,7 +23,7 @@ export class MetricsStore {
 
   constructor(
     now: () => number,
-    flushPartition: (state: MetricsPartitionState) => void,
+    flushPartition: (state: WorkerMetricsPartitionState) => void,
   ) {
     this.now = now;
     this.flushPartition = flushPartition;

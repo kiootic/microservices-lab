@@ -102,10 +102,10 @@ AppComboBox.useState = function useAppComboBoxState(
   });
 
   const handleOnInputChange = useEventCallback((value: string) => {
-    setState((s) => ({
+    setState({
       inputValue: value,
-      selectedKey: value === "" ? null : s.selectedKey,
-    }));
+      selectedKey: null,
+    });
   });
 
   return useMemo<AppComboBoxState>(

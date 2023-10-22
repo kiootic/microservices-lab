@@ -1,4 +1,4 @@
-import { MetricsPartitionState } from "../../../shared/comm";
+import { WorkerMetricsPartitionState } from "../../../shared/comm";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -19,5 +19,5 @@ export interface HostLogEntry {
 
 export interface Host {
   writeLog(entry: HostLogEntry): void;
-  writePartition(state: MetricsPartitionState): void;
+  writePartition(state: WorkerMetricsPartitionState): void;
 }
