@@ -21,14 +21,16 @@ export function formatTimestamp(
       return result.reverse().join(":");
     }
     case "compact": {
-      const result = [Math.round(seconds * 1000) / 1000 + "s"];
-      if (minutes !== 0) {
-        result.push(minutes.toString() + "m");
-      }
+      const result = [
+        Math.floor(seconds).toString().padStart(2, "0"),
+        minutes.toString().padStart(hours === 0 ? 0 : 2, "0"),
+      ];
+
       if (hours !== 0) {
-        result.push(hours.toString() + "h");
+        result.push(hours.toString());
       }
-      return result.reverse().join("");
+
+      return result.reverse().join(":");
     }
   }
 }
