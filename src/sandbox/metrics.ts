@@ -52,10 +52,22 @@ export class MetricsStore {
     this.process(partition.samples);
   }
 
-  getMetrics(name: string, max?: number): MetricsTimeSeries[] {
+  getMetrics(
+    name: string,
+    max?: number,
+    labels?: Partial<Record<string, string>>,
+  ): MetricsTimeSeries[] {
     return (this.seriesIDs.get(name) ?? [])
       .flatMap((id) => this.series.get(id) ?? [])
       .filter((series) => series.numSamples > 0)
+      .filter((series) => {
+        for (const [name, value] of Object.entries(labels ?? {})) {
+          if (series.labels[name] !== value) {
+            return false;
+          }
+        }
+        return true;
+      })
       .slice(0, max);
   }
 

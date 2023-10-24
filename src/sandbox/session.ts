@@ -134,8 +134,12 @@ export class Session implements SessionAPI {
     };
   }
 
-  getMetrics(name: string, max?: number): MetricsTimeSeries[] {
-    return this.metrics.getMetrics(name, max);
+  getMetrics(
+    name: string,
+    max?: number,
+    labels?: Partial<Record<string, string>>,
+  ): MetricsTimeSeries[] {
+    return this.metrics.getMetrics(name, max, labels);
   }
 
   queryMetrics(ids: number[]): MetricsTimeSeriesSamples[] {

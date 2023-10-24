@@ -122,11 +122,15 @@ class Session {
     }
   }
 
-  async getMetrics(name: string, max?: number): Promise<MetricsTimeSeries[]> {
+  async getMetrics(
+    name: string,
+    max?: number,
+    labels?: Partial<Record<string, string>>,
+  ): Promise<MetricsTimeSeries[]> {
     if (!(await this.checkAlive())) {
       return [];
     }
-    return await this.session.getMetrics(name, max);
+    return await this.session.getMetrics(name, max, labels);
   }
 
   async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {
@@ -218,13 +222,17 @@ export class SessionController {
     this.session$ = this.startSession(modules);
   }
 
-  async getMetrics(name: string, max?: number): Promise<MetricsTimeSeries[]> {
+  async getMetrics(
+    name: string,
+    max?: number,
+    labels?: Partial<Record<string, string>>,
+  ): Promise<MetricsTimeSeries[]> {
     const session = await this.session$;
     if (session == null) {
       return [];
     }
 
-    return session.getMetrics(name, max);
+    return session.getMetrics(name, max, labels);
   }
 
   async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {

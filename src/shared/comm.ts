@@ -15,7 +15,11 @@ export interface SessionPollResult {
 export interface SessionAPI {
   ping(): void;
   poll(): SessionPollResult;
-  getMetrics(name: string, max?: number): MetricsTimeSeries[];
+  getMetrics(
+    name: string,
+    max?: number,
+    labels?: Partial<Record<string, string>>,
+  ): MetricsTimeSeries[];
   queryMetrics(ids: number[]): MetricsTimeSeriesSamples[];
   queryLogs(query: LogQuery): LogQueryPage;
   cancel(): void;

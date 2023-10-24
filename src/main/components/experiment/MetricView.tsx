@@ -10,6 +10,7 @@ import {
   MetricsTimeSeriesSamples,
 } from "../../../shared/comm";
 import { useDebouncedValue } from "../../hooks/debounce";
+import { parseSeries } from "../../utils/series";
 
 const maxSeries = 10;
 
@@ -43,11 +44,11 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
   const [data, setData] = useState<SeriesData>({ series: [], samples: [] });
 
   useEffect(() => {
+    const series = parseSeries(metricName);
+
     let isDisposed = false;
     void session
-      .getMetrics(metricName)
-
-      .then((series) => series.slice(0, maxSeries))
+      .getMetrics(series.name, maxSeries, series.labels)
       .then((series) => {
         if (isDisposed) {
           return;
