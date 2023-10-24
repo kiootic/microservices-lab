@@ -74,6 +74,8 @@ namespace Runtime {
   export interface Random {
     uniform(): number;
     normal(): number;
+    exponential(): number;
+    erlang(k: number): number;
     choice<T>(list: T[]): T | null;
   }
 

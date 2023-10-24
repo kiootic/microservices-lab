@@ -68,11 +68,17 @@ function randomNormal(): number {
 }
 
 function randomExponential() {
-  let x = randomUniform();
-  if (x <= 0) {
-    x = 1;
-  }
+  const x = 1 - randomUniform();
   return -Math.log(x);
+}
+
+function randomErlang(k: number) {
+  let u = 1;
+  for (let i = 0; i < k; i++) {
+    const x = 1 - randomUniform();
+    u *= x;
+  }
+  return -Math.log(u);
 }
 
 function randomChoice<T>(list: T[]): T | null {
@@ -87,5 +93,6 @@ export const random = {
   uniform: randomUniform,
   normal: randomNormal,
   exponential: randomExponential,
+  erlang: randomErlang,
   choice: randomChoice,
 };
