@@ -22,7 +22,7 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
   const { className } = props;
   const intl = useIntl();
 
-  const { session } = useExperimentContext();
+  const { session, state } = useExperimentContext();
   const metricNames = useStore(session.state, (s) => s.metricNames);
   const metricSampleCount = useStore(session.state, (s) => s.metricSampleCount);
   const items = useMemo(
@@ -30,12 +30,18 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
     [metricNames],
   );
 
-  const metricState = AppComboBox.useState(items);
+  const metricState = AppComboBox.useState(items, {
+    inputValue: state.getState().metricQuery,
+    selectedKey: state.getState().metricQuery,
+  });
 
   const metricName = useDebouncedValue(
     metricState.inputValue,
     metricState.selectedKey == null ? 200 : 0,
   );
+  useEffect(() => {
+    state.setState({ metricQuery: metricName });
+  }, [state, metricName]);
 
   interface SeriesData {
     series: MetricsTimeSeries[];
@@ -82,9 +88,9 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
   }, [session, data.series]);
 
   return (
-    <div className={cn("p-3", className)}>
+    <div className={cn("p-3 flex flex-col", className)}>
       <AppComboBox
-        className="font-mono mb-4"
+        className="flex-none font-mono mb-4"
         popoverClassName="font-mono text-sm"
         aria-label={intl.formatMessage({
           id: "views.experiment.metrics.metricName",
@@ -99,7 +105,7 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
         items={items}
       />
       <MetricGraph
-        className="h-72"
+        className="flex-grow h-32"
         series={data.series}
         samples={data.samples}
       />

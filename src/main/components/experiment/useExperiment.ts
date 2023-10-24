@@ -9,6 +9,7 @@ export type ExperimentUIEvent = never;
 export interface ExperimentUIState {
   showDebugLogs: boolean;
   logSearch: string;
+  metricQuery: string;
 }
 
 export interface ExperimentController {
@@ -35,7 +36,12 @@ export function useExperiment(
   const [events] = useState(() => createEventBus<ExperimentUIEvent>());
   const [state] = useState(() =>
     createStore<ExperimentUIState>(
-      () => persistedState ?? { showDebugLogs: false, logSearch: "" },
+      () =>
+        persistedState ?? {
+          showDebugLogs: false,
+          logSearch: "",
+          metricQuery: "",
+        },
     ),
   );
 
