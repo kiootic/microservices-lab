@@ -141,6 +141,7 @@ export class Scheduler {
     this.setTimeout(() => {
       flushMicrotasks();
       this.nextID = 0;
+      this.time = 0;
       this.heap.clear();
       this.timers.clear();
       internals.resolve(promise, undefined);

@@ -16,15 +16,18 @@ const maxSeries = 10;
 
 interface MetricViewProps {
   className?: string;
+  ownerKey: string;
 }
 
 export const MetricView: React.FC<MetricViewProps> = (props) => {
-  const { className } = props;
+  const { className, ownerKey } = props;
   const intl = useIntl();
 
   const { session, state } = useExperimentContext();
-  const metricNames = useStore(session.state, (s) => s.metricNames);
   const metricSampleCount = useStore(session.state, (s) => s.metricSampleCount);
+
+  const [metricNames, setMetricNames] = useState<string[]>([]);
+
   const items = useMemo(
     () => metricNames.map((name) => ({ key: name })),
     [metricNames],
@@ -50,11 +53,24 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
   const [data, setData] = useState<SeriesData>({ series: [], samples: [] });
 
   useEffect(() => {
+    let isDisposed = false;
+    void session.getMetricNames(ownerKey).then((metricNames) => {
+      if (isDisposed) {
+        return;
+      }
+      setMetricNames(metricNames);
+    });
+    return () => {
+      isDisposed = true;
+    };
+  }, [session, ownerKey, metricSampleCount]);
+
+  useEffect(() => {
     const series = parseSeries(metricName);
 
     let isDisposed = false;
     void session
-      .getMetrics(series.name, maxSeries, series.labels)
+      .getMetrics(ownerKey, series.name, maxSeries, series.labels)
       .then((series) => {
         if (isDisposed) {
           return;
@@ -72,20 +88,25 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
     return () => {
       isDisposed = true;
     };
-  }, [session, metricName, metricSampleCount]);
+  }, [ownerKey, session, metricName, metricSampleCount]);
 
   useEffect(() => {
     let isDisposed = false;
-    void session.queryMetrics(data.series.map((s) => s.id)).then((samples) => {
-      if (isDisposed) {
-        return;
-      }
-      setData((d) => ({ series: d.series, samples }));
-    });
+    void session
+      .queryMetrics(
+        ownerKey,
+        data.series.map((s) => s.id),
+      )
+      .then((samples) => {
+        if (isDisposed) {
+          return;
+        }
+        setData((d) => ({ series: d.series, samples }));
+      });
     return () => {
       isDisposed = true;
     };
-  }, [session, data.series]);
+  }, [session, ownerKey, data.series]);
 
   return (
     <div className={cn("p-3 flex flex-col", className)}>

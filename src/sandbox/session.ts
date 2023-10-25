@@ -129,21 +129,26 @@ export class Session implements SessionAPI {
     return {
       isCompleted: this.isCompleted,
       logCount: this.logs.count,
-      metricNames: this.metrics.metricNames,
+      metricOwnerKeys: this.metrics.getOwnerKeys(),
       metricSampleCount: this.metrics.numSamples,
     };
   }
 
+  getMetricNames(ownerKey: string): string[] {
+    return this.metrics.getMetricNames(ownerKey);
+  }
+
   getMetrics(
+    ownerKey: string,
     name: string,
     max?: number,
     labels?: Partial<Record<string, string>>,
   ): MetricsTimeSeries[] {
-    return this.metrics.getMetrics(name, max, labels);
+    return this.metrics.getMetrics(ownerKey, name, max, labels);
   }
 
-  queryMetrics(ids: number[]): MetricsTimeSeriesSamples[] {
-    return this.metrics.queryMetrics(ids);
+  queryMetrics(ownerKey: string, ids: number[]): MetricsTimeSeriesSamples[] {
+    return this.metrics.queryMetrics(ownerKey, ids);
   }
 
   queryLogs(query: LogQuery): LogQueryPage {

@@ -5,7 +5,7 @@ import { Scheduler } from "./scheduler";
 
 export class MetricsManager {
   private readonly host: Host;
-  private readonly store: MetricsStore;
+  readonly store: MetricsStore;
 
   readonly factory = {
     counter: (name: string, labels: SeriesLabels = {}) =>

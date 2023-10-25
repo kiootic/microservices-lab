@@ -9,8 +9,9 @@ import {
   ComboBox,
   ComboBoxProps,
 } from "react-aria-components";
-import styles from "./AppComboxBox.module.css";
 import { useEventCallback } from "../hooks/event-callback";
+
+import styles from "./AppComboBox.module.css";
 
 export interface ComboBoxItem {
   key: string;
@@ -28,16 +29,9 @@ export function AppComboBox(props: AppComboBoxProps) {
   const { className, popoverClassName, items, ...rest } = props;
 
   return (
-    <ComboBox
-      className={cn(
-        styles["root"],
-        "flex border-b-2 ra-focus:border-primary-400",
-        className,
-      )}
-      {...rest}
-    >
+    <ComboBox className={cn(styles["root"], className)} {...rest}>
       <Input
-        className={cn("flex-1 bg-transparent pl-2 py-1", "outline-none")}
+        className={cn("flex-1 bg-transparent px-2 py-1", "outline-none")}
       />
       <Button
         className={cn(

@@ -49,7 +49,7 @@ export interface SessionState {
   id: number;
   status: "idle" | "preparing" | "running" | "disconnected";
   logCount: number;
-  metricNames: string[];
+  metricOwnerKeys: string[];
   metricSampleCount: number;
 }
 
@@ -107,13 +107,13 @@ class Session {
       return;
     }
 
-    const oldMetricNames = this.owner.state.getState().metricNames;
+    const oldOwnerKeys = this.owner.state.getState().metricOwnerKeys;
     this.setState({
       status: result.isCompleted ? "idle" : "running",
       logCount: result.logCount,
-      metricNames: shallow(oldMetricNames, result.metricNames)
-        ? oldMetricNames
-        : result.metricNames,
+      metricOwnerKeys: shallow(oldOwnerKeys, result.metricOwnerKeys)
+        ? oldOwnerKeys
+        : result.metricOwnerKeys,
       metricSampleCount: result.metricSampleCount,
     });
     if (result.isCompleted) {
@@ -122,7 +122,15 @@ class Session {
     }
   }
 
+  async getMetricNames(ownerKey: string): Promise<string[]> {
+    if (!(await this.checkAlive())) {
+      return [];
+    }
+    return await this.session.getMetricNames(ownerKey);
+  }
+
   async getMetrics(
+    ownerKey: string,
     name: string,
     max?: number,
     labels?: Partial<Record<string, string>>,
@@ -130,14 +138,17 @@ class Session {
     if (!(await this.checkAlive())) {
       return [];
     }
-    return await this.session.getMetrics(name, max, labels);
+    return await this.session.getMetrics(ownerKey, name, max, labels);
   }
 
-  async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {
+  async queryMetrics(
+    ownerKey: string,
+    ids: number[],
+  ): Promise<MetricsTimeSeriesSamples[]> {
     if (!(await this.checkAlive())) {
       return [];
     }
-    return await this.session.queryMetrics(ids);
+    return await this.session.queryMetrics(ownerKey, ids);
   }
 
   async queryLogs(query: LogQuery): Promise<LogQueryPage> {
@@ -189,7 +200,7 @@ export class SessionController {
     id: 1,
     status: "idle",
     logCount: 0,
-    metricNames: [],
+    metricOwnerKeys: [],
     metricSampleCount: 0,
   }));
 
@@ -216,13 +227,23 @@ export class SessionController {
       id: s.id + 1,
       status: "preparing",
       logCount: 0,
-      metricNames: [],
+      metricOwnerKeys: [],
       metricSampleCount: 0,
     }));
     this.session$ = this.startSession(modules);
   }
 
+  async getMetricNames(ownerKey: string): Promise<string[]> {
+    const session = await this.session$;
+    if (session == null) {
+      return [];
+    }
+
+    return session.getMetricNames(ownerKey);
+  }
+
   async getMetrics(
+    ownerKey: string,
     name: string,
     max?: number,
     labels?: Partial<Record<string, string>>,
@@ -232,16 +253,19 @@ export class SessionController {
       return [];
     }
 
-    return session.getMetrics(name, max, labels);
+    return session.getMetrics(ownerKey, name, max, labels);
   }
 
-  async queryMetrics(ids: number[]): Promise<MetricsTimeSeriesSamples[]> {
+  async queryMetrics(
+    ownerKey: string,
+    ids: number[],
+  ): Promise<MetricsTimeSeriesSamples[]> {
     const session = await this.session$;
     if (session == null) {
       return [];
     }
 
-    return session.queryMetrics(ids);
+    return session.queryMetrics(ownerKey, ids);
   }
 
   async queryLogs(query: LogQuery): Promise<LogQueryPage> {

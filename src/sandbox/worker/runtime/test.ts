@@ -100,6 +100,8 @@ export class Suite {
       });
       count++;
 
+      this.runtime.metrics.store.setOwnerKey(test.name);
+
       for (const fn of this.setupFns) {
         await fn();
       }

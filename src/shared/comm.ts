@@ -8,19 +8,21 @@ export interface SandboxAPI {
 export interface SessionPollResult {
   isCompleted: boolean;
   logCount: number;
-  metricNames: string[];
+  metricOwnerKeys: string[];
   metricSampleCount: number;
 }
 
 export interface SessionAPI {
   ping(): void;
   poll(): SessionPollResult;
+  getMetricNames(ownerKey: string): string[];
   getMetrics(
+    ownerKey: string,
     name: string,
     max?: number,
     labels?: Partial<Record<string, string>>,
   ): MetricsTimeSeries[];
-  queryMetrics(ids: number[]): MetricsTimeSeriesSamples[];
+  queryMetrics(ownerKey: string, ids: number[]): MetricsTimeSeriesSamples[];
   queryLogs(query: LogQuery): LogQueryPage;
   cancel(): void;
   dispose(): void;
@@ -88,6 +90,7 @@ export interface WorkerMetricsTimeSeriesMeta {
 }
 
 export interface WorkerMetricsPartitionState {
+  ownerKey: string;
   sequence: number;
   size: number;
   samples: Float32Array;

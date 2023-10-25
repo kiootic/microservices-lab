@@ -1,3 +1,7 @@
+.root {
+  @apply flex border-b-2 ra-focus:border-primary-400;
+}
+
 @media (hover: hover) {
   .button {
     opacity: 0;

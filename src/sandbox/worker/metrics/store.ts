@@ -21,6 +21,8 @@ export class MetricsStore {
   private partitionSequence = 0;
   private numSamples = 0;
 
+  private ownerKey = "";
+
   constructor(
     now: () => number,
     flushPartition: (state: WorkerMetricsPartitionState) => void,
@@ -31,6 +33,11 @@ export class MetricsStore {
 
   get timestamp(): number {
     return this.now();
+  }
+
+  setOwnerKey(key: string) {
+    this.flush();
+    this.ownerKey = key;
   }
 
   addSeries(
@@ -78,6 +85,7 @@ export class MetricsStore {
     }
 
     this.flushPartition({
+      ownerKey: this.ownerKey,
       sequence: this.partitionSequence,
       size: this.partition.count,
       samples: this.partition.getSamples(),
