@@ -16,6 +16,11 @@ export class MetricsStore {
 
   private readonly seriesID = new Map<string, number>();
   private readonly series = new Map<number, SeriesMeta>();
+
+  private readonly metricValues = new Map<number, number>();
+  private sampleBufferTimestamp = 0;
+  private readonly sampleBuffer = new Map<number, number>();
+
   private readonly partition = new Partition();
   private readonly partitionSeries = new Map<number, SeriesMeta>();
   private partitionSequence = 0;
@@ -33,6 +38,13 @@ export class MetricsStore {
 
   get timestamp(): number {
     return this.now();
+  }
+
+  updateMetric(id: number, updater: (x: number) => number): number {
+    let value = this.metricValues.get(id) ?? 0;
+    value = updater(value);
+    this.metricValues.set(id, value);
+    return value;
   }
 
   setOwnerKey(key: string) {
@@ -65,9 +77,30 @@ export class MetricsStore {
     return seriesID;
   }
 
+  private flushSampleBuffer() {
+    for (const [seriesID, value] of this.sampleBuffer) {
+      this.writeSample(seriesID, this.sampleBufferTimestamp, value);
+    }
+    this.sampleBuffer.clear();
+  }
+
+  bufferSample(seriesID: number, timestamp: number, value: number) {
+    if (this.sampleBufferTimestamp !== timestamp) {
+      this.flushSampleBuffer();
+      this.sampleBufferTimestamp = timestamp;
+    }
+
+    this.sampleBuffer.set(seriesID, value);
+  }
+
   writeSample(seriesID: number, timestamp: number, value: number) {
+    if (this.sampleBufferTimestamp !== timestamp) {
+      this.flushSampleBuffer();
+      this.sampleBufferTimestamp = timestamp;
+    }
+
     if (this.partition.isFull) {
-      this.flush();
+      this.doFlushPartition();
     }
 
     const meta = this.series.get(seriesID);
@@ -80,6 +113,11 @@ export class MetricsStore {
   }
 
   flush() {
+    this.flushSampleBuffer();
+    this.doFlushPartition();
+  }
+
+  private doFlushPartition() {
     if (this.partition.count === 0) {
       return;
     }

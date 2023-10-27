@@ -61,8 +61,6 @@ export class Vec<T extends Metric> {
 }
 
 export class Counter extends Metric {
-  private value = 0;
-
   constructor(store: MetricsStore, name: string, labels: SeriesLabels) {
     super("counter", store, name, labels);
   }
@@ -76,8 +74,8 @@ export class Counter extends Metric {
   }
 
   add(increase: number) {
-    this.value += increase;
-    this.store.writeSample(this.id, this.store.timestamp, this.value);
+    const value = this.store.updateMetric(this.id, (x) => x + increase);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 
   increment() {
@@ -86,8 +84,6 @@ export class Counter extends Metric {
 }
 
 export class Gauge extends Metric {
-  private value = 0;
-
   constructor(store: MetricsStore, name: string, labels: SeriesLabels) {
     super("gauge", store, name, labels);
   }
@@ -101,24 +97,28 @@ export class Gauge extends Metric {
   }
 
   set(value: number) {
-    this.value = value;
-    this.store.writeSample(this.id, this.store.timestamp, this.value);
+    this.store.updateMetric(this.id, () => value);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 
   add(increase: number) {
-    this.set(this.value + increase);
+    const value = this.store.updateMetric(this.id, (x) => x + increase);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 
   subtract(decrease: number) {
-    this.set(this.value - decrease);
+    const value = this.store.updateMetric(this.id, (x) => x - decrease);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 
   increment() {
-    this.set(this.value + 1);
+    const value = this.store.updateMetric(this.id, (x) => x + 1);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 
   decrement() {
-    this.set(this.value - 1);
+    const value = this.store.updateMetric(this.id, (x) => x - 1);
+    this.store.bufferSample(this.id, this.store.timestamp, value);
   }
 }
 
