@@ -9,6 +9,7 @@ import {
   setState,
 } from "@vitest/expect";
 import chai, { expect as chaiExpect } from "chai";
+import { TaskZone } from "../system/task";
 
 chai.use(JestExtend);
 chai.use(JestChaiExpect);
@@ -110,9 +111,10 @@ export class Suite {
       try {
         const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
           const user = new VirtualUser(i + 1, this.runtime.logger);
+          const zone = new TaskZone(null, null, `vu/${user.id}`);
           await Promise.resolve();
           try {
-            await test.testFn?.(user);
+            await zone.run(() => test.testFn?.(user));
           } catch (err) {
             throw new TestError(err, user.id);
           }

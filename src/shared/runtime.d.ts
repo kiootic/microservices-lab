@@ -22,6 +22,21 @@ const services: SystemServices;
 
 const random: Runtime.Random;
 
+const context: Runtime.Context;
+
+namespace Runtime {
+  export interface Task {
+    id: number;
+    nodeID: string | null;
+    fn: string;
+  }
+
+  export interface Context {
+    readonly task?: Task;
+    readonly caller?: Task;
+  }
+}
+
 namespace Runtime {
   export interface VirtualUser {
     readonly id: number;
@@ -147,5 +162,6 @@ export {
   Service,
   services,
   random,
+  context,
   Runtime,
 };

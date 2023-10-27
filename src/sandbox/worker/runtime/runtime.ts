@@ -9,6 +9,7 @@ import { LoggerFactory, formatConsoleLog } from "./logger";
 import { MetricsManager } from "./metrics";
 import { Scheduler } from "./scheduler";
 import { Suite, expect } from "./test";
+import { Zone } from "./zone";
 
 function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const console = runtime.logger.make("console");
@@ -49,6 +50,10 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
         static readonly __name = name;
       } satisfies ServiceConstructor<Name> as never,
     services: VirtualNetwork.proxy(() => system.network),
+
+    get context() {
+      return Zone.current?.context ?? {};
+    },
 
     Runtime: {
       defineTest: suite.defineTest.bind(suite),

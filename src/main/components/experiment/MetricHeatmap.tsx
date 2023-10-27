@@ -72,9 +72,12 @@ export const HeatMap: React.FC<HeatMapProps> = (props) => {
     return { xAxis, yAxis };
   }, [width, height, stats, zoom]);
 
-  const yTicks = yAxis
-    .scale<ScaleLinear<number, number, number>>()
-    .ticks(...(yAxis.tickArguments() as number[])).length;
+  const yTicks = Math.max(
+    1,
+    yAxis
+      .scale<ScaleLinear<number, number, number>>()
+      .ticks(...(yAxis.tickArguments() as number[])).length - 1,
+  );
   const [minX, maxX] = xAxis.scale().domain();
   const [minY, maxY] = yAxis.scale().domain();
 
@@ -138,8 +141,8 @@ export const HeatMap: React.FC<HeatMapProps> = (props) => {
       return { timestamp: null, value: null };
     }
     const tsBin = Math.floor(timestamp / binSize);
-    const valueBin = Math.floor((value / height) * (yTicks - 1));
-    if (valueBin >= yTicks - 1) {
+    const valueBin = Math.floor((value / height) * yTicks);
+    if (valueBin >= yTicks) {
       return { timestamp: null, value: null };
     }
     return { timestamp: tsBin, value: valueBin };
@@ -216,7 +219,7 @@ const Chart: React.FC<ChartProps> = (props) => {
 
     const xScale: ScaleLinear<number, number, number> = xAxis.scale();
     const cellWidth = xScale(binSize)! - xScale(0)!;
-    const cellHeight = height / (yTicks - 1);
+    const cellHeight = height / yTicks;
 
     const [start, end] = xScale.domain();
     const startBin = Math.floor(start / binSize);
@@ -330,7 +333,7 @@ const InfoPanel: React.FC<InfoPanelProps> = (props) => {
   const xScale: ScaleLinear<number, number, number> = xAxis.scale();
   const yScale: ScaleLinear<number, number, number> = yAxis.scale();
   const cellWidth = xScale(binSize)! - xScale(0)!;
-  const cellHeight = height / (yTicks - 1);
+  const cellHeight = height / yTicks;
 
   useLayoutEffect(() => {
     if (ref.current == null) {
@@ -362,9 +365,12 @@ const InfoPanel: React.FC<InfoPanelProps> = (props) => {
       .join("rect")
       .classed("indicator", true)
       .attr("stroke", "currentColor")
-      .attr("x", indicatorX)
+      .attr("x", Math.max(0, indicatorX))
       .attr("y", pointer.value * cellHeight)
-      .attr("width", Math.min(indicatorX + cellWidth, width) - indicatorX)
+      .attr(
+        "width",
+        Math.min(indicatorX + cellWidth, width) - Math.max(0, indicatorX),
+      )
       .attr("height", cellHeight);
 
     const panel = svg

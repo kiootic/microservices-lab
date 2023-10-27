@@ -1,6 +1,5 @@
-import { deferred } from "../utils/async";
 import { Heap } from "../utils/heap";
-import { flushMicrotasks, observeMicrotasks, internals } from "./microtask";
+import { Zone, internals } from "./zone";
 
 const yieldIntervalMS = 100;
 
@@ -18,16 +17,6 @@ function completeTimerMicrotaskPromise(arg: Promise<void>) {
 
 function completeTimerCallback(fn: () => void) {
   fn();
-}
-
-export type SchedulerMode = "native" | "microtask";
-
-function yieldMacrotask() {
-  const { promise, resolve } = deferred();
-  const channel = new MessageChannel();
-  channel.port1.onmessage = resolve;
-  channel.port2.postMessage(undefined);
-  return promise;
 }
 
 function settle<T>(promise: Promise<T>): () => T {
@@ -54,8 +43,6 @@ function settle<T>(promise: Promise<T>): () => T {
 export class Scheduler {
   static readonly epoch = new Date("1984-07-01T02:00:00Z");
 
-  readonly mode: SchedulerMode;
-
   private nextID = 1;
   private time = 0;
   private readonly heap = new Heap();
@@ -80,10 +67,6 @@ export class Scheduler {
       return Date[p as keyof typeof Date];
     },
   });
-
-  constructor(mode: SchedulerMode = "microtask") {
-    this.mode = mode;
-  }
 
   get currentTime(): number {
     return this.time;
@@ -122,24 +105,15 @@ export class Scheduler {
   delay(ms?: number): Promise<void> {
     ms = Math.max(0, ms ?? 0);
     const runNotBefore = this.time + ms;
-    switch (this.mode) {
-      case "native": {
-        const { promise, resolve } = deferred<void>();
-        this.schedule(runNotBefore, completeTimerCallback, resolve);
-        return promise;
-      }
-      case "microtask": {
-        const promise = internals.make<void>();
-        this.schedule(runNotBefore, completeTimerMicrotaskPromise, promise);
-        return promise;
-      }
-    }
+    const promise = internals.make<void>();
+    this.schedule(runNotBefore, completeTimerMicrotaskPromise, promise);
+    return promise;
   }
 
   reset(): Promise<void> {
     const promise = internals.make<void>();
     this.setTimeout(() => {
-      flushMicrotasks();
+      Zone.flush();
       this.nextID = 0;
       this.time = 0;
       this.heap.clear();
@@ -150,12 +124,7 @@ export class Scheduler {
   }
 
   run<T>(fn: () => Promise<T>): Promise<T> {
-    switch (this.mode) {
-      case "microtask":
-        return this.runMicrotasks(fn);
-      case "native":
-        return this.runNative(fn);
-    }
+    return this.runMicrotasks(fn);
   }
 
   private runTimer(): boolean {
@@ -174,21 +143,10 @@ export class Scheduler {
     return true;
   }
 
-  private async runNative<T>(fn: () => Promise<T>): Promise<T> {
-    const result = settle(fn());
-
-    await yieldMacrotask();
-    while (this.runTimer()) {
-      await yieldMacrotask();
-    }
-
-    return result();
-  }
-
   private async runMicrotasks<T>(fn: () => Promise<T>): Promise<T> {
-    const result = observeMicrotasks(() => {
+    const result = Zone.run(() => {
       const result = settle(fn());
-      flushMicrotasks();
+      Zone.flush();
       return result;
     });
 
@@ -200,7 +158,7 @@ export class Scheduler {
 
     const tick = () => {
       while (this.runTimer()) {
-        flushMicrotasks();
+        Zone.flush();
         if (Date.now() - lastYield > yieldIntervalMS) {
           return true;
         }
@@ -208,7 +166,7 @@ export class Scheduler {
       return false;
     };
 
-    while (observeMicrotasks(() => tick())) {
+    while (Zone.root.run(tick)) {
       await yieldToHost();
       lastYield = Date.now();
     }

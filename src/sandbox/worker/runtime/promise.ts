@@ -4,10 +4,6 @@ const REJECTED = 2;
 
 type PromiseState = typeof PENDING | typeof FULFILLED | typeof REJECTED;
 
-function scheduleMicrotask<T>(fn: (x: T) => void, arg: T) {
-  queueMicrotask(() => fn(arg));
-}
-
 export interface PromiseInternals {
   make<T>(): Promise<T>;
   resolve<T>(promise: Promise<T>, value: T | PromiseLike<T>): void;
@@ -19,9 +15,16 @@ type Executor = (
   reject: (reason: unknown) => void,
 ) => void;
 
+export function makePromise<Ctx>(
+  name: string,
+  context: () => Ctx,
+  schedule: <T>(ctx: Ctx, fn: (arg: T) => void, arg: T) => void,
+): [PromiseConstructor, PromiseInternals];
+
 export function makePromise(
   name: string,
-  schedule = scheduleMicrotask,
+  context: () => unknown,
+  schedule: <T>(ctx: unknown, fn: (arg: T) => void, arg: T) => void,
 ): [PromiseConstructor, PromiseInternals] {
   const raw = Symbol();
 
@@ -33,8 +36,10 @@ export function makePromise(
       __sibling: Promise | undefined = undefined;
       __onFulfill: ((value: unknown) => unknown) | undefined = undefined;
       __onReject: ((reason: unknown) => unknown) | undefined = undefined;
+      __context: unknown;
 
       constructor(executor: typeof raw | Executor) {
+        this.__context = context();
         if (executor === raw) {
           return;
         }
@@ -240,7 +245,7 @@ export function makePromise(
     self.__state = state;
 
     if (self.__child != null) {
-      schedule(notify, self);
+      schedule(self.__context, notify, self);
     }
   }
 
@@ -265,6 +270,7 @@ export function makePromise(
 
       if (typeof then === "function") {
         schedule(
+          self.__context,
           execute.bind(undefined, self),
           then.bind(value) as Promise["then"],
         );
@@ -306,7 +312,7 @@ export function makePromise(
       (self.__state === FULFILLED || self.__state === REJECTED) &&
       self.__child == null
     ) {
-      schedule(notify, self);
+      schedule(self.__context, notify, self);
     }
 
     if (self.__child == null) {
