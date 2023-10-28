@@ -1,6 +1,4 @@
 @import "../../codicon/codicon.css";
-@import "@fontsource/source-code-pro/400.css";
-@import "@fontsource/source-code-pro/600.css";
 
 @tailwind base;
 @tailwind components;
@@ -20,10 +18,6 @@
 
   #root {
     @apply w-full h-full;
-  }
-
-  :root {
-    --editor-font-family: theme(fontFamily.mono);
   }
 }
 

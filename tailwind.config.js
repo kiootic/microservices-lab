@@ -8,7 +8,7 @@ export default {
   theme: {
     colors: {
       transparent: "transparent",
-      current: 'currentColor',
+      current: "currentColor",
       gray: colors.slate,
       primary: colors.sky,
       red: colors.red,
@@ -16,9 +16,6 @@ export default {
       green: colors.green,
     },
     extend: {
-      fontFamily: {
-        mono: ["Source Code Pro", defaultTheme.fontFamily.mono],
-      },
       ringColor: ({ theme }) => ({ DEFAULT: theme("colors.primary.400") }),
       animation: {
         "fade-in": "fade 150ms ease-out",

@@ -15,6 +15,6 @@
 
 .popover {
   width: var(--trigger-width);
-  @apply shadow-lg bg-gray-100/80 backdrop-blur-sm;
+  @apply shadow-lg bg-gray-100/90 backdrop-blur-sm;
   @apply outline-none;
 }
