@@ -12,6 +12,17 @@ export function isValidFileName(fileName: string) {
   return segments.every((s) => s !== "" && s !== "." && s !== "..");
 }
 
+function comparePathSegment(a: string, b: string, isFinal: boolean) {
+  if (isFinal) {
+    const aMD = a.toLowerCase().endsWith(".md");
+    const bMD = b.toLowerCase().endsWith(".md");
+    if (aMD !== bMD) {
+      return aMD ? -1 : 1;
+    }
+  }
+  return a.localeCompare(b, undefined, { sensitivity: "base" });
+}
+
 function compareFileName(a: string, b: string) {
   const aSegments = a.split("/");
   const bSegments = b.split("/");
@@ -19,9 +30,11 @@ function compareFileName(a: string, b: string) {
     return aSegments.length - bSegments.length;
   }
   for (let i = 0; i < aSegments.length; i++) {
-    const cmp = aSegments[i].localeCompare(bSegments[i], undefined, {
-      sensitivity: "base",
-    });
+    const cmp = comparePathSegment(
+      aSegments[i],
+      bSegments[i],
+      i === aSegments.length - 1,
+    );
     if (cmp !== 0) {
       return cmp;
     }
