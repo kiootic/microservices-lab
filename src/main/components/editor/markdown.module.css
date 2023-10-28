@@ -1,0 +1,33 @@
+.heading {
+  @apply font-medium;
+}
+.heading1 {
+  @apply text-3xl;
+}
+.heading2 {
+  @apply text-xl;
+}
+
+.link {
+  @apply font-bold;
+}
+
+.url {
+  @apply text-primary-600 underline font-normal;
+}
+
+.quote,
+.code,
+.table {
+  @apply font-mono;
+}
+
+.markup,
+.separator,
+.list-mark {
+  @apply font-light font-mono no-underline;
+}
+
+.markup {
+  @apply text-gray-400;
+}

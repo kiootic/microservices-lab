@@ -59,7 +59,7 @@ const colors = {
 const theme = EditorView.theme({
   "& .cm-scroller": {
     lineHeight: "unset",
-    fontFamily: "var(--editor-font-family, monospace)",
+    fontFamily: "var(----font-family-mono, monospace)",
   },
   "&.cm-focused": { outline: "none" },
 
@@ -135,7 +135,7 @@ const theme = EditorView.theme({
   },
   ".cm-diagnostic": {
     padding: "0.25rem 0.5rem",
-    fontFamily: "var(--editor-font-family, monospace)",
+    fontFamily: "var(----font-family-mono, monospace)",
   },
   ".cm-diagnostic:not(:first-child)": {
     borderTopColor: colors["editorHoverWidget.border/separator"],
@@ -160,7 +160,7 @@ const theme = EditorView.theme({
   },
   ".cm-tooltip.cm-completionInfo": {
     padding: "0.25rem 0.5rem",
-    fontFamily: "var(--editor-font-family, monospace)",
+    fontFamily: "var(----font-family-mono, monospace)",
   },
   ".cm-completionMatchedText": {
     fontWeight: "600",

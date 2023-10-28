@@ -13,6 +13,7 @@ import { typescriptIntegration } from "../../editor/typescript";
 import { useForwardedRef } from "../../hooks/ref";
 import { WorkspaceFile } from "../../model/workspace";
 import { Editor, EditorProps, InitialEditorState } from "../editor/Editor";
+import { markdownExtension } from "../editor/markdown";
 import { setup } from "./extensions";
 
 interface FileEditorProps {
@@ -98,7 +99,9 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
         extension: [
           setup,
           tooltips({ position: "fixed", parent: tooltipParentRef.current }),
-          typescriptIntegration(token.file),
+          token.file.name.endsWith(".md")
+            ? markdownExtension
+            : typescriptIntegration(token.file),
           EditorView.updateListener.of((update) => {
             const state = update.state;
             if (update.docChanged) {

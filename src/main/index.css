@@ -19,6 +19,11 @@
   #root {
     @apply w-full h-full;
   }
+
+  :root {
+    --font-family-mono: theme(fontFamily.mono);
+    --font-family-sans: theme(fontFamily.sans);
+  }
 }
 
 @layer utilities {
