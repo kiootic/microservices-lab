@@ -10,12 +10,22 @@ export class VirtualNetwork {
     this.ctx = ctx;
   }
 
-  invoke(service: string, fn: string, args: unknown[]): Promise<unknown> {
+  async invoke(service: string, fn: string, args: unknown[]): Promise<unknown> {
     const lb = this.ctx.loadBalancers.get(service);
     if (lb == null) {
       throw new ServiceUnavailableError(service);
     }
-    return lb.invoke(fn, args);
+
+    try {
+      for (const cond of this.ctx.conditioners) {
+        await cond.onBeginInvoke?.(service, fn);
+      }
+      return await lb.invoke(fn, args);
+    } finally {
+      for (const cond of this.ctx.conditioners) {
+        await cond.onEndInvoke?.(service, fn);
+      }
+    }
   }
 
   static proxy(

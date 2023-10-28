@@ -1,6 +1,7 @@
 import { Logger } from "../runtime/logger";
 import { MetricsFactory } from "../runtime/metrics";
 import { Runtime } from "../runtime/runtime";
+import { Conditioner } from "./conditioner";
 import { LoadBalancer } from "./load-balancer";
 import { VirtualNetwork } from "./network";
 import { Node } from "./node";
@@ -9,6 +10,7 @@ import type { ServiceConstructor } from "./service";
 export interface SystemContext {
   readonly runtime: Runtime;
   readonly metrics: MetricsFactory;
+  readonly conditioners: Conditioner[];
   readonly services: Map<string, ServiceConstructor>;
 
   nextNodeID: number;
@@ -30,6 +32,7 @@ export class System {
     this.context = {
       runtime: this.runtime,
       metrics: this.runtime.metrics.factory,
+      conditioners: [],
       nextNodeID: 1,
       services: new Map(),
       nodes: new Map(),
@@ -40,6 +43,10 @@ export class System {
 
   defineService<T extends ServiceConstructor>(service: T) {
     this.context.services.set(service.__name, service);
+  }
+
+  addConditioner(cond: Conditioner) {
+    this.context.conditioners.push(cond);
   }
 
   setup() {

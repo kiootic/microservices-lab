@@ -61,6 +61,7 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
 
       Service,
       defineService: system.defineService.bind(system),
+      addConditioner: system.addConditioner.bind(system),
       setupSystem: system.setup.bind(system),
 
       Semaphore: Semaphore,

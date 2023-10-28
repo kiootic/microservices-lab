@@ -23,6 +23,7 @@ declare global {
 let nextTaskID = 1;
 
 export class TaskZone extends Zone {
+  readonly task: Task;
   private isScheduled = false;
   private readonly owner: TaskOwner | null;
   private readonly queue = new MicrotaskQueue(this);
@@ -34,7 +35,9 @@ export class TaskZone extends Zone {
     caller?: Task,
   ) {
     const id = nextTaskID++;
-    super(`task:${nodeID}:${fn}:${id}`, { task: { id, nodeID, fn }, caller });
+    const task: Task = { id, nodeID, fn };
+    super(`task:${nodeID}:${fn}:${id}`, { task, caller });
+    this.task = task;
     this.owner = owner;
   }
 

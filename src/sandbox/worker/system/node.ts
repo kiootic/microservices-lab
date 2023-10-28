@@ -3,7 +3,7 @@ import { Zone } from "../runtime/zone";
 import { random } from "../utils/random";
 import { Service, ServiceConstructor } from "./service";
 import { SystemContext } from "./system";
-import { TaskOwner, TaskZone } from "./task";
+import { Task, TaskOwner, TaskZone } from "./task";
 
 export class Node implements TaskOwner {
   private readonly ctx: SystemContext;
@@ -81,37 +81,40 @@ export class Node implements TaskOwner {
     }
   }
 
-  scheduleTask(task: TaskZone): void {
-    this.schedulePendingTasks();
-    this.pendingTasks.push(task);
+  scheduleTask(zone: TaskZone): void {
+    this.schedulePendingTasks(zone.task);
+    this.pendingTasks.push(zone);
   }
 
-  private getTaskTimeslice() {
-    // FIXME: config
-    return 1;
+  private getTaskTimeslice(task: Task) {
+    let timeslice = 1;
+    for (const cond of this.ctx.conditioners) {
+      timeslice *= cond.getTaskTimesliceFactor?.(task) ?? 1;
+    }
+    return timeslice;
   }
 
-  private schedulePendingTasks() {
+  private schedulePendingTasks(task: Task) {
     if (this.isScheduled) {
       return;
     }
 
     this.isScheduled = true;
     const scheduler = this.ctx.runtime.scheduler;
-    const delay = this.getTaskTimeslice() * random.exponential();
+    const delay = this.getTaskTimeslice(task) * random.exponential();
     scheduler.schedule(scheduler.currentTime + delay, runPendingTasks, this);
   }
 
   runPendingTasks() {
     this.isScheduled = false;
 
-    const task = this.pendingTasks.shift();
-    if (task == null) {
+    const zone = this.pendingTasks.shift();
+    if (zone == null) {
       return;
     }
-    task.flushMicrotasks();
+    zone.flushMicrotasks();
 
-    this.schedulePendingTasks();
+    this.schedulePendingTasks(zone.task);
 
     const avgLoad = this.loadMeasurer.add(
       this.ctx.runtime.scheduler.currentTime,
