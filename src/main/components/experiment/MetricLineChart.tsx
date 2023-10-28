@@ -165,7 +165,7 @@ const Chart: React.FC<ChartProps> = (props) => {
   const ref = useRef<SVGGElement | null>(null);
 
   const { numBins, firstTimestamp, lastTimestamp } = useMemo(() => {
-    const resolutionLevel = Math.pow(2, Math.floor(Math.log2(zoom.k)));
+    const resolutionLevel = Math.pow(2, Math.floor(Math.log2(zoom.k)) - 1);
     const xScale = xAxis.scale();
     const numBins = resolutionLevel * (xScale.range()[1] - xScale.range()[0]);
     const [firstTimestamp, lastTimestamp] = xScale.domain().map(Number);
