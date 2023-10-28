@@ -1,4 +1,5 @@
 import { Logger } from "../runtime/logger";
+import { MetricsFactory } from "../runtime/metrics";
 import { Runtime } from "../runtime/runtime";
 import { LoadBalancer } from "./load-balancer";
 import { VirtualNetwork } from "./network";
@@ -7,6 +8,7 @@ import type { ServiceConstructor } from "./service";
 
 export interface SystemContext {
   readonly runtime: Runtime;
+  readonly metrics: MetricsFactory;
   readonly services: Map<string, ServiceConstructor>;
 
   nextNodeID: number;
@@ -27,6 +29,7 @@ export class System {
 
     this.context = {
       runtime: this.runtime,
+      metrics: this.runtime.metrics.factory,
       nextNodeID: 1,
       services: new Map(),
       nodes: new Map(),
