@@ -18,12 +18,18 @@ export class VirtualNetwork {
 
     try {
       for (const cond of this.ctx.conditioners) {
-        await cond.onBeginInvoke?.(service, fn);
+        const task = cond.onBeginInvoke?.(service, fn);
+        if (task instanceof Promise) {
+          await task;
+        }
       }
       return await lb.invoke(fn, args);
     } finally {
       for (const cond of this.ctx.conditioners) {
-        await cond.onEndInvoke?.(service, fn);
+        const task = cond.onEndInvoke?.(service, fn);
+        if (task instanceof Promise) {
+          await task;
+        }
       }
     }
   }
