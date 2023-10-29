@@ -16,7 +16,7 @@ export class Node implements TaskOwner {
   private readonly pendingTasks: TaskZone[] = [];
   private isScheduled = false;
 
-  private readonly loadMeasurer = new LoadMeasurer();
+  private readonly loadCounter = new LoadCounter();
   private readonly metrics;
 
   constructor(
@@ -103,10 +103,19 @@ export class Node implements TaskOwner {
     const scheduler = this.ctx.runtime.scheduler;
     const delay = this.getTaskTimeslice(task) * random.exponential();
     scheduler.schedule(scheduler.currentTime + delay, runPendingTasks, this);
+
+    this.loadCounter.addTimeslice(scheduler.currentTime, delay);
   }
 
   runPendingTasks() {
     this.isScheduled = false;
+
+    const load = this.loadCounter.collect(
+      this.ctx.runtime.scheduler.currentTime,
+    );
+    if (load != null) {
+      this.metrics.node_load.set(load);
+    }
 
     const zone = this.pendingTasks.shift();
     if (zone == null) {
@@ -114,14 +123,8 @@ export class Node implements TaskOwner {
     }
     zone.flushMicrotasks();
 
-    this.schedulePendingTasks(zone.task);
-
-    const avgLoad = this.loadMeasurer.add(
-      this.ctx.runtime.scheduler.currentTime,
-      this.load,
-    );
-    if (avgLoad != null) {
-      this.metrics.node_load.set(avgLoad);
+    if (this.pendingTasks.length > 0) {
+      this.schedulePendingTasks(this.pendingTasks[0].task);
     }
   }
 }
@@ -130,36 +133,32 @@ function runPendingTasks(node: Node) {
   node.runPendingTasks();
 }
 
-const loadCollectionMS = 100;
+const loadAccountPeriodMS = 100;
 
-class LoadMeasurer {
-  private beginTimestamp = 0;
-  private lastSampleTimestamp = 0;
-  private readonly samples: number[] = [];
+class LoadCounter {
+  private periodBeginTimestamp = -1;
+  private periodBusyDuration = 0;
 
-  add(timestamp: number, load: number): number | null {
-    let result: number | null = null;
-    if (timestamp - this.beginTimestamp >= loadCollectionMS) {
-      result = this.collect(timestamp);
-    }
-
-    this.samples.push((timestamp - this.lastSampleTimestamp) * load);
-    this.lastSampleTimestamp = timestamp;
-    return result;
+  private resetPeriod(start: number) {
+    this.periodBeginTimestamp = start;
+    this.periodBusyDuration = 0;
   }
 
-  collect(timestamp: number): number {
-    let result = 0;
-    if (this.samples.length > 0) {
-      const duration = timestamp - this.beginTimestamp;
-      for (const sample of this.samples) {
-        result += sample / duration;
-      }
+  addTimeslice(start: number, duration: number) {
+    if (this.periodBeginTimestamp < 0) {
+      this.resetPeriod(start);
     }
 
-    this.beginTimestamp = timestamp;
-    this.lastSampleTimestamp = timestamp;
-    this.samples.length = 0;
-    return result;
+    this.periodBusyDuration += duration;
+  }
+
+  collect(timestamp: number): number | null {
+    if (timestamp >= this.periodBeginTimestamp + loadAccountPeriodMS) {
+      const periodDuration = timestamp - this.periodBeginTimestamp;
+      const load = this.periodBusyDuration / periodDuration;
+      this.resetPeriod(timestamp);
+      return load;
+    }
+    return null;
   }
 }

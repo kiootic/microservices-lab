@@ -72,33 +72,33 @@ export abstract class Zone {
 
 export class MicrotaskQueue {
   private readonly owner: Zone;
-  private readonly mictotasks: Array<unknown> = [];
+  private readonly microtasks: Array<unknown> = [];
 
   constructor(owner: Zone) {
     this.owner = owner;
   }
 
   get isEmpty(): boolean {
-    return this.mictotasks.length === 0;
+    return this.microtasks.length === 0;
   }
 
   flush() {
     const oldZone = currentZone;
     currentZone = this.owner;
     try {
-      for (let i = 0; i < this.mictotasks.length; i += 2) {
-        const fn = this.mictotasks[i] as (x: unknown) => void;
-        const arg = this.mictotasks[i + 1];
+      for (let i = 0; i < this.microtasks.length; i += 2) {
+        const fn = this.microtasks[i] as (x: unknown) => void;
+        const arg = this.microtasks[i + 1];
         fn(arg);
       }
-      this.mictotasks.length = 0;
+      this.microtasks.length = 0;
     } finally {
       currentZone = oldZone;
     }
   }
 
   schedule<T>(fn: (x: T) => void, arg: T): void {
-    this.mictotasks.push(fn, arg);
+    this.microtasks.push(fn, arg);
   }
 }
 
