@@ -3,9 +3,9 @@ import { Zone } from "../runtime/zone";
 import { random } from "../utils/random";
 import { Service, ServiceConstructor } from "./service";
 import { SystemContext } from "./system";
-import { Task, TaskOwner, TaskZone } from "./task";
+import { Task, TaskZone } from "./task";
 
-export class Node implements TaskOwner {
+export class Node {
   private readonly ctx: SystemContext;
   readonly id: string;
   readonly service: string;
@@ -46,6 +46,10 @@ export class Node implements TaskOwner {
     };
   }
 
+  get scheduler() {
+    return this.ctx.runtime.scheduler;
+  }
+
   get load(): number {
     return this.numTasks === 0
       ? 0
@@ -60,14 +64,9 @@ export class Node implements TaskOwner {
       );
     }
 
-    const task = new TaskZone(
-      this,
-      this.id,
-      fnName,
-      Zone.current?.context.task,
-    );
+    const task = new TaskZone(this, fnName, Zone.current?.context.task);
 
-    const start = this.ctx.runtime.scheduler.currentTime;
+    const start = this.scheduler.currentTime;
     this.numTasks++;
     try {
       return await task.run(
@@ -75,7 +74,7 @@ export class Node implements TaskOwner {
       );
     } finally {
       this.numTasks--;
-      const end = this.ctx.runtime.scheduler.currentTime;
+      const end = this.scheduler.currentTime;
       this.metrics.fn_duration_ms.get(fnName).observe(end - start);
       this.metrics.fn_count.get(fnName).increment();
     }
@@ -100,7 +99,7 @@ export class Node implements TaskOwner {
     }
 
     this.isScheduled = true;
-    const scheduler = this.ctx.runtime.scheduler;
+    const scheduler = this.scheduler;
     const delay = this.getTaskTimeslice(task) * random.exponential();
     scheduler.schedule(scheduler.currentTime + delay, runPendingTasks, this);
 
@@ -110,9 +109,7 @@ export class Node implements TaskOwner {
   runPendingTasks() {
     this.isScheduled = false;
 
-    const load = this.loadCounter.collect(
-      this.ctx.runtime.scheduler.currentTime,
-    );
+    const load = this.loadCounter.collect(this.scheduler.currentTime);
     if (load != null) {
       this.metrics.node_load.set(load);
     }
@@ -121,7 +118,7 @@ export class Node implements TaskOwner {
     if (zone == null) {
       return;
     }
-    zone.flushMicrotasks();
+    zone.runTask();
 
     if (this.pendingTasks.length > 0) {
       this.schedulePendingTasks(this.pendingTasks[0].task);

@@ -2,6 +2,7 @@ import type * as RuntimeGlobals from "../../../shared/runtime";
 import { VirtualNetwork } from "../system/network";
 import { Service, ServiceConstructor } from "../system/service";
 import { System } from "../system/system";
+import { TaskZone } from "../system/task";
 import { Semaphore } from "../utils/async";
 import { random } from "../utils/random";
 import { Host } from "./host";
@@ -42,6 +43,13 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
     logger: runtime.logger.make.bind(runtime.logger),
     metrics: runtime.metrics.factory,
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
+    spin: (ms) => {
+      const zone = Zone.current;
+      if (zone instanceof TaskZone) {
+        return zone.spin(ms);
+      }
+      return Promise.resolve();
+    },
 
     expect,
     random: random,

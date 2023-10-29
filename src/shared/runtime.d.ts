@@ -10,6 +10,7 @@ function logger(name: string): Runtime.Logger;
 const metrics: Runtime.MetricFactory;
 
 function delay(ms: number): Promise<void>;
+function spin(ms: number): Promise<void>;
 
 const expect: import("@vitest/expect").ExpectStatic;
 
@@ -166,6 +167,7 @@ export {
   logger,
   metrics,
   delay,
+  spin,
   expect,
   Service,
   services,
