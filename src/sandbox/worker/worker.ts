@@ -47,6 +47,15 @@ class WorkerHost implements Host {
 
 class Worker implements WorkerAPI {
   prepare(bundleJS: string) {
+    try {
+      importScripts(
+        URL.createObjectURL(new Blob([""], { type: "application/javascript" })),
+      );
+    } catch {
+      // Safari...
+      return "data:application/javascript;base64," + btoa(bundleJS);
+    }
+
     return URL.createObjectURL(
       new Blob([bundleJS], { type: "application/javascript" }),
     );

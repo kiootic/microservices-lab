@@ -13,6 +13,8 @@ import cn from "clsx";
 import { useNotebookContext } from "./context";
 import { useNavContext } from "../nav/context";
 
+import styles from "./FileView.module.css";
+
 interface FileViewProps {
   className?: string;
   fileName: string;
@@ -110,7 +112,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
       <div ref={setContainerElement} className="flow-root mb-4">
         <details className="-mb-4" ref={contentsRef} open={isOpened}>
           <summary
-            className="marker:content-none cursor-pointer outline-none"
+            className={cn(styles["summary"], "cursor-pointer outline-none")}
             tabIndex={-1}
             onClickCapture={handleSummaryOnClick}
           >

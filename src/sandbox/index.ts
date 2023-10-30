@@ -3,6 +3,8 @@ import { SandboxAPI } from "../shared/comm";
 import { Session } from "./session";
 import WorkerScriptURL from "./worker/worker?worker&url";
 
+// This is used to circumvent sandboxed iframe (null origin)
+// cannot import worker script.
 const trampolineScript = URL.createObjectURL(
   new Blob(
     [
