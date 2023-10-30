@@ -1,4 +1,4 @@
-import { Annotation, Extension } from "@codemirror/state";
+import { Annotation, Extension, Facet } from "@codemirror/state";
 import {
   EditorView,
   ViewPlugin,
@@ -6,15 +6,42 @@ import {
   showTooltip,
 } from "@codemirror/view";
 import { format } from "prettier";
-import * as prettierESTree from "prettier/plugins/estree";
-import * as prettierTS from "prettier/plugins/typescript";
+import * as pluginESTree from "prettier/plugins/estree";
+import * as pluginMarkdown from "prettier/plugins/markdown";
+import * as pluginTS from "prettier/plugins/typescript";
 
 const formatCode = Annotation.define<boolean>();
+
+type FormatFn = (code: string) => Promise<string | null>;
+const formatFn = Facet.define<FormatFn>();
+
+async function formatTypeScript(code: string) {
+  try {
+    return await format(code, {
+      parser: "typescript",
+      plugins: [pluginESTree, pluginTS],
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+async function formatMarkdown(code: string) {
+  try {
+    return await format(code, {
+      parser: "markdown",
+      plugins: [pluginMarkdown],
+    });
+  } catch (e) {
+    return null;
+  }
+}
 
 const plugin = ViewPlugin.fromClass(
   class {
     private readonly view: EditorView;
     private needFormat = false;
+
     constructor(view: EditorView) {
       this.view = view;
     }
@@ -34,20 +61,10 @@ const plugin = ViewPlugin.fromClass(
       }
     }
 
-    private async format(code: string) {
-      try {
-        return await format(code, {
-          parser: "typescript",
-          plugins: [prettierESTree, prettierTS],
-        });
-      } catch (e) {
-        return null;
-      }
-    }
-
     private async applyPrettier(code: string) {
       this.needFormat = false;
-      const newCode = await this.format(code);
+      const fn = this.view.state.facet(formatFn)[0];
+      const newCode = await fn(code);
 
       if (newCode == null || newCode === code || this.needFormat) {
         return;
@@ -66,6 +83,10 @@ const plugin = ViewPlugin.fromClass(
   },
 );
 
-export function prettier(): Extension {
-  return plugin;
+export function prettierTypeScript(): Extension {
+  return [plugin, formatFn.of(formatTypeScript)];
+}
+
+export function prettierMarkdown(): Extension {
+  return [plugin, formatFn.of(formatMarkdown)];
 }

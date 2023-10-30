@@ -15,6 +15,7 @@ import { WorkspaceFile } from "../../model/workspace";
 import { Editor, EditorProps, InitialEditorState } from "../editor/Editor";
 import { markdownExtension } from "../editor/markdown";
 import { setup } from "./extensions";
+import { prettierTypeScript, prettierMarkdown } from "../../editor/prettier";
 
 interface FileEditorProps {
   className?: string;
@@ -100,8 +101,8 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
           setup,
           tooltips({ position: "fixed", parent: tooltipParentRef.current }),
           token.file.name.endsWith(".md")
-            ? markdownExtension
-            : typescriptIntegration(token.file),
+            ? [markdownExtension, prettierMarkdown()]
+            : [typescriptIntegration(token.file), prettierTypeScript()],
           EditorView.updateListener.of((update) => {
             const state = update.state;
             if (update.docChanged) {

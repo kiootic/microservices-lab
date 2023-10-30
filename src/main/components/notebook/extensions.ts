@@ -17,7 +17,6 @@ import {
   lineNumbers,
   rectangularSelection,
 } from "@codemirror/view";
-import { prettier } from "../../editor/prettier";
 import { foldGutter } from "../editor/theme";
 
 const tabKeymap: KeyBinding[] = [
@@ -46,6 +45,5 @@ export const setup: Extension = [
   closeBrackets(),
   rectangularSelection(),
   crosshairCursor(),
-  prettier(),
   keymap.of([...closeBracketsKeymap, ...foldKeymap, ...tabKeymap]),
 ];
