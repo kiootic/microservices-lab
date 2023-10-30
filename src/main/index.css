@@ -6,11 +6,11 @@
 
 @layer base {
   html {
-    @apply w-full h-full;
+    @apply w-full h-full overflow-hidden;
   }
 
   body {
-    @apply w-full h-full;
+    @apply w-full h-full overflow-hidden;
     @apply text-base bg-gray-50 text-primary-950;
     @apply select-none selection:bg-[#add6ff80];
     -webkit-tap-highlight-color: transparent;
