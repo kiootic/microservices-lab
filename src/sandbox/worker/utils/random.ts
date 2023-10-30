@@ -81,6 +81,11 @@ function randomErlang(k: number) {
   return -Math.log(u);
 }
 
+function randomPareto(alpha: number) {
+  const x = 1 - randomUniform();
+  return Math.pow(x, -1 / alpha);
+}
+
 function randomChoice<T>(list: T[]): T | null {
   if (list.length === 0) {
     return null;
@@ -94,5 +99,6 @@ export const random = {
   normal: randomNormal,
   exponential: randomExponential,
   erlang: randomErlang,
+  pareto: randomPareto,
   choice: randomChoice,
 };

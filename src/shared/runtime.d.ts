@@ -105,6 +105,7 @@ namespace Runtime {
     normal(): number;
     exponential(): number;
     erlang(k: number): number;
+    pareto(alpha: number): number;
     choice<T>(list: T[]): T | null;
   }
 

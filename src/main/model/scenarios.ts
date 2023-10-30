@@ -30,8 +30,28 @@ const parseScenarioMeta: Parser<ScenarioMeta> = parse.json(
 const scenarioMap = new Map<string, ScenarioDraft>();
 
 const metaJSON = "_meta.json";
-for (const [path, content] of Object.entries(rawScenarios)) {
-  const [, key, fileName] = /^..\/..\/scenarios\/([^/]+)\/(.+)$/.exec(path)!;
+
+const scenarioFiles = Object.fromEntries(
+  Object.entries(rawScenarios).map(([path, content]) => [
+    path.slice("../../scenarios/".length),
+    content,
+  ]),
+);
+const scenarioKeys = Object.keys(scenarioFiles).flatMap((path) => {
+  const match = /^(.+)\/_meta\.json$/.exec(path);
+  if (match == null) {
+    return [];
+  }
+
+  return match[1];
+});
+
+for (const [path, content] of Object.entries(scenarioFiles)) {
+  const key = scenarioKeys.find((key) => path.startsWith(key));
+  if (key == null) {
+    continue;
+  }
+  const fileName = path.slice(key.length + 1);
 
   let scenario = scenarioMap.get(key);
   if (scenario == null) {

@@ -13,7 +13,7 @@ module.exports = {
       version: "detect",
     },
   },
-  ignorePatterns: ["dist", ".eslintrc.cjs"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "scenarios"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
