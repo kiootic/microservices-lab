@@ -73,7 +73,7 @@ class TestError extends Error {
 
 export class Suite {
   readonly tests: Test[] = [];
-  readonly setupFns: Array<() => void | Promise<void>> = [];
+  readonly resetFns: Array<() => void | Promise<void>> = [];
   readonly runtime: Runtime;
 
   constructor(runtime: Runtime) {
@@ -86,8 +86,14 @@ export class Suite {
     return test;
   }
 
-  addSetupFn(fn: () => void | Promise<void>): void {
-    this.setupFns.push(fn);
+  addResetFn(fn: () => void | Promise<void>): void {
+    this.resetFns.push(fn);
+  }
+
+  private async reset() {
+    for (const fn of this.resetFns) {
+      await fn();
+    }
   }
 
   async run(): Promise<void> {
@@ -95,6 +101,8 @@ export class Suite {
     let count = 0;
     let pass = 0;
     for (const test of this.tests) {
+      await this.reset();
+
       this.runtime.logger.main.info("Running test...", {
         test: test.name,
         vus: test.numUsers,
@@ -103,9 +111,6 @@ export class Suite {
 
       this.runtime.metrics.store.setOwnerKey(test.name);
 
-      for (const fn of this.setupFns) {
-        await fn();
-      }
       await test.setupFn?.();
 
       try {
@@ -133,10 +138,15 @@ export class Suite {
         }
         this.runtime.logger.main.error("Test failed.", context);
       } finally {
-        await this.runtime.scheduler.reset();
         await test.teardownFn?.();
       }
+
+      this.runtime.logger.main.info("Test passed.", {
+        test: test.name,
+      });
     }
+
+    await this.reset();
 
     const end = performance.now();
     const elaspsed = (end - start) / 1000;

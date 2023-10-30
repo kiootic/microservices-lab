@@ -18,9 +18,10 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const system = new System(runtime);
   const suite = new Suite(runtime);
 
-  suite.addSetupFn(() => {
+  suite.addResetFn(async () => {
     system.reset();
     random.reset();
+    await runtime.scheduler.reset();
   });
 
   const math = Object.create(Math) as typeof Math;
