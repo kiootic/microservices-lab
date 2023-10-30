@@ -16,17 +16,19 @@ export class VirtualNetwork {
       throw new ServiceUnavailableError(service);
     }
 
+    const beginHooks = this.ctx.runtime.hooks.hooks["system.before-invoke-fn"];
+    const afterHooks = this.ctx.runtime.hooks.hooks["system.after-invoke-fn"];
     try {
-      for (const cond of this.ctx.conditioners) {
-        const task = cond.onBeginInvoke?.(service, fn);
+      for (const hook of beginHooks ?? []) {
+        const task = hook(service, fn);
         if (task instanceof Promise) {
           await task;
         }
       }
       return await lb.invoke(fn, args);
     } finally {
-      for (const cond of this.ctx.conditioners) {
-        const task = cond.onEndInvoke?.(service, fn);
+      for (const hook of afterHooks ?? []) {
+        const task = hook(service, fn);
         if (task instanceof Promise) {
           await task;
         }

@@ -87,8 +87,10 @@ export class Node {
 
   private getTaskTimeslice(task: Task) {
     let timeslice = 1;
-    for (const cond of this.ctx.conditioners) {
-      timeslice *= cond.getTaskTimesliceFactor?.(task) ?? 1;
+    const hooks =
+      this.ctx.runtime.hooks.hooks["system.task-timeslice-multiplier"];
+    for (const hook of hooks ?? []) {
+      timeslice *= hook?.(task) ?? 1;
     }
     return timeslice;
   }

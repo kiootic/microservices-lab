@@ -25,6 +25,8 @@ const random: Runtime.Random;
 
 const context: Runtime.Context;
 
+const hooks: Runtime.HooksObject;
+
 namespace Runtime {
   export interface Task {
     id: number;
@@ -88,8 +90,6 @@ namespace Runtime {
     onEndInvoke?(service: string, fn: string): Promise<void>;
     getTaskTimesliceFactor?(task: Task): number;
   }
-
-  export function addConditioner(cond: Conditioner): void;
 
   export function setupSystem(): void;
 }
@@ -160,6 +160,21 @@ namespace Runtime {
   }
 }
 
+namespace Runtime {
+  export interface Hooks {
+    "system.before-invoke-fn": (service: string, fn: string) => Promise<void>;
+    "system.after-invoke-fn": (service: string, fn: string) => Promise<void>;
+    "system.task-timeslice-multiplier": (task: Runtime.Task) => number;
+  }
+
+  export type HooksObject = { [K in keyof Hooks]?: Array<Hooks[K]> };
+
+  export function registerHook<K extends keyof Hooks>(
+    name: K,
+    value: Hooks[K],
+  ): void;
+}
+
 // MARKER: exports
 
 export {
@@ -173,5 +188,6 @@ export {
   services,
   random,
   context,
+  hooks,
   Runtime,
 };
