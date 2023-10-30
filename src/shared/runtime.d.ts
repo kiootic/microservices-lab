@@ -25,6 +25,11 @@ const random: Runtime.Random;
 
 const context: Runtime.Context;
 
+interface Hooks {
+  "system.before-invoke-fn": (service: string, fn: string) => Promise<void>;
+  "system.after-invoke-fn": (service: string, fn: string) => Promise<void>;
+  "system.task-timeslice-multiplier": (task: Runtime.Task) => number;
+}
 const hooks: Runtime.HooksObject;
 
 namespace Runtime {
@@ -161,12 +166,6 @@ namespace Runtime {
 }
 
 namespace Runtime {
-  export interface Hooks {
-    "system.before-invoke-fn": (service: string, fn: string) => Promise<void>;
-    "system.after-invoke-fn": (service: string, fn: string) => Promise<void>;
-    "system.task-timeslice-multiplier": (task: Runtime.Task) => number;
-  }
-
   export type HooksObject = { [K in keyof Hooks]?: Array<Hooks[K]> };
 
   export function registerHook<K extends keyof Hooks>(
@@ -189,5 +188,6 @@ export {
   random,
   context,
   hooks,
+  Hooks,
   Runtime,
 };

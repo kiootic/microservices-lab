@@ -89,7 +89,7 @@ export class Runtime {
   readonly scheduler: Scheduler;
   readonly logger: LoggerFactory;
   readonly metrics: MetricsManager;
-  readonly hooks = new Hooks<RuntimeGlobals.Runtime.Hooks>();
+  readonly hooks = new Hooks<import("../../../shared/runtime").Hooks>();
 
   readonly globals: typeof RuntimeGlobals;
 
