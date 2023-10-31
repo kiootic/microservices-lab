@@ -65,7 +65,12 @@ export class Node {
       );
     }
 
-    const task = new TaskZone(this, fnName, Zone.current?.context.task);
+    const task = new TaskZone(
+      this,
+      this.service,
+      fnName,
+      Zone.current?.context.task,
+    );
 
     const start = this.scheduler.currentTime;
     this.numTasks++;

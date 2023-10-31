@@ -4,6 +4,7 @@ import type { Node } from "./node";
 export interface Task {
   id: number;
   nodeID: string | null;
+  service: string;
   fn: string;
 }
 
@@ -30,10 +31,10 @@ export class TaskZone extends Zone {
 
   timeslice = 0;
 
-  constructor(node: Node | null, fn: string, caller?: Task) {
+  constructor(node: Node | null, service: string, fn: string, caller?: Task) {
     const id = nextTaskID++;
     const nodeID = node?.id ?? null;
-    const task: Task = { id, nodeID, fn };
+    const task: Task = { id, nodeID, service, fn };
     super(`task:${nodeID}:${fn}:${id}`, { task, caller });
     this.task = task;
     this.node = node;

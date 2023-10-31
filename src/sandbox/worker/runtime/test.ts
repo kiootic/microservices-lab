@@ -116,7 +116,7 @@ export class Suite {
       try {
         const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
           const user = new VirtualUser(i + 1, this.runtime.logger);
-          const zone = new TaskZone(null, `vu/${user.id}`);
+          const zone = new TaskZone(null, "vu", `${user.id}`);
           await Promise.resolve();
           try {
             await zone.run(() => test.testFn?.(user));

@@ -35,6 +35,7 @@ namespace Runtime {
   export interface Task {
     id: number;
     nodeID: string | null;
+    service: string;
     fn: string;
   }
 
