@@ -14,4 +14,4 @@ import context = __rt.context;
 const services: Record<string, Record<string, (...args: any[]) => any>>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const hooks: Record<string, any[]>;
+const hooks: Record<string, any>;

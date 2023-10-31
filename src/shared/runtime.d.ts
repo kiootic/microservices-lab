@@ -34,8 +34,10 @@ const random: Runtime.Random;
 const context: Runtime.Context;
 
 interface Hooks {
-  "system.invoke-fn": <T>(next: () => Promise<T>) => () => Promise<T>;
-  "system.task-timeslice-multiplier": (task: Runtime.Task) => number;
+  "system.invoke-fn": Array<
+    (next: () => Promise<unknown>) => () => Promise<unknown>
+  >;
+  [x: `system.service-performance-factor.${string}`]: number;
 }
 const hooks: Runtime.HooksObject;
 
@@ -159,11 +161,11 @@ namespace Runtime {
 }
 
 namespace Runtime {
-  export type HooksObject = { [K in keyof Hooks]?: Array<Hooks[K]> };
+  export type HooksObject = Partial<Hooks>;
 
   export function registerHook<K extends keyof Hooks>(
     name: K,
-    value: Hooks[K],
+    appendFn: (value: Hooks[K] | undefined) => Hooks[K],
   ): void;
 }
 

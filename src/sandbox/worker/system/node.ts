@@ -92,13 +92,12 @@ export class Node {
   }
 
   private getTaskTimeslice(task: Task) {
-    let timeslice = 1;
-    const hooks =
-      this.ctx.runtime.hooks.hooks["system.task-timeslice-multiplier"];
-    for (const hook of hooks ?? []) {
-      timeslice *= hook?.(task) ?? 1;
-    }
-    return timeslice;
+    const timeslice = 1;
+    const factor =
+      this.ctx.runtime.hooks.hooks[
+        `system.service-performance-factor.${task.service}`
+      ] ?? 1;
+    return timeslice / factor;
   }
 
   private schedulePendingTasks(task: Task) {
