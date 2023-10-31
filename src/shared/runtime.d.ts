@@ -90,12 +90,6 @@ namespace Runtime {
 
   export function defineService<T extends ServiceConstructor>(service: T): void;
 
-  export interface Conditioner {
-    onBeginInvoke?(service: string, fn: string): Promise<void>;
-    onEndInvoke?(service: string, fn: string): Promise<void>;
-    getTaskTimesliceFactor?(task: Task): number;
-  }
-
   export function setupSystem(): void;
 }
 
