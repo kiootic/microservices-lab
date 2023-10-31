@@ -127,7 +127,10 @@ export class Suite {
           }
         });
         await Promise.all(threads);
-        this.runtime.logger.main.debug("Test passed.", { test: test.name });
+
+        this.runtime.logger.main.info("Test passed.", {
+          test: test.name,
+        });
         pass++;
       } catch (err) {
         const context: Record<string, unknown> = {};
@@ -144,10 +147,6 @@ export class Suite {
           await fn();
         }
       }
-
-      this.runtime.logger.main.info("Test passed.", {
-        test: test.name,
-      });
     }
 
     await this.reset();
