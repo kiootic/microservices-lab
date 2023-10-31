@@ -115,6 +115,8 @@ export class MetricsStore {
   flush() {
     this.flushSampleBuffer();
     this.doFlushPartition();
+    this.metricValues.clear();
+    this.sampleBufferTimestamp = 0;
   }
 
   private doFlushPartition() {
