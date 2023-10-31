@@ -2,6 +2,7 @@ import { Counter, Gauge, Histogram } from "../metrics/metrics";
 import { MetricsStore, SeriesLabels } from "../metrics/store";
 import { Host } from "./host";
 import { Scheduler } from "./scheduler";
+import { Zone } from "./zone";
 
 export interface MetricsFactory {
   counter: (name: string, labels?: SeriesLabels) => Counter;
@@ -23,7 +24,7 @@ export class MetricsManager {
     this.host = host;
     this.store = new MetricsStore(
       () => scheduler.currentTime,
-      (state) => this.host.writePartition(state),
+      (state) => Zone.runOutside(() => this.host.writePartition(state)),
     );
   }
 

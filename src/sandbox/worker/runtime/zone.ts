@@ -39,6 +39,16 @@ export abstract class Zone {
     return this.root.run(fn);
   }
 
+  static runOutside<T>(fn: () => T): T {
+    const oldZone = currentZone;
+    currentZone = null;
+    try {
+      return fn();
+    } finally {
+      currentZone = oldZone;
+    }
+  }
+
   static flush() {
     root.flushMicrotasks();
   }
@@ -98,6 +108,9 @@ export class MicrotaskQueue {
   }
 
   schedule<T>(fn: (x: T) => void, arg: T): void {
+    if (Zone.current == null) {
+      throw new Error("Attempt to schedule outside zone");
+    }
     this.microtasks.push(fn, arg);
   }
 }

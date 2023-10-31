@@ -1,6 +1,7 @@
 import { Host, LogLevel } from "./host";
 import { Scheduler } from "./scheduler";
 import { objDisplay, format } from "@vitest/utils";
+import { Zone } from "./zone";
 
 export class LoggerFactory {
   private readonly host: Host;
@@ -29,20 +30,22 @@ export class LoggerFactory {
     message: string,
     context: Record<string, unknown> | undefined,
   ) {
-    this.host.writeLog({
-      timestamp: this.scheduler.currentTime,
-      level,
-      name,
-      message,
-      context: context
-        ? Object.fromEntries(
-            Object.entries(context).map(([key, value]) => [
-              key,
-              formatArg(value),
-            ]),
-          )
-        : undefined,
-    });
+    Zone.runOutside(() =>
+      this.host.writeLog({
+        timestamp: this.scheduler.currentTime,
+        level,
+        name,
+        message,
+        context: context
+          ? Object.fromEntries(
+              Object.entries(context).map(([key, value]) => [
+                key,
+                formatArg(value),
+              ]),
+            )
+          : undefined,
+      }),
+    );
   }
 }
 
