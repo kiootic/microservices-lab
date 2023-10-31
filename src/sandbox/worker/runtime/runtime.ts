@@ -3,7 +3,7 @@ import { VirtualNetwork } from "../system/network";
 import { Service, ServiceConstructor } from "../system/service";
 import { System } from "../system/system";
 import { TaskZone } from "../system/task";
-import { Semaphore } from "../utils/async";
+import { Semaphore, retryOnError, timeout } from "../utils/async";
 import { random } from "../utils/random";
 import { Hooks } from "./hooks";
 import { Host } from "./host";
@@ -77,8 +77,12 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
       setupSystem: system.setup.bind(system),
 
       registerHook: runtime.hooks.registerHook.bind(runtime.hooks),
+    },
 
-      Semaphore: Semaphore,
+    utils: {
+      Semaphore,
+      timeout: (task, timeoutMS) => timeout(runtime.scheduler, task, timeoutMS),
+      retryOnError,
     },
   };
 }

@@ -1,3 +1,5 @@
+import { Scheduler } from "../runtime/scheduler";
+
 interface Deferred<T> {
   promise: Promise<T>;
   resolve: (value: T) => void;
@@ -70,4 +72,62 @@ export class Semaphore {
       this.release(n);
     }
   }
+}
+
+class TimeoutError extends Error {
+  get name() {
+    return "TimeoutError";
+  }
+
+  constructor() {
+    super("Task timed out");
+  }
+}
+
+const timeoutToken = Symbol();
+export function timeout<T>(
+  scheduler: Scheduler,
+  task: Promise<T>,
+  timeoutMS: number,
+): Promise<T> {
+  let timeoutHandle: number = 0;
+  return Promise.race([
+    task,
+    new Promise<typeof timeoutToken>((resolve) => {
+      timeoutHandle = scheduler.setTimeout(
+        resolve as () => void,
+        timeoutMS,
+        timeoutToken,
+      );
+    }),
+  ]).then((result) => {
+    if (result === timeoutToken) {
+      throw new TimeoutError();
+    } else {
+      scheduler.clearTimeout(timeoutHandle);
+      return result;
+    }
+  });
+}
+
+export async function retryOnError<T>(
+  fn: (retryCount: number) => Promise<T>,
+  maxRetry: number,
+  shouldRetry?: (err: unknown) => boolean,
+) {
+  let retryCount = 0;
+  let err: unknown = null;
+  do {
+    try {
+      return await fn(retryCount);
+    } catch (e) {
+      err = e;
+
+      if (shouldRetry != null && !shouldRetry(err)) {
+        break;
+      }
+      retryCount++;
+    }
+  } while (retryCount <= maxRetry);
+  throw err;
 }

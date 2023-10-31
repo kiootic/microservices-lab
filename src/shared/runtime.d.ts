@@ -111,18 +111,6 @@ namespace Runtime {
     pareto(alpha: number): number;
     choice<T>(list: T[]): T | null;
   }
-
-  export class Semaphore {
-    readonly max: number;
-    readonly active: number;
-    readonly pending: number;
-
-    constructor(max: number);
-    tryAcquire(n: number): boolean;
-    acquire(n: number): Promise<void>;
-    release(n: number): void;
-    async run<T>(n: number, fn: () => Promise<T>): Promise<T>;
-  }
 }
 
 namespace Runtime {
@@ -178,6 +166,27 @@ namespace Runtime {
   ): void;
 }
 
+namespace utils {
+  export class Semaphore {
+    readonly max: number;
+    readonly active: number;
+    readonly pending: number;
+
+    constructor(max: number);
+    tryAcquire(n: number): boolean;
+    acquire(n: number): Promise<void>;
+    release(n: number): void;
+    async run<T>(n: number, fn: () => Promise<T>): Promise<T>;
+  }
+
+  export function timeout<T>(task: Promise<T>, timeoutMS: number): Promise<T>;
+  export function retryOnError<T>(
+    fn: (retryCount: number) => Promise<T>,
+    maxRetry: number,
+    shouldRetry?: (err: unknown) => boolean,
+  ): Promise<T>;
+}
+
 // MARKER: exports
 
 export {
@@ -196,4 +205,5 @@ export {
   hooks,
   Hooks,
   Runtime,
+  utils,
 };
