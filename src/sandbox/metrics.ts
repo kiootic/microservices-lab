@@ -53,7 +53,7 @@ export class MetricsStore {
   }
 
   getOwnerKeys(): string[] {
-    return Array.from(this.owners.keys()).sort();
+    return Array.from(this.owners.keys());
   }
 
   getMetricNames(ownerKey: string): string[] {

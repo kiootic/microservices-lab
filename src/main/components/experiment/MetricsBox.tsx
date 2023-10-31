@@ -26,7 +26,13 @@ export const MetricsBox: React.FC<MetricsBoxProps> = (props) => {
   );
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const effectiveSelectedKey = selectedKey ?? metricOwnerKeys[0] ?? "";
+  const effectiveSelectedKey = useMemo(
+    () =>
+      selectedKey != null && metricOwnerKeys.includes(selectedKey)
+        ? selectedKey
+        : metricOwnerKeys.at(0) ?? "",
+    [selectedKey, metricOwnerKeys],
+  );
   const handleOnSelectionChange = useEventCallback((key: React.Key) => {
     if (typeof key === "string") {
       setSelectedKey(key);
