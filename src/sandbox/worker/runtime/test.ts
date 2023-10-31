@@ -34,6 +34,7 @@ type TestFn = (user: VirtualUser) => Promise<void>;
 class Test {
   readonly name: string;
   numUsers = 1;
+  allowFailure = false;
   readonly setupFns: Array<() => Promise<void>> = [];
   readonly teardownFns: Array<() => Promise<void>> = [];
   testFn?: TestFn;
@@ -44,6 +45,11 @@ class Test {
 
   users(numUsers: number): this {
     this.numUsers = numUsers;
+    return this;
+  }
+
+  fallible(): this {
+    this.allowFailure = true;
     return this;
   }
 
@@ -141,7 +147,12 @@ export class Suite {
         } else {
           context.error = err;
         }
-        this.runtime.logger.main.error("Test failed.", context);
+        if (test.allowFailure) {
+          pass++;
+          this.runtime.logger.main.warn("Test failed.", context);
+        } else {
+          this.runtime.logger.main.error("Test failed.", context);
+        }
       } finally {
         for (const fn of test.teardownFns) {
           await fn();

@@ -61,6 +61,7 @@ namespace Runtime {
 
   export interface Test {
     users(numUsers: number): this;
+    fallible(): this;
     setup(fn: () => void | Promise<void>): this;
     teardown(fn: () => void | Promise<void>): this;
     run(fn: (user: VirtualUser) => Promise<void>): this;
