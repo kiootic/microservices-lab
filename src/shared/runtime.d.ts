@@ -26,8 +26,7 @@ const random: Runtime.Random;
 const context: Runtime.Context;
 
 interface Hooks {
-  "system.before-invoke-fn": (service: string, fn: string) => Promise<void>;
-  "system.after-invoke-fn": (service: string, fn: string) => Promise<void>;
+  "system.invoke-fn": <T>(next: () => Promise<T>) => () => Promise<T>;
   "system.task-timeslice-multiplier": (task: Runtime.Task) => number;
 }
 const hooks: Runtime.HooksObject;

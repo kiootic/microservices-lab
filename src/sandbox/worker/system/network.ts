@@ -10,30 +10,18 @@ export class VirtualNetwork {
     this.ctx = ctx;
   }
 
-  async invoke(service: string, fn: string, args: unknown[]): Promise<unknown> {
+  invoke(service: string, fn: string, args: unknown[]): Promise<unknown> {
     const lb = this.ctx.loadBalancers.get(service);
     if (lb == null) {
       throw new ServiceUnavailableError(service);
     }
 
-    const beginHooks = this.ctx.runtime.hooks.hooks["system.before-invoke-fn"];
-    const afterHooks = this.ctx.runtime.hooks.hooks["system.after-invoke-fn"];
-    try {
-      for (const hook of beginHooks ?? []) {
-        const task = hook(service, fn);
-        if (task instanceof Promise) {
-          await task;
-        }
-      }
-      return await lb.invoke(fn, args);
-    } finally {
-      for (const hook of afterHooks ?? []) {
-        const task = hook(service, fn);
-        if (task instanceof Promise) {
-          await task;
-        }
-      }
+    const hooks = this.ctx.runtime.hooks.hooks["system.invoke-fn"];
+    let invoke = () => lb.invoke(fn, args);
+    for (const hook of hooks ?? []) {
+      invoke = hook(invoke);
     }
+    return invoke();
   }
 
   static proxy(
