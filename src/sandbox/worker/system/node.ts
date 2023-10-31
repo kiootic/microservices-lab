@@ -42,7 +42,7 @@ export class Node {
       fn_count: ctx.metrics
         .counter("system.fn_count", { service, node: id })
         .vec("fn"),
-      node_load: ctx.metrics.gauge("system.node_load", { node: id }),
+      node_load: ctx.metrics.gauge("system.node_load", { service, node: id }),
     };
   }
 
