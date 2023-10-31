@@ -22,10 +22,13 @@ let nextTaskID = 1;
 export class TaskZone extends Zone {
   readonly task: Task;
   private readonly node: Node | null;
-  private readonly queue = new MicrotaskQueue(this);
+  private queue = new MicrotaskQueue(this);
+  private spinQueue = new MicrotaskQueue(this);
 
-  private spinUntil = -1;
+  private spinDuration = 0;
   private isScheduled = false;
+
+  timeslice = 0;
 
   constructor(node: Node | null, fn: string, caller?: Task) {
     const id = nextTaskID++;
@@ -45,24 +48,29 @@ export class TaskZone extends Zone {
     if (this.node != null) {
       this.node.scheduleTask(this);
     } else {
-      Zone.root.scheduleMicrotask(runTask, this);
+      Zone.root.scheduleMicrotask(runRootTask, this);
     }
   }
 
   scheduleMicrotask<T>(fn: (x: T) => void, arg: T): void {
-    this.queue.schedule(fn, arg);
+    const queue = this.spinDuration > 0 ? this.spinQueue : this.queue;
+    queue.schedule(fn, arg);
     this.schedule();
   }
 
-  runTask() {
+  runTask(timeslice: number) {
     this.isScheduled = false;
 
-    if (this.spinUntil >= 0 && this.node != null) {
-      if (this.node.scheduler.currentTime < this.spinUntil) {
+    if (this.spinDuration > 0 && this.node != null) {
+      this.spinDuration -= timeslice;
+      if (this.spinDuration >= 0) {
         this.schedule();
         return;
       }
-      this.spinUntil = -1;
+      this.spinDuration = 0;
+      const spinQueue = this.spinQueue;
+      this.spinQueue = this.queue;
+      this.queue = spinQueue;
     }
 
     this.queue.flush();
@@ -70,12 +78,12 @@ export class TaskZone extends Zone {
 
   spin(ms: number) {
     if (this.node != null) {
-      this.spinUntil = this.node.scheduler.currentTime + ms;
+      this.spinDuration = ms;
     }
     return Promise.resolve();
   }
 }
 
-function runTask(task: TaskZone) {
-  task.runTask();
+function runRootTask(task: TaskZone) {
+  task.runTask(0);
 }

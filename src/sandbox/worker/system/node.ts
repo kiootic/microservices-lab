@@ -15,6 +15,7 @@ export class Node {
   private numTasks = 0;
   private readonly pendingTasks: TaskZone[] = [];
   private isScheduled = false;
+  private scheduleTimeslice = 0;
 
   private readonly loadCounter = new LoadCounter();
   private readonly metrics;
@@ -103,6 +104,7 @@ export class Node {
     this.isScheduled = true;
     const scheduler = this.scheduler;
     const delay = this.getTaskTimeslice(task) * random.exponential();
+    this.scheduleTimeslice = delay;
     scheduler.schedule(scheduler.currentTime + delay, runPendingTasks, this);
 
     this.loadCounter.addTimeslice(scheduler.currentTime, delay);
@@ -120,7 +122,7 @@ export class Node {
     if (zone == null) {
       return;
     }
-    zone.runTask();
+    zone.runTask(this.scheduleTimeslice);
 
     if (this.pendingTasks.length > 0) {
       this.schedulePendingTasks(this.pendingTasks[0].task);
