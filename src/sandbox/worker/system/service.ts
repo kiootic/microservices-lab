@@ -7,6 +7,9 @@ export interface ServiceContext {
 
 export abstract class Service {
   static readonly __name: string;
+  static get replicas() {
+    return 1;
+  }
 
   readonly nodeID: string;
   readonly logger: Logger;
@@ -19,6 +22,7 @@ export abstract class Service {
 
 export interface ServiceConstructor<Name extends string = string> {
   readonly __name: Name;
+  readonly replicas: number;
 
   new (ctx: ServiceContext): Service;
 }

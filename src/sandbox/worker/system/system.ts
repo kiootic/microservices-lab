@@ -68,7 +68,16 @@ export class System {
     for (const service of this.context.services.keys()) {
       const lb = new LoadBalancer(this.context, service);
       this.context.loadBalancers.set(service, lb);
-      this.instantiateNode(service);
+
+      const Service = this.context.services.get(service);
+      if (Service == null) {
+        throw new TypeError(`Service ${service} not found`);
+      }
+
+      const replicas = Service.replicas;
+      for (let i = 0; i < replicas; i++) {
+        this.instantiateNode(service);
+      }
     }
   }
 }

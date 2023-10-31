@@ -74,6 +74,7 @@ namespace Runtime {
 
   interface ServiceConstructor<Name extends string = string> {
     readonly __name: Name;
+    readonly replicas: number;
     new (ctx: unknown): Service;
   }
 
