@@ -34,8 +34,8 @@ type TestFn = (user: VirtualUser) => Promise<void>;
 class Test {
   readonly name: string;
   numUsers = 1;
-  setupFn?: () => Promise<void>;
-  teardownFn?: () => Promise<void>;
+  readonly setupFns: Array<() => Promise<void>> = [];
+  readonly teardownFns: Array<() => Promise<void>> = [];
   testFn?: TestFn;
 
   constructor(name: string) {
@@ -48,12 +48,12 @@ class Test {
   }
 
   setup(fn: () => Promise<void>): this {
-    this.setupFn = fn;
+    this.setupFns.push(fn);
     return this;
   }
 
   teardown(fn: () => Promise<void>): this {
-    this.teardownFn = fn;
+    this.teardownFns.push(fn);
     return this;
   }
 
@@ -111,7 +111,9 @@ export class Suite {
 
       this.runtime.metrics.store.setOwnerKey(test.name);
 
-      await test.setupFn?.();
+      for (const fn of test.setupFns) {
+        await fn();
+      }
 
       try {
         const threads = new Array(test.numUsers).fill(0).map(async (_, i) => {
@@ -138,7 +140,9 @@ export class Suite {
         }
         this.runtime.logger.main.error("Test failed.", context);
       } finally {
-        await test.teardownFn?.();
+        for (const fn of test.teardownFns) {
+          await fn();
+        }
       }
 
       this.runtime.logger.main.info("Test passed.", {
