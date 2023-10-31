@@ -9,6 +9,14 @@ function logger(name: string): Runtime.Logger;
 
 const metrics: Runtime.MetricFactory;
 
+function setTimeout(
+  handler: (...args: unknown[]) => void,
+  timeout?: number,
+  ...args: unknown[]
+): number;
+
+function clearTimeout(handle: number): void;
+
 function delay(ms: number): Promise<void>;
 function spin(ms: number): Promise<void>;
 
@@ -178,6 +186,8 @@ export {
   metrics,
   delay,
   spin,
+  setTimeout,
+  clearTimeout,
   expect,
   Service,
   services,

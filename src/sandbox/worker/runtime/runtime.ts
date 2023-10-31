@@ -30,8 +30,6 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
   const globalOverrides: Partial<Record<keyof typeof globalThis, unknown>> = {
     Date: runtime.scheduler.Date,
     Math: math,
-    setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
-    clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
   };
 
   return {
@@ -44,6 +42,8 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
     },
     logger: runtime.logger.make.bind(runtime.logger),
     metrics: runtime.metrics.factory,
+    setTimeout: runtime.scheduler.setTimeout.bind(runtime.scheduler),
+    clearTimeout: runtime.scheduler.clearTimeout.bind(runtime.scheduler),
     delay: runtime.scheduler.delay.bind(runtime.scheduler),
     spin: (ms) => {
       const zone = Zone.current;
