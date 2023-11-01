@@ -69,12 +69,6 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
 
     const [editorProps, setEditorProps] = useState<EditorProps | null>(null);
 
-    // Fixed tooltip container is not cleaned up on destroy, manually clean it up.
-    const tooltipParentRef = useRef<HTMLElement | null>(null);
-    useLayoutEffect(() => {
-      return () => tooltipParentRef.current?.remove();
-    }, []);
-
     useLayoutEffect(() => {
       const doc = token.file.read() ?? "";
       const initialState: InitialEditorState = {
@@ -91,15 +85,11 @@ export const FileEditor = React.forwardRef<EditorView | null, FileEditorProps>(
         initialState.json = { ...(loadedState.json as object), doc };
       }
 
-      tooltipParentRef.current?.remove();
-      tooltipParentRef.current = document.createElement("div");
-      document.body.appendChild(tooltipParentRef.current);
-
       setEditorProps({
         initialState,
         extension: [
           setup,
-          tooltips({ position: "fixed", parent: tooltipParentRef.current }),
+          tooltips({ position: "fixed", parent: document.body }),
           token.file.name.endsWith(".md")
             ? [markdownExtension, prettierMarkdown()]
             : [typescriptIntegration(token.file), prettierTypeScript()],
