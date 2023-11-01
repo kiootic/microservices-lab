@@ -1,4 +1,4 @@
-@import "../../codicon/codicon.css";
+@import "@vscode/codicons/dist/codicon.css";
 
 @tailwind base;
 @tailwind components;
