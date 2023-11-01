@@ -6,10 +6,15 @@ import { Workspace } from "../model/workspace";
 import { Journal, JournalEntryHandle } from "../model/journal";
 import { Scenario } from "../model/scenarios";
 
-export type WorkbenchUIEvent = {
-  kind: "save";
-  state: "saving" | "succeed" | "failed";
-};
+export type WorkbenchUIEvent =
+  | {
+      kind: "save";
+      state: "saving" | "succeed" | "failed";
+    }
+  | {
+      kind: "link";
+      url: URL;
+    };
 
 export type WorkbenchView = "notebook" | "experiment" | "journal";
 

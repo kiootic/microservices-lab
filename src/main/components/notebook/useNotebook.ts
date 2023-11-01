@@ -25,18 +25,20 @@ export interface NotebookController {
   events: EventBus<NotebookUIEvent>;
   state: StoreApi<NotebookUIState>;
   setStatusBar?: (item: React.ReactNode) => void;
+  tryHandleInternalLink?: (link: string) => boolean;
 }
 
 interface NotebookControllerParams {
   persistedState?: NotebookUIState;
   setStatusBar?: (item: React.ReactNode) => void;
+  tryHandleInternalLink?: (link: string) => boolean;
 }
 
 export function useNotebook(
   workspace: Workspace,
   params?: NotebookControllerParams,
 ): NotebookController {
-  const { persistedState, setStatusBar } = params ?? {};
+  const { persistedState, setStatusBar, tryHandleInternalLink } = params ?? {};
 
   const [events] = useState(() => createEventBus<NotebookUIEvent>());
   const [state] = useState(() =>
@@ -51,7 +53,7 @@ export function useNotebook(
   );
 
   return useMemo<NotebookController>(
-    () => ({ workspace, events, state, setStatusBar }),
-    [workspace, events, state, setStatusBar],
+    () => ({ workspace, events, state, setStatusBar, tryHandleInternalLink }),
+    [workspace, events, state, setStatusBar, tryHandleInternalLink],
   );
 }

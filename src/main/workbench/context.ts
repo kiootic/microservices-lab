@@ -8,6 +8,7 @@ import {
   allWorkbenchPanes,
   allWorkbenchViews,
 } from "./useWorkbench";
+import { internalLinkProtocol } from "../constants";
 
 export type WorkbenchStatusBarItemKey = "notebook" | "experiment";
 
@@ -23,6 +24,7 @@ export interface WorkbenchContextValue extends WorkbenchController {
     key: WorkbenchStatusBarItemKey,
     content: React.ReactNode,
   ) => void;
+  tryHandleInternalLink: (link: string) => boolean;
 }
 
 export function createContextValue(
@@ -68,6 +70,18 @@ export function createContextValue(
       internalState.setState((s) => ({
         statusBarItems: { ...s.statusBarItems, [key]: content },
       }));
+    },
+    tryHandleInternalLink: (link) => {
+      try {
+        const url = new URL(link);
+        if (url.protocol === internalLinkProtocol) {
+          controller.events.dispatch({ kind: "link", url });
+          return true;
+        }
+      } catch {
+        return false;
+      }
+      return false;
     },
   };
 }

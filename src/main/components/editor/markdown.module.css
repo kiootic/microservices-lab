@@ -9,11 +9,22 @@
 }
 
 .link {
-  @apply font-bold;
+  @apply font-medium;
+}
+
+.link-title {
+  @apply italic font-normal;
 }
 
 .url {
   @apply text-primary-600 underline font-normal;
+}
+
+.link-button {
+  @apply pr-2;
+}
+.link-button :global(.codicon) {
+  @apply align-middle text-primary-600;
 }
 
 .quote,

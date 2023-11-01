@@ -14,6 +14,7 @@ import { useNotebookContext } from "./context";
 import { useNavContext } from "../nav/context";
 
 import styles from "./FileView.module.css";
+import { markdownLinkHandler } from "../editor/markdown";
 
 interface FileViewProps {
   className?: string;
@@ -23,8 +24,15 @@ interface FileViewProps {
 export const FileView: React.FC<FileViewProps> = (props) => {
   const { className, fileName } = props;
 
-  const { workspace, state, events, rootElementRef, toggleOpen, setIsVisible } =
-    useNotebookContext();
+  const {
+    workspace,
+    state,
+    events,
+    rootElementRef,
+    toggleOpen,
+    setIsVisible,
+    tryHandleInternalLink,
+  } = useNotebookContext();
 
   const file = useStore(workspace, (w) => w.getFile(fileName));
 
@@ -83,8 +91,16 @@ export const FileView: React.FC<FileViewProps> = (props) => {
   const handleOnEscape = useEventCallback(() => {
     events.dispatch({ kind: "focus", target: "nav", fileName });
   });
+
+  const handleMarkdownLink = useEventCallback((link: string) => {
+    if (!tryHandleInternalLink?.(link)) {
+      window.open(link, "_blank", "noreferrer");
+    }
+  });
+
   const extension: Extension = useMemo(
     () => [
+      markdownLinkHandler.of(handleMarkdownLink),
       keymap.of([
         {
           key: "Escape",
@@ -95,7 +111,7 @@ export const FileView: React.FC<FileViewProps> = (props) => {
         },
       ]),
     ],
-    [handleOnEscape],
+    [handleOnEscape, handleMarkdownLink],
   );
 
   const loadState = useEventCallback(() => {

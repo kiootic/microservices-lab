@@ -14,7 +14,8 @@ interface NotebookViewProps {
 export const NotebookView: React.FC<NotebookViewProps> = (props) => {
   const { className } = props;
 
-  const { workspace, state, setStatusBarItem } = useWorkbenchContext();
+  const { workspace, state, setStatusBarItem, tryHandleInternalLink } =
+    useWorkbenchContext();
 
   const setStatusBar = useEventCallback((item: React.ReactNode) => {
     setStatusBarItem("notebook", item);
@@ -26,6 +27,7 @@ export const NotebookView: React.FC<NotebookViewProps> = (props) => {
       | NotebookUIState
       | undefined,
     setStatusBar,
+    tryHandleInternalLink,
   });
 
   const notebookUIState = notebook.state;
