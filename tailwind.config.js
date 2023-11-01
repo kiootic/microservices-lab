@@ -18,12 +18,18 @@ export default {
     extend: {
       ringColor: ({ theme }) => ({ DEFAULT: theme("colors.primary.400") }),
       animation: {
+        "loading":  "loading 2s ease-out",
         "fade-in": "fade 150ms ease-out",
         "fade-out": "fade 150ms reverse ease-in",
       },
       keyframes: {
         fade: {
           from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        loading: {
+          from: { opacity: 0 },
+          '60%': { opacity: 0 },
           to: { opacity: 1 },
         },
       },
