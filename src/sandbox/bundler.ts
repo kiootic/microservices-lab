@@ -40,6 +40,10 @@ export class BuildError extends Error {
   }
 }
 
+export async function initBundler() {
+  await init$;
+}
+
 export async function makeBundle(
   modules: Map<string, string>,
   cancel$: Promise<void>,

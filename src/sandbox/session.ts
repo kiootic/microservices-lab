@@ -12,7 +12,7 @@ import {
   MetricsTimeSeries,
   MetricsTimeSeriesSamples,
 } from "../shared/comm";
-import { BuildError, makeBundle } from "./bundler";
+import { BuildError, initBundler, makeBundle } from "./bundler";
 import { LogStore } from "./logs";
 import { MetricsStore } from "./metrics";
 
@@ -30,6 +30,11 @@ class WorkerHost implements WorkerHostAPI {
     this.session.metrics.add(partition);
   }
 }
+
+let isInitialized = false;
+void initBundler().then(() => {
+  isInitialized = true;
+});
 
 export class Session implements SessionAPI {
   readonly cancel: () => void;
@@ -69,6 +74,11 @@ export class Session implements SessionAPI {
       this.log("debug", "Building modules...");
       let bundleJS: string;
       try {
+        if (!isInitialized) {
+          this.log("info", "Loading bundler...");
+          await initBundler();
+        }
+
         bundleJS = await makeBundle(modules, this.cancel$);
       } catch (err) {
         this.log("error", "Build failed.");
