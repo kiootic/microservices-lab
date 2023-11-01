@@ -39,6 +39,9 @@ export class System {
   }
 
   defineService<T extends ServiceConstructor>(service: T) {
+    if (this.context.services.has(service.__name)) {
+      throw new TypeError(`Duplicated service ${service.__name}`);
+    }
     this.context.services.set(service.__name, service);
   }
 
