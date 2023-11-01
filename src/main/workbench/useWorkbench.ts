@@ -75,7 +75,7 @@ export function useWorkbench(
       viewAffinity: {
         notebook: "primary",
         experiment: "secondary",
-        journal: null,
+        journal: "secondary",
       },
       notebookUIState: null,
       experimentUIState: null,

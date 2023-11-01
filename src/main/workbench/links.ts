@@ -20,6 +20,12 @@ export function useLinkHandler(ctx: WorkbenchContextValue) {
         });
 
         showView("experiment");
+        break;
+      }
+
+      case internalLinkPaths.scenarios: {
+        showView("journal");
+        break;
       }
     }
   });

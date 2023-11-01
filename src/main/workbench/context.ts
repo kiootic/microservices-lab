@@ -79,8 +79,10 @@ export function createContextValue(
         return;
       }
 
-      const targetPane =
-        state.viewAffinity[view] ?? visiblePanes.at(0) ?? "primary";
+      let targetPane = state.viewAffinity[view];
+      if (targetPane == null || !visiblePanes.includes(targetPane)) {
+        targetPane = visiblePanes.at(0) ?? "primary";
+      }
       switchView(targetPane, view);
     },
     setStatusBarItem: (key, content) => {

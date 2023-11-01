@@ -5,6 +5,7 @@ import { useStore } from "zustand";
 import { FileView } from "./FileView";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useNavContext } from "../nav/context";
+import { EmptyView } from "./EmptyView";
 
 interface ContentProps {
   className?: string;
@@ -35,15 +36,22 @@ export const Content: React.FC<ContentProps> = (props) => {
       ref={ref}
       className={cn(
         className,
-        "overflow-auto after:block after:h-[calc(100%-4rem)]",
+        "overflow-auto",
+        fileNames.length > 0 && "after:block after:h-[calc(100%-4rem)]",
         useCompactLayout && "pt-10",
       )}
       onScroll={handleOnScroll}
     >
-      {fileNames.map((fileName) => (
-        <FileView key={fileName} fileName={fileName} />
-      ))}
-      <hr className="ml-12 flex-1 border-t-2 mt-5" />
+      {fileNames.length === 0 ? (
+        <EmptyView className="w-full h-full" />
+      ) : (
+        <>
+          {fileNames.map((fileName) => (
+            <FileView key={fileName} fileName={fileName} />
+          ))}
+          <hr className="ml-12 flex-1 border-t-2 mt-5" />
+        </>
+      )}
     </div>
   );
 };
