@@ -1,5 +1,5 @@
 import cn from "clsx";
-import React, { useMemo, useState } from "react";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import { SplitLayout } from "../components/SplitLayout";
 import { useSize } from "../hooks/resize";
 import { Pane } from "./Pane";
@@ -10,6 +10,7 @@ import {
   createContextValue,
 } from "./context";
 import { WorkbenchController } from "./useWorkbench";
+import { useLinkHandler } from "./links";
 
 const compactLayoutThreshold = 768;
 
@@ -28,6 +29,11 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
 
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const useCompactLayout = useSize(element, (w) => w < compactLayoutThreshold);
+  useLayoutEffect(() => {
+    context.internalState.setState({
+      visiblePanes: useCompactLayout ? ["primary"] : ["primary", "secondary"],
+    });
+  }, [context, useCompactLayout]);
 
   const paneA = useMemo<React.ReactNode>(
     () => <Pane className="w-full h-full" pane="primary" />,
@@ -40,6 +46,8 @@ export const Workbench: React.FC<WorkbenchProps> = (props) => {
       ),
     [useCompactLayout],
   );
+
+  useLinkHandler(context);
 
   return (
     <WorkbenchContext.Provider value={context}>

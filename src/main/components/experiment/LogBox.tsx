@@ -29,8 +29,8 @@ export const LogBox: React.FC<LogBoxProps> = (props) => {
   const lastRowRef = useRef<HTMLTableRowElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
-  const showDebugLogs = useStore(uiState, (s) => s.showDebugLogs);
-  const search = useStore(uiState, (s) => s.logSearch);
+  const showDebugLogs = useStore(uiState, (s) => s.showDebugLogs ?? false);
+  const search = useStore(uiState, (s) => s.logSearch ?? "");
 
   interface LogState {
     isTailing: boolean;

@@ -14,12 +14,14 @@ export type WorkbenchStatusBarItemKey = "notebook" | "experiment";
 
 export interface WorkbenchInternalState {
   statusBarItems: Partial<Record<WorkbenchStatusBarItemKey, React.ReactNode>>;
+  visiblePanes: WorkbenchPane[];
 }
 
 export interface WorkbenchContextValue extends WorkbenchController {
   internalState: StoreApi<WorkbenchInternalState>;
 
   switchView: (pane: WorkbenchPane, view: WorkbenchView) => void;
+  showView: (view: WorkbenchView) => void;
   setStatusBarItem: (
     key: WorkbenchStatusBarItemKey,
     content: React.ReactNode,
@@ -32,39 +34,54 @@ export function createContextValue(
 ): WorkbenchContextValue {
   const internalState = createStore<WorkbenchInternalState>(() => ({
     statusBarItems: {},
+    visiblePanes: [],
   }));
+
+  const switchView = (pane: WorkbenchPane, view: WorkbenchView) => {
+    const state = controller.state.getState();
+    if (!allWorkbenchViews.includes(view)) {
+      return;
+    }
+
+    const viewCurrentPane = findViewPane(state, view);
+    if (viewCurrentPane === pane) {
+      return;
+    }
+
+    let { paneView, viewAffinity, paneLastView } = state;
+    paneLastView = { ...paneLastView, [pane]: paneView[pane] };
+    paneView = { ...paneView, [pane]: view };
+    viewAffinity = { ...viewAffinity, [view]: pane };
+
+    if (viewCurrentPane != null) {
+      let reassignedView = paneLastView[viewCurrentPane];
+      if (reassignedView == null || reassignedView === view) {
+        reassignedView = findUnboundView({ ...state, paneView })!;
+      }
+
+      paneLastView = { ...paneLastView, [viewCurrentPane]: view };
+      paneView = { ...paneView, [viewCurrentPane]: reassignedView };
+    }
+
+    controller.state.setState({ paneView, viewAffinity, paneLastView });
+  };
 
   return {
     ...controller,
     internalState,
 
-    switchView: (pane, view) => {
+    switchView,
+    showView: (view) => {
       const state = controller.state.getState();
-      if (!allWorkbenchViews.includes(view)) {
+      const viewPane = findViewPane(state, view);
+      const visiblePanes = internalState.getState().visiblePanes;
+      if (viewPane != null && visiblePanes.includes(viewPane)) {
         return;
       }
 
-      const viewCurrentPane = findViewPane(state, view);
-      if (viewCurrentPane === pane) {
-        return;
-      }
-
-      let { paneView, viewAffinity, paneLastView } = state;
-      paneLastView = { ...paneLastView, [pane]: paneView[pane] };
-      paneView = { ...paneView, [pane]: view };
-      viewAffinity = { ...viewAffinity, [view]: pane };
-
-      if (viewCurrentPane != null) {
-        let reassignedView = paneLastView[viewCurrentPane];
-        if (reassignedView == null || reassignedView === view) {
-          reassignedView = findUnboundView({ ...state, paneView })!;
-        }
-
-        paneLastView = { ...paneLastView, [viewCurrentPane]: view };
-        paneView = { ...paneView, [viewCurrentPane]: reassignedView };
-      }
-
-      controller.state.setState({ paneView, viewAffinity, paneLastView });
+      const targetPane =
+        state.viewAffinity[view] ?? visiblePanes.at(0) ?? "primary";
+      switchView(targetPane, view);
     },
     setStatusBarItem: (key, content) => {
       internalState.setState((s) => ({

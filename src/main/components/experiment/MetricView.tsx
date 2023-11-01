@@ -33,10 +33,16 @@ export const MetricView: React.FC<MetricViewProps> = (props) => {
     [metricNames],
   );
 
+  const metricQuery = useStore(state, (s) => s.metricQuery ?? "");
   const metricState = AppComboBox.useState(items, {
-    inputValue: state.getState().metricQuery,
-    selectedKey: state.getState().metricQuery,
+    inputValue: metricQuery,
+    selectedKey: metricQuery,
   });
+
+  const handleOnSelectionChange = metricState.handleOnSelectionChange;
+  useEffect(() => {
+    handleOnSelectionChange(metricQuery);
+  }, [handleOnSelectionChange, metricQuery]);
 
   const metricName = useDebouncedValue(
     metricState.inputValue,

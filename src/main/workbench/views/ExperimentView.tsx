@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
+import { useStore } from "zustand";
+import { Experiment } from "../../components/experiment/Experiment";
 import {
   ExperimentUIState,
   useExperiment,
 } from "../../components/experiment/useExperiment";
 import { useEventCallback } from "../../hooks/event-callback";
 import { useWorkbenchContext } from "../context";
-import { Experiment } from "../../components/experiment/Experiment";
 
 interface ExperimentViewProps {
   className?: string;
@@ -21,6 +22,7 @@ export const ExperimentView: React.FC<ExperimentViewProps> = (props) => {
   });
   useEffect(() => setStatusBar(null), [setStatusBar]);
 
+  const experimentUIState = useStore(state, (s) => s.experimentUIState);
   const experiment = useExperiment(workspace, session, {
     persistedState: (state.getState().experimentUIState ?? undefined) as
       | ExperimentUIState
@@ -28,12 +30,15 @@ export const ExperimentView: React.FC<ExperimentViewProps> = (props) => {
     setStatusBar,
   });
 
-  const experimentUIState = experiment.state;
   useEffect(() => {
-    return experimentUIState.subscribe((experimentUIState) => {
+    experiment.state.setState(() => experimentUIState as ExperimentUIState);
+  }, [experiment.state, experimentUIState]);
+
+  useEffect(() => {
+    return experiment.state.subscribe((experimentUIState) => {
       state.setState({ experimentUIState });
     });
-  }, [experimentUIState, state]);
+  }, [experiment.state, state]);
 
   return <Experiment className={className} controller={experiment} />;
 };

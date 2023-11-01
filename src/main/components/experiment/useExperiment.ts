@@ -7,9 +7,9 @@ import { SessionController } from "../../model/session";
 export type ExperimentUIEvent = never;
 
 export interface ExperimentUIState {
-  showDebugLogs: boolean;
-  logSearch: string;
-  metricQuery: string;
+  showDebugLogs?: boolean;
+  logSearch?: string;
+  metricQuery?: string;
 }
 
 export interface ExperimentController {
