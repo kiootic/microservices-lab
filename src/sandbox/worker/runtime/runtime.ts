@@ -5,7 +5,7 @@ import { System } from "../system/system";
 import { TaskZone } from "../system/task";
 import { Semaphore, retryOnError, timeout } from "../utils/async";
 import { random } from "../utils/random";
-import { Hooks } from "./hooks";
+import { ConfigStore } from "./config";
 import { Host } from "./host";
 import { LoggerFactory, formatConsoleLog } from "./logger";
 import { MetricsManager } from "./metrics";
@@ -64,9 +64,6 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
     get context() {
       return Zone.current?.context ?? {};
     },
-    get hooks() {
-      return runtime.hooks.hooks;
-    },
 
     Runtime: {
       defineTest: suite.defineTest.bind(suite),
@@ -76,7 +73,8 @@ function makeGlobals(runtime: Runtime): typeof RuntimeGlobals {
       defineService: system.defineService.bind(system),
       setupSystem: system.setup.bind(system),
 
-      registerHook: runtime.hooks.registerHook.bind(runtime.hooks),
+      defineConfig: runtime.config.define.bind(runtime.config),
+      configure: runtime.config.configure.bind(runtime.config),
     },
 
     utils: {
@@ -93,7 +91,7 @@ export class Runtime {
   readonly scheduler: Scheduler;
   readonly logger: LoggerFactory;
   readonly metrics: MetricsManager;
-  readonly hooks = new Hooks<import("../../../shared/runtime").Hooks>();
+  readonly config = new ConfigStore<import("../../../shared/runtime").Config>();
 
   readonly globals: typeof RuntimeGlobals;
 

@@ -1,8 +1,4 @@
-let numQuery = 1;
-Runtime.registerHook("services.api.num-queries", () => numQuery);
-
-async function test(n: number, user: Runtime.VirtualUser) {
-  numQuery = n;
+async function test(user: Runtime.VirtualUser) {
   await delay(random.uniform() * 1000);
   for (let i = 0; i < 1000; i++) {
     await delay(1000 + random.uniform() * 100);
@@ -12,8 +8,18 @@ async function test(n: number, user: Runtime.VirtualUser) {
 
 Runtime.defineTest("naive query")
   .users(20)
-  .run((user) => test(1, user));
+  .setup(() =>
+    Runtime.configure("services.api", (config) => {
+      config.numQueries = 1;
+    }),
+  )
+  .run(test);
 
-Runtime.defineTest("parallel query (n=2)")
+Runtime.defineTest("hedged requests (n=2)")
   .users(20)
-  .run((user) => test(2, user));
+  .setup(() =>
+    Runtime.configure("services.api", (config) => {
+      config.numQueries = 2;
+    }),
+  )
+  .run(test);

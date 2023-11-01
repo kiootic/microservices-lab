@@ -33,13 +33,9 @@ const random: Runtime.Random;
 
 const context: Runtime.Context;
 
-interface Hooks {
-  "system.invoke-fn": Array<
-    (next: () => Promise<unknown>) => () => Promise<unknown>
-  >;
-  [x: `system.service-performance-factor.${string}`]: number;
+interface Config {
+  system: Runtime.SystemConfig;
 }
-const hooks: Runtime.HooksObject;
 
 namespace Runtime {
   export interface Task {
@@ -161,12 +157,27 @@ namespace Runtime {
 }
 
 namespace Runtime {
-  export type HooksObject = Partial<Hooks>;
+  export interface SystemConfig {
+    onInvoke(
+      interceptor: (next: () => Promise<unknown>) => () => Promise<unknown>,
+    );
 
-  export function registerHook<K extends keyof Hooks>(
+    adjustServicePerformance(service: string, factor: number): void;
+  }
+
+  export function defineConfig<K extends string, V>(
     name: K,
-    appendFn: (value: Hooks[K] | undefined) => Hooks[K],
+    value: V,
+  ): V & { __name?: K };
+
+  export function configure<K extends keyof Config>(
+    name: K,
+    fn: (value: Config[K]) => void,
   ): void;
+
+  export type ConfigType<T extends { [__name]?: string }> = {
+    [K in T["__name"]]: Omit<T, "__name">;
+  };
 }
 
 namespace utils {
@@ -205,8 +216,7 @@ export {
   services,
   random,
   context,
-  hooks,
-  Hooks,
+  Config,
   Runtime,
   utils,
 };

@@ -1,3 +1,4 @@
+import { SystemConfig } from "./config";
 import { ServiceUnavailableError } from "./errors";
 import type { SystemContext } from "./system";
 
@@ -16,10 +17,10 @@ export class VirtualNetwork {
       throw new ServiceUnavailableError(service);
     }
 
-    const hooks = this.ctx.runtime.hooks.hooks["system.invoke-fn"];
+    const interceptors = SystemConfig.instance.interceptors;
     let invoke = () => lb.invoke(fn, args);
-    for (const hook of hooks ?? []) {
-      invoke = hook(invoke);
+    for (const interceptor of interceptors ?? []) {
+      invoke = interceptor(invoke);
     }
     return invoke();
   }

@@ -3,11 +3,13 @@ export * from "../shared/runtime";
 export as namespace __rt;
 
 declare global {
-  interface Hooks {
-    [x: string]: any;
-  }
   namespace Runtime {
-    function registerHook(name: string, value: any): void;
+    function defineConfig(name: string, value: any): any;
+    function configure(name: string, fn: (value: any) => void): void;
+    function configure(
+      name: "system",
+      fn: (value: Runtime.SystemConfig) => void,
+    ): void;
   }
   function Service<Name extends string>(
     name: Name,

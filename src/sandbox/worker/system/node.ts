@@ -1,6 +1,7 @@
 import { Logger } from "../runtime/logger";
 import { Zone } from "../runtime/zone";
 import { random } from "../utils/random";
+import { SystemConfig } from "./config";
 import { Service, ServiceConstructor } from "./service";
 import { SystemContext } from "./system";
 import { Task, TaskZone } from "./task";
@@ -94,9 +95,7 @@ export class Node {
   private getTaskTimeslice(task: Task) {
     const timeslice = 1;
     const factor =
-      this.ctx.runtime.hooks.hooks[
-        `system.service-performance-factor.${task.service}`
-      ] ?? 1;
+      SystemConfig.instance.servicePerformanceFactors.get(task.service) ?? 1;
     return timeslice / factor;
   }
 

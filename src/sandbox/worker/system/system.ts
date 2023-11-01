@@ -1,6 +1,7 @@
 import { Logger } from "../runtime/logger";
 import { MetricsFactory } from "../runtime/metrics";
 import { Runtime } from "../runtime/runtime";
+import { SystemConfig } from "./config";
 import { LoadBalancer } from "./load-balancer";
 import { VirtualNetwork } from "./network";
 import { Node } from "./node";
@@ -36,6 +37,8 @@ export class System {
       loadBalancers: new Map(),
     };
     this.network = new VirtualNetwork(this.context);
+
+    runtime.config.define("system", SystemConfig.instance);
   }
 
   defineService<T extends ServiceConstructor>(service: T) {
