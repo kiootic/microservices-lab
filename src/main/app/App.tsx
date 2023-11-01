@@ -1,11 +1,17 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { IntlProvider } from "react-intl";
-import { MainScreen } from "./MainScreen";
+import { LoadingScreen } from "./LoadingScreen";
+
+const MainScreenLoader = React.lazy(() =>
+  import("./MainScreen").then((m) => ({ default: m.MainScreen })),
+);
 
 export const App: React.FC = () => {
   return (
     <IntlProvider locale="en" defaultLocale="en">
-      <MainScreen />
+      <Suspense fallback={<LoadingScreen />}>
+        <MainScreenLoader />
+      </Suspense>
     </IntlProvider>
   );
 };

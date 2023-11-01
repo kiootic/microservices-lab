@@ -71,5 +71,7 @@ export const WorkbenchHost: React.FC<WorkbenchHostProps> = (props) => {
     };
   }, [journal, workspace, controller.events]);
 
-  return <Workbench className="w-full h-full" controller={controller} />;
+  return (
+    <Workbench className="w-full h-full isolate" controller={controller} />
+  );
 };
